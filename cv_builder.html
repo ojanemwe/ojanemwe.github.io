@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CV Builder - Pro Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -11,17 +11,18 @@
 
         :root {
             --primary-color: #2563eb;
+            --scale-factor: 1;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #e5e7eb;
             margin: 0;
             padding: 0;
-            overflow-x: hidden;
+            overflow-x: hidden; /* Mencegah scroll horizontal di mobile */
         }
 
-        /* Kontainer Utama untuk memastikan Pratinjau tidak terpotong */
+        /* Kontainer Utama */
         #preview-main {
             padding-top: 2rem;
             padding-bottom: 5rem;
@@ -29,64 +30,97 @@
             flex-direction: column;
             align-items: center;
             min-height: calc(100vh - 4rem);
+            background-color: #525659; /* Warna background seperti PDF reader */
+            overflow: hidden; /* Penting untuk scaling */
+            position: relative; /* Untuk positioning zoom controls */
         }
 
-        /* Ukuran Kertas A4 */
+        /* Ukuran Kertas A4 Dinamis */
         .page-preview {
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm; /* Minimal A4, tapi bisa bertambah */
+            height: auto;      /* Biarkan tinggi menyesuaikan konten */
             background: white;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             position: relative;
-            overflow: hidden;
             box-sizing: border-box;
             display: block;
-            margin: 0 auto; /* Menghilangkan margin atas otomatis yang konflik */
-            flex-shrink: 0;
+            margin: 0 auto;
+            transform-origin: top center; /* Titik pusat scaling di atas tengah */
+            transition: transform 0.2s ease-out; /* Smooth zoom transition */
+            
+            /* CSS Logic untuk Halaman Berlanjut */
+            display: flex;
+            flex-direction: column;
         }
 
-        /* ATS Specific Styles - Font Size Reduced Slightly */
+        /* Container Pembungkus untuk Scaling */
+        .preview-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            overflow: visible;
+            padding-bottom: 100px; /* Ruang untuk scroll */
+        }
+
+        /* ATS Specific Styles */
         .ats-content {
             font-family: 'Lora', 'Times New Roman', serif;
             color: #000;
-            line-height: 1.35; /* Sedikit lebih rapat */
-            padding: 25mm 20mm; /* Standar margin A4 */
+            line-height: 1.4;
+            padding: 20mm;
         }
-        .ats-header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-        .ats-name { font-size: 22pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; } /* 24pt -> 22pt */
-        .ats-contact { font-size: 9pt; } /* 10pt -> 9pt */
-        .ats-section { margin-bottom: 12px; }
-        .ats-section-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 6px; padding-bottom: 2px; } /* 11pt -> 10pt */
-        .ats-job-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 10pt; } /* 11pt -> 10pt */
-        .ats-job-sub { display: flex; justify-content: space-between; font-style: italic; font-size: 10pt; margin-bottom: 2px; } /* 11pt -> 10pt */
-        .ats-list { list-style-type: disc; margin-left: 20px; font-size: 9.5pt; } /* 10.5pt -> 9.5pt */
-        .ats-text-body { font-size: 9.5pt; } /* Kelas helper baru untuk body text */
+        .ats-header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+        .ats-name { font-size: 24pt; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+        .ats-contact { font-size: 10pt; }
+        .ats-section { margin-bottom: 15px; page-break-inside: avoid; } /* Mencegah potong halaman di tengah seksi */
+        .ats-section-title { font-size: 11pt; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000; margin-bottom: 8px; padding-bottom: 2px; }
+        .ats-job-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 11pt; }
+        .ats-job-sub { display: flex; justify-content: space-between; font-style: italic; font-size: 11pt; margin-bottom: 4px; }
+        
+        /* ATS Updates: Font lebih kecil */
+        .ats-list { list-style-type: disc; margin-left: 20px; font-size: 9.5pt; } 
+        .ats-entry { margin-bottom: 12px; page-break-inside: avoid; }
+        .ats-text-body { font-size: 9.5pt; } /* Class baru untuk teks body ATS */
 
-        /* Responsivitas Skala untuk Layar Kecil */
-        @media (max-width: 1024px) {
-            #preview-main { padding-top: 1rem; }
-            .page-preview {
-                transform: scale(0.65);
-                transform-origin: top center;
-                margin-bottom: -100mm;
-            }
+        /* Zoom Controls Style */
+        .zoom-controls {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            padding: 0.5rem;
+            border-radius: 9999px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
         }
-
-        @media (max-width: 640px) {
-            .page-preview {
-                transform: scale(0.38);
-                margin-bottom: -180mm;
-            }
+        .zoom-btn {
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 9999px;
+            color: #374151;
+            transition: all 0.2s;
+            font-size: 0.875rem;
         }
+        .zoom-btn:hover { background-color: #f3f4f6; color: var(--primary-color); }
+        .zoom-display { font-size: 0.75rem; font-weight: 600; color: #6b7280; min-width: 3rem; text-align: center; }
 
         /* PERBAIKAN FITUR CETAK */
-        /* Default A4 tapi membiarkan user memilih di dialog print jika perlu */
         @page {
             margin: 0;
+            size: auto; /* Biarkan browser mengatur ukuran kertas berdasarkan konten */
         }
 
         @media print {
-            .no-print, nav, aside, button, .template-selector, .mobile-toggle { 
+            .no-print, nav, aside, button, .template-selector, .mobile-toggle, #page-controls, .zoom-controls { 
                 display: none !important; 
             }
             
@@ -96,45 +130,67 @@
                 padding: 0 !important;
                 width: 100%;
                 height: 100%;
+                overflow: visible !important;
             }
 
             #preview-main {
                 padding: 0 !important;
                 display: block !important;
-                height: auto;
+                background: white !important;
+                height: auto !important;
+                min-height: 0 !important;
+            }
+
+            .preview-wrapper {
+                display: block !important;
+                padding: 0 !important;
+                height: auto !important;
             }
 
             .page-preview {
                 margin: 0 !important;
                 border: none !important;
                 box-shadow: none !important;
-                transform: scale(1) !important;
-                width: 210mm !important;
-                height: 297mm !important; /* Tinggi tetap A4 */
-                page-break-after: always !important;
+                transform: none !important; /* Reset scaling saat print */
+                width: 100% !important;
+                min-height: 0 !important;
+                height: auto !important;
                 print-color-adjust: exact; 
                 -webkit-print-color-adjust: exact;
             }
-
-            * { 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important; 
-            }
+            
+            /* Print Utilities */
+            .page-break-safe { page-break-inside: avoid; }
+            .break-after-avoid { page-break-after: avoid; }
+            h1, h2, h3, h4 { page-break-after: avoid; }
+            
+            /* Fix untuk Minimalist Template saat Print */
+            .print-block { display: block !important; }
+            .print-center { text-align: center !important; }
+            .print-mx-auto { margin-left: auto !important; margin-right: auto !important; }
+            .print-mb-small { margin-bottom: 1rem !important; } /* Kurangi margin header saat print */
         }
 
-        .sidebar-scroll { height: calc(100vh - 4rem); overflow-y: auto; }
+        .sidebar-scroll { height: calc(100vh - 4rem); overflow-y: auto; scrollbar-width: thin; }
+        
+        /* Form Inputs Styling */
+        .input-group { margin-bottom: 0.75rem; }
+        .input-label { display: block; font-size: 10px; font-weight: 700; color: #9ca3af; margin-bottom: 4px; text-transform: uppercase; }
+        .input-field { width: 100%; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px 10px; font-size: 13px; outline: none; transition: all 0.2s; }
+        .input-field:focus { border-color: var(--primary-color); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1); }
 
         /* Template: Bold Split */
-        /* Warna background sidebar sekarang dinamis via inline style, default fallback ada di sini */
-        .bold-sidebar { color: white; width: 32%; height: 100%; padding: 40px 25px; transition: background-color 0.3s; }
-        .bold-main { width: 68%; padding: 45px; background: white; }
-        .bold-photo { width: 140px; height: 140px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 0 20px rgba(0,0,0,0.2); object-fit: cover; }
+        .bold-container { display: flex; min-height: 100%; height: auto; align-items: stretch; }
+        .bold-sidebar { color: white; width: 32%; padding: 40px 25px; display: flex; flex-direction: column; flex-shrink: 0; min-height: 297mm; }
+        .bold-main { width: 68%; padding: 45px; background: white; flex-grow: 1; }
+        .bold-photo { width: 140px; height: 140px; border-radius: 50%; border: 4px solid rgba(255,255,255,0.2); box-shadow: 0 0 20px rgba(0,0,0,0.2); object-fit: cover; margin-bottom: 1.5rem; }
         .bold-skill-bg { height: 4px; background: rgba(0,0,0,0.2); width: 100%; border-radius: 2px; }
         .bold-skill-fill { height: 100%; background: white; border-radius: 2px; }
 
         /* Template: Contemporary */
+        .contemp-container { padding: 3rem; min-height: 100%; height: auto; background: #fcfcfc; display: flex; flex-direction: column; }
         .contemp-header { border-bottom: 1px solid #e5e7eb; padding-bottom: 30px; margin-bottom: 30px; }
-        .contemp-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
+        .contemp-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; flex-grow: 1; }
         .contemp-section-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 15px; text-transform: uppercase; }
 
         /* Helpers */
@@ -144,130 +200,199 @@
 </head>
 <body class="text-gray-800">
 
-    <nav class="bg-white border-b h-16 flex items-center justify-between px-6 sticky top-0 z-50 no-print">
+    <nav class="bg-white border-b h-16 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-50 no-print shadow-sm">
         <div class="flex items-center gap-4">
-            <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-blue-600 mobile-toggle">
+            <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-blue-600 mobile-toggle p-2">
                 <i class="fas fa-bars text-xl"></i>
             </button>
-            <div class="flex items-center gap-2 text-blue-600 font-bold text-xl">
-                <i class="fas fa-id-card"></i> <span class="hidden sm:inline">CV Builder</span>
+            <div class="flex items-center gap-2 text-blue-600 font-bold text-lg lg:text-xl">
+                <i class="fas fa-id-card"></i> <span class="inline">CV Builder</span>
             </div>
         </div>
-        <div class="flex items-center gap-4">
-            <select id="langSwitch" onchange="generatePreview()" class="border rounded px-2 py-1 text-sm bg-gray-50 outline-none">
-                <option value="id">Bahasa Indonesia</option>
-                <option value="en">English</option>
+        <div class="flex items-center gap-2 lg:gap-4">
+            <select id="langSwitch" onchange="generatePreview()" class="border rounded px-2 py-1.5 text-xs lg:text-sm bg-gray-50 outline-none hover:bg-gray-100 cursor-pointer">
+                <option value="id">🇮🇩 Indonesia</option>
+                <option value="en">🇺🇸 English</option>
             </select>
-            <button onclick="window.print()" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-blue-700 transition shadow-lg">
-                <i class="fas fa-print mr-2"></i> <span class="hidden sm:inline">Cetak CV (PDF)</span><span class="sm:hidden">PDF</span>
+            <button onclick="downloadPDF()" class="bg-blue-600 text-white px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-semibold hover:bg-blue-700 transition shadow-lg flex items-center gap-2">
+                <i class="fas fa-download"></i> <span class="hidden sm:inline">Download PDF</span><span class="sm:hidden">PDF</span>
             </button>
         </div>
     </nav>
 
-    <div id="app-container" class="flex flex-col lg:flex-row">
+    <div id="app-container" class="flex flex-col lg:flex-row relative">
         
-        <!-- SIDEBAR DIPERLEBAR: lg:w-1/3 dari sebelumnya lg:w-1/4 -->
-        <aside id="sidebar" class="fixed inset-0 top-16 bg-white z-40 lg:relative lg:top-0 lg:w-1/3 xl:w-1/3 border-r no-print sidebar-scroll p-6 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
-            <div class="space-y-6">
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 top-16 bg-white z-40 w-full md:w-1/2 lg:w-[400px] border-r no-print sidebar-scroll p-6 transform -translate-x-full lg:translate-x-0 lg:static lg:h-[calc(100vh-4rem)] transition-transform duration-300 shadow-2xl lg:shadow-none">
+            <div class="space-y-8 pb-10">
                 <section>
-                    <h2 class="text-[10px] font-black uppercase text-gray-400 mb-4 flex items-center gap-2">INFORMASI DASAR</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xs font-black uppercase text-gray-400 flex items-center gap-2"><i class="fas fa-user-circle"></i> INFORMASI PRIBADI</h2>
+                        <button onclick="toggleSidebar()" class="lg:hidden text-gray-400"><i class="fas fa-times"></i></button>
+                    </div>
+                    
                     <div class="space-y-3">
-                        <div class="flex flex-col items-center gap-3 p-4 bg-gray-50 rounded-lg border border-dashed">
-                            <div id="photo-preview-form" class="w-20 h-20 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border-2 border-white shadow-sm">
-                                <i class="fas fa-user text-gray-400 text-2xl"></i>
+                        <div class="flex flex-col items-center gap-3 p-4 bg-gray-50 rounded-lg border border-dashed mb-4">
+                            <div id="photo-preview-form" class="w-24 h-24 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center border-4 border-white shadow-md cursor-pointer relative group">
+                                <i class="fas fa-camera text-gray-400 text-2xl group-hover:text-blue-500 transition"></i>
+                                <img id="img-preview-tag" class="hidden w-full h-full object-cover absolute inset-0">
                             </div>
-                            <input type="file" id="input_photo" accept="image/*" class="text-[10px] w-full">
+                            <input type="file" id="input_photo" accept="image/*" class="text-xs w-full text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                         </div>
-                        <input type="text" id="input_name" oninput="generatePreview()" placeholder="Nama Lengkap" class="w-full border rounded p-2 text-sm outline-none focus:border-blue-500">
-                        <input type="text" id="input_title" oninput="generatePreview()" placeholder="Jabatan Profesional" class="w-full border rounded p-2 text-sm outline-none">
+
+                        <div class="input-group">
+                            <label class="input-label">Nama Lengkap</label>
+                            <input type="text" id="input_name" oninput="generatePreview()" placeholder="Contoh: Alex Morgan" class="input-field font-bold">
+                        </div>
                         
-                        <!-- Penambahan Checkbox Toggle untuk Profil Ringkas -->
-                        <div class="flex items-center justify-between mt-2 px-1">
+                        <div class="input-group">
+                            <label class="input-label">Jabatan Profesional</label>
+                            <input type="text" id="input_title" oninput="generatePreview()" placeholder="Contoh: Senior UI/UX Designer" class="input-field">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="input-group">
+                                <label class="input-label">Email</label>
+                                <input type="email" id="input_email" oninput="generatePreview()" placeholder="email@contoh.com" class="input-field">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Telepon</label>
+                                <input type="text" id="input_phone" oninput="generatePreview()" placeholder="+62 812..." class="input-field">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label class="input-label">Lokasi / Domisili</label>
+                            <input type="text" id="input_location" oninput="generatePreview()" placeholder="Jakarta, Indonesia" class="input-field">
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-4 px-1">
                             <label class="text-[10px] font-bold text-gray-500 uppercase">Profil Ringkas</label>
                             <label class="flex items-center cursor-pointer">
                                 <input type="checkbox" id="toggle_summary" onchange="toggleSummary()" checked class="form-checkbox h-3 w-3 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
-                                <span class="ml-1 text-[9px] text-gray-400">Show</span>
+                                <span class="ml-1 text-[9px] text-gray-400 font-bold">TAMPILKAN</span>
                             </label>
                         </div>
-                        <textarea id="input_summary" oninput="generatePreview()" placeholder="Profil Ringkas..." rows="4" class="w-full border rounded p-2 text-sm outline-none"></textarea>
+                        <textarea id="input_summary" oninput="generatePreview()" placeholder="Tulis deskripsi singkat tentang diri Anda dan tujuan karir..." rows="4" class="input-field"></textarea>
                     </div>
                 </section>
 
-                <section>
-                    <h2 class="text-[10px] font-black uppercase text-gray-400 mb-4">WARNA TEMA</h2>
-                    <p class="text-[9px] text-gray-400 mb-2">Mencakup latar belakang sidebar (Bold Split) dan aksen.</p>
-                    <input type="color" id="input_color" value="#2563eb" oninput="generatePreview()" class="w-full h-10 border rounded cursor-pointer">
-                </section>
+                <hr class="border-gray-100">
 
                 <section>
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-[10px] font-black text-gray-400 uppercase">PENGALAMAN KERJA</h2>
-                        <button onclick="addEntry('work')" class="text-blue-600 text-[10px] font-bold">+ TAMBAH</button>
+                    <h2 class="text-xs font-black uppercase text-gray-400 mb-4 flex items-center gap-2"><i class="fas fa-palette"></i> PERSONALISASI</h2>
+                    <div class="input-group">
+                        <label class="input-label">Warna Tema Utama</label>
+                        <div class="flex gap-2 items-center">
+                            <input type="color" id="input_color" value="#2563eb" oninput="generatePreview()" class="w-10 h-10 rounded border-0 cursor-pointer p-0 overflow-hidden shadow-sm">
+                            <span class="text-xs text-gray-400">Pilih warna aksen untuk CV Anda</span>
+                        </div>
                     </div>
-                    <div id="work_entries" class="space-y-3"></div>
                 </section>
+
+                <hr class="border-gray-100">
 
                 <section>
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-[10px] font-black text-gray-400 uppercase">PENDIDIKAN</h2>
-                        <button onclick="addEntry('education')" class="text-blue-600 text-[10px] font-bold">+ TAMBAH</button>
+                        <h2 class="text-xs font-black text-gray-400 uppercase flex items-center gap-2"><i class="fas fa-briefcase"></i> PENGALAMAN KERJA</h2>
+                        <button onclick="addEntry('work')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-100">+ TAMBAH</button>
                     </div>
-                    <div id="education_entries" class="space-y-3"></div>
+                    <div id="work_entries" class="space-y-4"></div>
                 </section>
+
+                <hr class="border-gray-100">
 
                 <section>
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-[10px] font-black text-gray-400 uppercase">KEAHLIAN (HARD/SOFT SKILL)</h2>
-                        <button onclick="addSkill()" class="text-blue-600 text-[10px] font-bold">+ TAMBAH</button>
+                        <h2 class="text-xs font-black text-gray-400 uppercase flex items-center gap-2"><i class="fas fa-graduation-cap"></i> PENDIDIKAN</h2>
+                        <button onclick="addEntry('education')" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-100">+ TAMBAH</button>
+                    </div>
+                    <div id="education_entries" class="space-y-4"></div>
+                </section>
+
+                <hr class="border-gray-100">
+
+                <section>
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xs font-black text-gray-400 uppercase flex items-center gap-2"><i class="fas fa-star"></i> KEAHLIAN</h2>
+                        <button onclick="addSkill()" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-100">+ TAMBAH</button>
                     </div>
                     <div id="skill_entries" class="space-y-2"></div>
                 </section>
 
-                <!-- Section: BAHASA -->
                 <section>
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-[10px] font-black text-gray-400 uppercase">BAHASA</h2>
-                        <button onclick="addLanguage()" class="text-blue-600 text-[10px] font-bold">+ TAMBAH</button>
+                        <h2 class="text-xs font-black text-gray-400 uppercase flex items-center gap-2"><i class="fas fa-language"></i> BAHASA</h2>
+                        <button onclick="addLanguage()" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-100">+ TAMBAH</button>
                     </div>
                     <div id="language_entries" class="space-y-2"></div>
                 </section>
 
-                <!-- Section: SERTIFIKASI -->
                 <section>
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
-                            <h2 class="text-[10px] font-black text-gray-400 uppercase">SERTIFIKASI</h2>
+                            <h2 class="text-xs font-black text-gray-400 uppercase flex items-center gap-2"><i class="fas fa-certificate"></i> SERTIFIKASI</h2>
                             <label class="flex items-center cursor-pointer">
                                 <input type="checkbox" id="toggle_cert" onchange="toggleCert()" checked class="form-checkbox h-3 w-3 text-blue-600 rounded focus:ring-blue-500 border-gray-300">
-                                <span class="ml-1 text-[9px] text-gray-400">Show</span>
                             </label>
                         </div>
-                        <button onclick="addCertification()" class="text-blue-600 text-[10px] font-bold">+ TAMBAH</button>
+                        <button onclick="addCertification()" class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-[10px] font-bold hover:bg-blue-100">+ TAMBAH</button>
                     </div>
                     <div id="certification_entries" class="space-y-3"></div>
                 </section>
 
-                <button onclick="toggleSidebar()" class="w-full bg-gray-800 text-white py-3 rounded-lg font-bold lg:hidden">LIHAT HASIL</button>
+                <button onclick="toggleSidebar()" class="w-full bg-gray-900 text-white py-4 rounded-xl font-bold lg:hidden shadow-xl mt-4">
+                    LIHAT HASIL CV
+                </button>
+                <div class="h-20 lg:hidden"></div> <!-- Spacer for mobile bottom -->
             </div>
         </aside>
 
-        <main id="preview-main" class="flex-1 bg-gray-100 overflow-y-auto">
-            <div class="template-selector flex flex-wrap justify-center gap-2 mb-8 no-print">
-                <button onclick="selectTemplate('bold-split')" class="px-5 py-2 rounded-full bg-white shadow-sm font-bold text-[10px] hover:bg-blue-600 hover:text-white transition">BOLD SPLIT</button>
-                <button onclick="selectTemplate('contemporary-grid')" class="px-5 py-2 rounded-full bg-white shadow-sm font-bold text-[10px] hover:bg-blue-600 hover:text-white transition">CONTEMPORARY</button>
-                <button onclick="selectTemplate('modern-minimal')" class="px-5 py-2 rounded-full bg-white shadow-sm font-bold text-[10px] hover:bg-blue-600 hover:text-white transition">MINIMALIST</button>
-                <button onclick="selectTemplate('ats')" class="px-5 py-2 rounded-full bg-white shadow-sm font-bold text-[10px] border border-gray-300 hover:bg-black hover:text-white transition">FORMAT ATS (TEXT)</button>
+        <!-- MAIN PREVIEW AREA -->
+        <main id="preview-main" class="flex-1 w-full overflow-y-auto">
+            <!-- Template Selector -->
+            <div class="template-selector w-full max-w-2xl mx-auto flex flex-wrap justify-center gap-2 mb-6 no-print px-4 sticky top-4 z-30">
+                <div class="bg-gray-800/80 backdrop-blur p-2 rounded-full flex flex-wrap justify-center gap-2 shadow-xl border border-gray-600">
+                    <button onclick="selectTemplate('bold-split')" class="px-4 py-1.5 rounded-full bg-transparent text-gray-200 font-bold text-[10px] hover:bg-white hover:text-gray-900 transition border border-transparent hover:border-white">BOLD SPLIT</button>
+                    <button onclick="selectTemplate('contemporary-grid')" class="px-4 py-1.5 rounded-full bg-transparent text-gray-200 font-bold text-[10px] hover:bg-white hover:text-gray-900 transition border border-transparent hover:border-white">CONTEMPORARY</button>
+                    <button onclick="selectTemplate('modern-minimal')" class="px-4 py-1.5 rounded-full bg-transparent text-gray-200 font-bold text-[10px] hover:bg-white hover:text-gray-900 transition border border-transparent hover:border-white">MINIMALIST</button>
+                    <button onclick="selectTemplate('ats')" class="px-4 py-1.5 rounded-full bg-transparent text-gray-200 font-bold text-[10px] hover:bg-white hover:text-gray-900 transition border border-transparent hover:border-white">ATS (SIMPLE)</button>
+                </div>
             </div>
 
-            <div id="creative-page" class="page-preview"></div>
+            <!-- Zoom Controls -->
+            <div class="zoom-controls no-print">
+                <button onclick="changeZoom(-0.1)" class="zoom-btn" title="Zoom Out">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <span id="zoom-level-display" class="zoom-display">Fit</span>
+                <button onclick="changeZoom(0.1)" class="zoom-btn" title="Zoom In">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button onclick="resetZoom()" class="zoom-btn" title="Reset Fit">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+
+            <div class="preview-wrapper">
+                <div id="creative-page" class="page-preview">
+                    <!-- CV Content will be injected here -->
+                </div>
+            </div>
+            
+            <p class="text-white/50 text-xs text-center mt-4 no-print pb-10">
+                <i class="fas fa-info-circle mr-1"></i> 
+                Halaman akan otomatis bertambah jika konten terlalu panjang.<br>
+                Gunakan tombol Download untuk menyimpan PDF.
+            </p>
         </main>
     </div>
 
     <script>
+        // Data Global Aplikasi
         let appData = {
             lang: 'id',
             template: 'bold-split',
-            color: '#1a1e26', // Default dark
+            color: '#1a1e26',
             photo: '',
             showCert: true,
             showSummary: true,
@@ -275,16 +400,16 @@
                 name: 'Alex Morgan', 
                 title: 'SENIOR UI/UX DESIGNER', 
                 email: 'alex.morgan@design.com', 
-                phone: '+1 (555) 123-4567', 
-                location: 'San Francisco, CA', 
-                summary: 'Passionate about creating intuitive and visually stunning digital experiences. Specialized in mobile app design, design systems, and rapid prototyping. I bridge the gap between aesthetics and functionality.' 
+                phone: '+62 812 3456 7890', 
+                location: 'Jakarta Selatan, Indonesia', 
+                summary: 'Profesional kreatif dengan pengalaman 5+ tahun dalam merancang antarmuka digital yang intuitif. Memiliki keahlian khusus dalam sistem desain, prototyping cepat, dan pengembangan produk berbasis pengguna.' 
             },
             work: [
-                { instansi: 'Creative Solutions Inc.', logo: '', pos: 'Senior Product Designer', startYear: '2021', endYear: 'Present', desc: 'Led the redesign of the core mobile application, resulting in a 40% increase in user engagement.' },
-                { instansi: 'TechFlow Agency', logo: '', pos: 'UI/UX Designer', startYear: '2018', endYear: '2021', desc: 'Collaborated with developers to implement responsive web designs for fintech clients.' }
+                { instansi: 'PT Inovasi Digital', logo: '', pos: 'Senior Product Designer', startYear: '2021', endYear: 'Sekarang', desc: 'Memimpin desain ulang aplikasi utama yang meningkatkan engagement pengguna sebesar 40%. Mengelola tim desain beranggotakan 5 orang.' },
+                { instansi: 'Studio Kreatif Nusantara', logo: '', pos: 'UI/UX Designer', startYear: '2018', endYear: '2021', desc: 'Bekerja sama dengan tim developer untuk mengimplementasikan desain web responsif untuk klien fintech BUMN.' }
             ],
             education: [
-                { instansi: 'University of California', major: 'BFA in Interaction Design', startYear: '2014', endYear: '2018' }
+                { instansi: 'Universitas Indonesia', major: 'Sarjana Desain Komunikasi Visual', startYear: '2014', endYear: '2018' }
             ],
             skills: [
                 { name: 'UI/UX Design', level: 95 },
@@ -293,14 +418,13 @@
                 { name: 'HTML / CSS', level: 75 }
             ],
             languages: [
-                { name: 'English', level: 'Native' },
-                { name: 'Spanish', level: 'Professional' }
+                { name: 'Bahasa Indonesia', level: 'Native' },
+                { name: 'English', level: 'Professional' }
             ],
             certifications: [
                 { name: 'Google UX Design Professional Certificate', year: '2021' },
                 { name: 'Certified ScrumMaster (CSM)', year: '2020' }
-            ],
-            interests: ['Photography', 'Hiking', '3D Modeling', 'Coffee']
+            ]
         };
 
         const translations = {
@@ -308,30 +432,132 @@
             en: { work: 'Work Experience', edu: 'Education', skill: 'Skills', lang: 'Languages', cert: 'Certifications', contact: 'Contact', about: 'About Me' }
         };
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); }
+        // UI Helpers
+        function toggleSidebar() { 
+            const sb = document.getElementById('sidebar');
+            // Logic toggle class
+            if (sb.classList.contains('-translate-x-full')) {
+                sb.classList.remove('-translate-x-full');
+            } else {
+                sb.classList.add('-translate-x-full');
+            }
+        }
+
         function toggleCert() { appData.showCert = document.getElementById('toggle_cert').checked; generatePreview(); }
         function toggleSummary() { appData.showSummary = document.getElementById('toggle_summary').checked; generatePreview(); }
 
-        window.onload = () => {
+        // DOWNLOAD PDF LOGIC
+        function downloadPDF() {
+            // Ubah judul dokumen sementara agar nama file default saat save as PDF bagus
+            const originalTitle = document.title;
+            const cleanName = appData.personal.name.replace(/[^a-zA-Z0-9]/g, '_');
+            document.title = `CV_${cleanName}`;
+            
+            // Print Trigger
+            window.print();
+            
+            // Kembalikan judul
+            setTimeout(() => { document.title = originalTitle; }, 1000);
+        }
+
+        // ZOOM & RESPONSIVE SCALING LOGIC
+        let zoomLevel = 1.0; // 1.0 = 100% of "Fit Width" calculation (Default)
+        let isManualZoom = false;
+
+        function changeZoom(delta) {
+            zoomLevel += delta;
+            // Limit zoom
+            if (zoomLevel < 0.3) zoomLevel = 0.3;
+            if (zoomLevel > 2.0) zoomLevel = 2.0;
+            
+            isManualZoom = true;
+            updateZoomDisplay();
+            resizePreview();
+        }
+
+        function resetZoom() {
+            zoomLevel = 1.0;
+            isManualZoom = false;
+            updateZoomDisplay();
+            resizePreview();
+        }
+
+        function updateZoomDisplay() {
+            const display = document.getElementById('zoom-level-display');
+            if (isManualZoom) {
+                display.innerText = Math.round(zoomLevel * 100) + '%';
+            } else {
+                display.innerText = 'Fit';
+            }
+        }
+
+        function resizePreview() {
+            if (window.matchMedia('print').matches) return; // Jangan scale saat print dialog
+            
+            const wrapper = document.querySelector('.preview-wrapper');
+            const page = document.querySelector('.page-preview');
+            const containerWidth = wrapper.parentElement.clientWidth; // Lebar main area
+            const A4Width = 794; // approx px width of 210mm
+            const padding = 40; // safety padding
+
+            // Hitung skala dasar (Fit Width)
+            let baseScale = (containerWidth - padding) / A4Width;
+            if (baseScale > 1 && !isManualZoom) baseScale = 1; // Jika layar besar, jangan stretch kecuali zoom manual
+            
+            // Aplikasikan Zoom Multiplier
+            let finalScale = baseScale * zoomLevel;
+            
+            // Terapkan Transform
+            page.style.transform = `scale(${finalScale})`;
+            
+            // Atur margin bawah negatif agar tidak ada whitespace besar karena scaling
+            const h = page.getBoundingClientRect().height;
+            // Reset margin untuk kalkulasi ulang
+            page.style.marginBottom = '0px';
+            
+            // Kalkulasi ulang margin bottom berdasarkan tinggi yang berubah
+            // Tinggi asli (unscaled)
+            const unscaledHeight = page.offsetHeight;
+            // Perbedaan tinggi visual vs layout flow
+            const marginAdjust = (unscaledHeight * finalScale) - unscaledHeight;
+            
+            // Jika scale < 1, kita butuh negative margin. Jika > 1, positive margin.
+            // Namun transform scale biasanya menyisakan ruang asli.
+            // Rumus akurat untuk transform-origin: top center
+            page.style.marginBottom = `${(finalScale - 1) * unscaledHeight}px`;
+        }
+
+        // Event Listeners
+        window.addEventListener('resize', resizePreview);
+        window.addEventListener('load', () => {
             syncFormInputs();
             renderFormLists();
             generatePreview();
+            resizePreview();
+        });
 
-            document.getElementById('input_photo').onchange = function(e) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    appData.photo = ev.target.result;
-                    document.getElementById('photo-preview-form').innerHTML = `<img src="${ev.target.result}" class="w-full h-full object-cover">`;
-                    generatePreview();
-                };
-                if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+        // Image Handling
+        document.getElementById('input_photo').onchange = function(e) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                appData.photo = ev.target.result;
+                const imgTag = document.getElementById('img-preview-tag');
+                imgTag.src = ev.target.result;
+                imgTag.classList.remove('hidden');
+                generatePreview();
             };
+            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         };
 
         function syncFormInputs() {
             const p = appData.personal;
             document.getElementById('input_name').value = p.name;
             document.getElementById('input_title').value = p.title;
+            // Sinkronisasi input baru
+            document.getElementById('input_email').value = p.email;
+            document.getElementById('input_phone').value = p.phone;
+            document.getElementById('input_location').value = p.location;
+            
             document.getElementById('input_summary').value = p.summary;
             document.getElementById('input_color').value = appData.color;
             document.getElementById('toggle_cert').checked = appData.showCert;
@@ -339,23 +565,23 @@
         }
 
         function renderFormLists() {
+            // Render ulang semua list input (Work, Edu, dll)
             // WORK
             const wBox = document.getElementById('work_entries');
             wBox.innerHTML = '';
             appData.work.forEach((w, i) => {
-                wBox.innerHTML += `<div class="p-3 bg-gray-50 border rounded text-xs relative">
-                    <button onclick="removeEntry('work', ${i})" class="absolute top-1 right-1 text-red-400">×</button>
-                    <div class="mb-2">
-                         <label class="block text-[9px] text-gray-400 mb-1">Logo Perusahaan</label>
-                         <input type="file" onchange="handleLogoUpload(event, ${i})" accept="image/*" class="text-[9px] w-full">
+                wBox.innerHTML += `
+                <div class="p-3 bg-gray-50 border rounded-lg text-xs relative group hover:border-blue-300 transition-colors">
+                    <button onclick="removeEntry('work', ${i})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 font-bold p-1"><i class="fas fa-trash"></i></button>
+                    <div class="grid gap-2">
+                        <input type="text" oninput="appData.work[${i}].pos = this.value; generatePreview()" value="${w.pos}" placeholder="Jabatan" class="w-full font-bold bg-white border border-gray-200 rounded p-1.5 focus:border-blue-500 outline-none">
+                        <input type="text" oninput="appData.work[${i}].instansi = this.value; generatePreview()" value="${w.instansi}" placeholder="Nama Perusahaan" class="w-full bg-white border border-gray-200 rounded p-1.5 outline-none">
+                        <div class="flex gap-2">
+                            <input type="text" oninput="appData.work[${i}].startYear = this.value; generatePreview()" value="${w.startYear}" placeholder="Mulai" class="w-1/2 bg-white border border-gray-200 rounded p-1.5 outline-none">
+                            <input type="text" oninput="appData.work[${i}].endYear = this.value; generatePreview()" value="${w.endYear}" placeholder="Akhir" class="w-1/2 bg-white border border-gray-200 rounded p-1.5 outline-none">
+                        </div>
+                        <textarea oninput="appData.work[${i}].desc = this.value; generatePreview()" placeholder="Deskripsi tugas..." class="w-full bg-white border border-gray-200 rounded p-1.5 outline-none h-16 resize-none">${w.desc}</textarea>
                     </div>
-                    <input type="text" oninput="appData.work[${i}].pos = this.value; generatePreview()" value="${w.pos}" placeholder="Jabatan" class="w-full font-bold bg-transparent mb-1">
-                    <input type="text" oninput="appData.work[${i}].instansi = this.value; generatePreview()" value="${w.instansi}" placeholder="Nama Perusahaan" class="w-full bg-transparent mb-1">
-                    <div class="flex gap-2">
-                        <input type="text" oninput="appData.work[${i}].startYear = this.value; generatePreview()" value="${w.startYear}" placeholder="Thn Mulai" class="w-1/2 border rounded p-1">
-                        <input type="text" oninput="appData.work[${i}].endYear = this.value; generatePreview()" value="${w.endYear}" placeholder="Thn Akhir" class="w-1/2 border rounded p-1">
-                    </div>
-                    <textarea oninput="appData.work[${i}].desc = this.value; generatePreview()" placeholder="Deskripsi Pekerjaan..." class="w-full bg-transparent mt-1 border-t pt-1 h-16">${w.desc}</textarea>
                 </div>`;
             });
 
@@ -363,13 +589,16 @@
             const eBox = document.getElementById('education_entries');
             eBox.innerHTML = '';
             appData.education.forEach((e, i) => {
-                eBox.innerHTML += `<div class="p-3 bg-gray-50 border rounded text-xs relative">
-                    <button onclick="removeEntry('education', ${i})" class="absolute top-1 right-1 text-red-400">×</button>
-                    <input type="text" oninput="appData.education[${i}].instansi = this.value; generatePreview()" value="${e.instansi}" placeholder="Nama Sekolah/Univ" class="w-full font-bold bg-transparent mb-1">
-                    <input type="text" oninput="appData.education[${i}].major = this.value; generatePreview()" value="${e.major}" placeholder="Jurusan/Gelar" class="w-full bg-transparent mb-1">
-                    <div class="flex gap-2">
-                        <input type="text" oninput="appData.education[${i}].startYear = this.value; generatePreview()" value="${e.startYear}" placeholder="Thn Mulai" class="w-1/2 border rounded p-1">
-                        <input type="text" oninput="appData.education[${i}].endYear = this.value; generatePreview()" value="${e.endYear}" placeholder="Thn Akhir" class="w-1/2 border rounded p-1">
+                eBox.innerHTML += `
+                <div class="p-3 bg-gray-50 border rounded-lg text-xs relative group hover:border-blue-300 transition-colors">
+                    <button onclick="removeEntry('education', ${i})" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 font-bold"><i class="fas fa-trash"></i></button>
+                    <div class="grid gap-2">
+                        <input type="text" oninput="appData.education[${i}].instansi = this.value; generatePreview()" value="${e.instansi}" placeholder="Nama Sekolah/Univ" class="w-full font-bold bg-white border border-gray-200 rounded p-1.5 outline-none">
+                        <input type="text" oninput="appData.education[${i}].major = this.value; generatePreview()" value="${e.major}" placeholder="Jurusan/Gelar" class="w-full bg-white border border-gray-200 rounded p-1.5 outline-none">
+                        <div class="flex gap-2">
+                            <input type="text" oninput="appData.education[${i}].startYear = this.value; generatePreview()" value="${e.startYear}" placeholder="Thn Mulai" class="w-1/2 bg-white border border-gray-200 rounded p-1.5 outline-none">
+                            <input type="text" oninput="appData.education[${i}].endYear = this.value; generatePreview()" value="${e.endYear}" placeholder="Thn Akhir" class="w-1/2 bg-white border border-gray-200 rounded p-1.5 outline-none">
+                        </div>
                     </div>
                 </div>`;
             });
@@ -378,10 +607,11 @@
             const sBox = document.getElementById('skill_entries');
             sBox.innerHTML = '';
             appData.skills.forEach((s, i) => {
-                sBox.innerHTML += `<div class="flex gap-2 relative">
-                     <button onclick="removeEntry('skills', ${i})" class="text-red-400 text-[10px] font-bold absolute -right-2 -top-2">x</button>
-                    <input type="text" oninput="appData.skills[${i}].name = this.value; generatePreview()" value="${s.name}" class="flex-1 text-[10px] border p-1 rounded">
-                    <input type="number" oninput="appData.skills[${i}].level = this.value; generatePreview()" value="${s.level}" class="w-10 text-[10px] border p-1 rounded">
+                sBox.innerHTML += `
+                <div class="flex gap-2 relative items-center">
+                    <input type="text" oninput="appData.skills[${i}].name = this.value; generatePreview()" value="${s.name}" class="flex-1 text-[10px] border p-2 rounded outline-none focus:border-blue-500">
+                    <input type="number" oninput="appData.skills[${i}].level = this.value; generatePreview()" value="${s.level}" class="w-12 text-[10px] border p-2 rounded outline-none text-center">
+                    <button onclick="removeEntry('skills', ${i})" class="text-red-300 hover:text-red-500"><i class="fas fa-times"></i></button>
                 </div>`;
             });
 
@@ -389,10 +619,11 @@
             const lBox = document.getElementById('language_entries');
             lBox.innerHTML = '';
             appData.languages.forEach((l, i) => {
-                lBox.innerHTML += `<div class="flex gap-2 relative">
-                    <button onclick="removeEntry('languages', ${i})" class="text-red-400 text-[10px] font-bold absolute -right-2 -top-2">x</button>
-                    <input type="text" oninput="appData.languages[${i}].name = this.value; generatePreview()" value="${l.name}" placeholder="Bahasa" class="flex-1 text-[10px] border p-1 rounded">
-                    <input type="text" oninput="appData.languages[${i}].level = this.value; generatePreview()" value="${l.level}" placeholder="Level (ex: Native)" class="flex-1 text-[10px] border p-1 rounded">
+                lBox.innerHTML += `
+                <div class="flex gap-2 relative items-center">
+                    <input type="text" oninput="appData.languages[${i}].name = this.value; generatePreview()" value="${l.name}" placeholder="Bahasa" class="flex-1 text-[10px] border p-2 rounded outline-none focus:border-blue-500">
+                    <input type="text" oninput="appData.languages[${i}].level = this.value; generatePreview()" value="${l.level}" placeholder="Level" class="flex-1 text-[10px] border p-2 rounded outline-none">
+                    <button onclick="removeEntry('languages', ${i})" class="text-red-300 hover:text-red-500"><i class="fas fa-times"></i></button>
                 </div>`;
             });
 
@@ -400,21 +631,15 @@
             const cBox = document.getElementById('certification_entries');
             cBox.innerHTML = '';
             appData.certifications.forEach((c, i) => {
-                cBox.innerHTML += `<div class="p-2 bg-gray-50 border rounded text-xs relative">
-                    <button onclick="removeEntry('certifications', ${i})" class="absolute top-1 right-1 text-red-400">×</button>
-                    <input type="text" oninput="appData.certifications[${i}].name = this.value; generatePreview()" value="${c.name}" placeholder="Nama Sertifikat" class="w-full font-bold bg-transparent mb-1">
-                    <input type="text" oninput="appData.certifications[${i}].year = this.value; generatePreview()" value="${c.year}" placeholder="Tahun" class="w-1/3 border rounded p-1">
+                cBox.innerHTML += `
+                <div class="p-2 bg-gray-50 border rounded text-xs relative flex gap-2 items-center">
+                    <div class="flex-1 grid gap-1">
+                        <input type="text" oninput="appData.certifications[${i}].name = this.value; generatePreview()" value="${c.name}" placeholder="Nama Sertifikat" class="w-full font-bold bg-transparent outline-none">
+                        <input type="text" oninput="appData.certifications[${i}].year = this.value; generatePreview()" value="${c.year}" placeholder="Tahun" class="w-1/3 text-gray-500 outline-none">
+                    </div>
+                    <button onclick="removeEntry('certifications', ${i})" class="text-red-300 hover:text-red-500 px-2"><i class="fas fa-times"></i></button>
                 </div>`;
             });
-        }
-
-        function handleLogoUpload(e, i) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                appData.work[i].logo = ev.target.result;
-                generatePreview();
-            };
-            if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
         }
 
         function addEntry(type) { 
@@ -430,13 +655,21 @@
         function selectTemplate(t) { appData.template = t; generatePreview(); }
 
         function generatePreview() {
+            // Get values form inputs
             appData.personal.name = document.getElementById('input_name').value;
             appData.personal.title = document.getElementById('input_title').value;
+            appData.personal.email = document.getElementById('input_email').value;
+            appData.personal.phone = document.getElementById('input_phone').value;
+            appData.personal.location = document.getElementById('input_location').value;
             appData.personal.summary = document.getElementById('input_summary').value;
             appData.color = document.getElementById('input_color').value;
             appData.lang = document.getElementById('langSwitch').value;
+            
             document.documentElement.style.setProperty('--primary-color', appData.color);
             renderPage();
+            
+            // Trigger resize after render change height
+            setTimeout(resizePreview, 100);
         }
 
         function renderPage() {
@@ -446,13 +679,14 @@
             const p = d.personal;
             const photoUrl = d.photo || 'https://i.pravatar.cc/300?img=12';
 
+            // ATS TEMPLATE
             if(d.template === 'ats') {
                 page.innerHTML = `
                 <div class="ats-content">
                     <div class="ats-header">
                         <div class="ats-name">${p.name}</div>
                         <div class="ats-contact">
-                            ${p.location} | ${p.phone} | ${p.email}
+                            ${p.location ? p.location + ' | ' : ''} ${p.phone} | ${p.email}
                         </div>
                     </div>
 
@@ -465,7 +699,7 @@
                     <div class="ats-section">
                         <div class="ats-section-title">${t.work.toUpperCase()}</div>
                         ${d.work.map(w => `
-                            <div style="margin-bottom: 10px;">
+                            <div class="ats-entry">
                                 <div class="ats-job-header">
                                     <span>${w.instansi}</span>
                                     <span>${w.startYear} - ${w.endYear}</span>
@@ -481,7 +715,7 @@
                     <div class="ats-section">
                         <div class="ats-section-title">${t.edu.toUpperCase()}</div>
                         ${d.education.map(e => `
-                            <div style="margin-bottom: 5px;">
+                            <div class="ats-entry">
                                 <div class="ats-job-header">
                                     <span>${e.instansi}</span>
                                     <span>${e.startYear} - ${e.endYear}</span>
@@ -513,112 +747,123 @@
                         </ul>
                     </div>` : ''}
                 </div>`;
-            } else if(d.template === 'bold-split') {
+            } 
+            // BOLD SPLIT TEMPLATE
+            else if(d.template === 'bold-split') {
                 page.innerHTML = `
-                <div class="flex h-full">
-                    <div class="bold-sidebar flex flex-col items-center" style="background-color: ${appData.color}">
-                        <img src="${photoUrl}" class="bold-photo mb-6">
-                        <h1 class="text-2xl font-black text-center mb-1 uppercase tracking-tight">${p.name}</h1>
-                        <p class="text-[10px] text-center font-bold tracking-[0.15em] mb-12 uppercase opacity-80">${p.title}</p>
-                        
-                        <div class="w-full mb-10">
-                            <h3 class="text-[10px] font-black uppercase border-b border-white/20 pb-2 mb-4 tracking-widest opacity-60">${t.contact}</h3>
-                            <div class="space-y-3 text-[10px]">
-                                <div class="flex items-center gap-3"><i class="fas fa-envelope opacity-70 w-4 text-center"></i> <span>${p.email}</span></div>
-                                <div class="flex items-center gap-3"><i class="fas fa-phone opacity-70 w-4 text-center"></i> <span>${p.phone}</span></div>
-                                <div class="flex items-center gap-3"><i class="fas fa-map-marker-alt opacity-70 w-4 text-center"></i> <span>${p.location}</span></div>
+                <div class="bold-container">
+                    <div class="bold-sidebar" style="background-color: ${appData.color}">
+                        <div class="flex flex-col items-center">
+                            <img src="${photoUrl}" class="bold-photo">
+                            <h1 class="text-2xl font-black text-center mb-1 uppercase tracking-tight leading-tight">${p.name}</h1>
+                            <p class="text-[10px] text-center font-bold tracking-[0.15em] mb-8 uppercase opacity-80">${p.title}</p>
+                            
+                            <div class="w-full mb-8 page-break-safe">
+                                <h3 class="text-[10px] font-black uppercase border-b border-white/20 pb-2 mb-4 tracking-widest opacity-60">${t.contact}</h3>
+                                <div class="space-y-3 text-[10px]">
+                                    <div class="flex items-center gap-3"><i class="fas fa-envelope opacity-70 w-4 text-center"></i> <span class="break-all">${p.email}</span></div>
+                                    <div class="flex items-center gap-3"><i class="fas fa-phone opacity-70 w-4 text-center"></i> <span>${p.phone}</span></div>
+                                    <div class="flex items-start gap-3"><i class="fas fa-map-marker-alt opacity-70 w-4 text-center mt-0.5"></i> <span>${p.location}</span></div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="w-full mb-8">
-                            <h3 class="text-[10px] font-black uppercase border-b border-white/20 pb-2 mb-4 tracking-widest opacity-60">${t.lang}</h3>
-                            <div class="space-y-2">
-                                ${d.languages.map(l => `<div class="flex justify-between text-[10px]"><span>${l.name}</span><span class="opacity-70">${l.level}</span></div>`).join('')}
+                            <div class="w-full mb-8 page-break-safe">
+                                <h3 class="text-[10px] font-black uppercase border-b border-white/20 pb-2 mb-4 tracking-widest opacity-60">${t.lang}</h3>
+                                <div class="space-y-2">
+                                    ${d.languages.map(l => `<div class="flex justify-between text-[10px]"><span>${l.name}</span><span class="opacity-70">${l.level}</span></div>`).join('')}
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="w-full mb-8">
-                            <h3 class="text-[10px] font-black uppercase border-b border-white/20 pb-2 mb-4 tracking-widest opacity-60">${t.skill}</h3>
-                            <div class="space-y-4">
-                                ${d.skills.map(s => `
-                                    <div>
-                                        <div class="flex justify-between text-[9px] mb-1.5 font-bold uppercase tracking-tighter"><span>${s.name}</span><span class="opacity-60">${s.level}%</span></div>
-                                        <div class="bold-skill-bg"><div class="bold-skill-fill" style="width:${s.level}%"></div></div>
-                                    </div>
-                                `).join('')}
+                            <div class="w-full mb-8 page-break-safe">
+                                <h3 class="text-[10px] font-black uppercase border-b border-white/20 pb-2 mb-4 tracking-widest opacity-60">${t.skill}</h3>
+                                <div class="space-y-4">
+                                    ${d.skills.map(s => `
+                                        <div>
+                                            <div class="flex justify-between text-[9px] mb-1.5 font-bold uppercase tracking-tighter"><span>${s.name}</span><span class="opacity-60">${s.level}%</span></div>
+                                            <div class="bold-skill-bg"><div class="bold-skill-fill" style="width:${s.level}%"></div></div>
+                                        </div>
+                                    `).join('')}
+                                </div>
                             </div>
                         </div>
                     </div>
                     <div class="bold-main">
                         ${d.showSummary ? `
-                        <div class="w-full mb-8">
+                        <div class="w-full mb-8 page-break-safe">
                             <h3 class="text-xs font-black uppercase border-b-2 border-gray-100 pb-2 mb-4 tracking-widest text-gray-400">${t.about}</h3>
-                            <p class="text-[11px] leading-relaxed text-gray-600">${p.summary}</p>
+                            <p class="text-[11px] leading-relaxed text-gray-600 text-justify">${p.summary}</p>
                         </div>` : ''}
 
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center" style="color:${appData.color}">
-                                <i class="fas fa-briefcase"></i>
-                            </div>
-                            <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight">${t.work}</h2>
-                        </div>
-                        <div class="space-y-8 relative mb-8">
-                            <div class="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
-                            ${d.work.map(w => `
-                                <div class="relative pl-8">
-                                    <div class="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-white border-4" style="border-color:${appData.color}"></div>
-                                    <div class="flex justify-between items-center mb-1">
-                                        <div class="flex items-center gap-2">
-                                            ${w.logo ? `<img src="${w.logo}" class="w-6 h-6 object-contain rounded-full border">` : ''}
-                                            <h4 class="text-sm font-bold text-gray-900">${w.pos}</h4>
-                                        </div>
-                                        <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">${w.startYear} - ${w.endYear}</span>
-                                    </div>
-                                    <p class="text-[11px] font-bold mb-2" style="color:${appData.color}">${w.instansi}</p>
-                                    <p class="text-[10px] text-gray-500 leading-relaxed">${w.desc}</p>
+                        <div class="page-break-safe mb-6">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center" style="color:${appData.color}">
+                                    <i class="fas fa-briefcase"></i>
                                 </div>
-                            `).join('')}
+                                <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight">${t.work}</h2>
+                            </div>
+                            <div class="space-y-8 relative">
+                                <div class="absolute left-[7px] top-2 bottom-2 w-0.5 bg-gray-100"></div>
+                                ${d.work.map(w => `
+                                    <div class="relative pl-8 page-break-safe">
+                                        <div class="absolute left-0 top-1.5 w-4 h-4 rounded-full bg-white border-4" style="border-color:${appData.color}"></div>
+                                        <div class="flex justify-between items-center mb-1">
+                                            <div class="flex items-center gap-2">
+                                                <h4 class="text-sm font-bold text-gray-900">${w.pos}</h4>
+                                            </div>
+                                            <span class="text-[9px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded uppercase tracking-wider">${w.startYear} - ${w.endYear}</span>
+                                        </div>
+                                        <p class="text-[11px] font-bold mb-2" style="color:${appData.color}">${w.instansi}</p>
+                                        <p class="text-[10px] text-gray-500 leading-relaxed text-justify">${w.desc}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center" style="color:${appData.color}">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                            <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight">${t.edu}</h2>
-                        </div>
-                        <div class="space-y-4 mb-8">
-                            ${d.education.map(e => `
-                                <div class="flex justify-between items-start border-l-2 pl-4" style="border-color:${appData.color}">
-                                    <div>
-                                        <h4 class="text-sm font-bold text-gray-900">${e.instansi}</h4>
-                                        <p class="text-[11px] text-gray-600">${e.major}</p>
-                                    </div>
-                                    <span class="text-[10px] font-bold text-gray-400">${e.startYear} - ${e.endYear}</span>
+                        <div class="page-break-safe mb-6">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center" style="color:${appData.color}">
+                                    <i class="fas fa-graduation-cap"></i>
                                 </div>
-                            `).join('')}
+                                <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight">${t.edu}</h2>
+                            </div>
+                            <div class="space-y-4">
+                                ${d.education.map(e => `
+                                    <div class="flex justify-between items-start border-l-2 pl-4 page-break-safe" style="border-color:${appData.color}">
+                                        <div>
+                                            <h4 class="text-sm font-bold text-gray-900">${e.instansi}</h4>
+                                            <p class="text-[11px] text-gray-600">${e.major}</p>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-gray-400">${e.startYear} - ${e.endYear}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
 
                         ${d.showCert ? `
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center" style="color:${appData.color}">
-                                <i class="fas fa-certificate"></i>
-                            </div>
-                            <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight">${t.cert}</h2>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            ${d.certifications.map(c => `
-                                <div class="p-3 bg-gray-50 rounded border border-gray-100">
-                                    <h4 class="text-[10px] font-bold text-gray-800">${c.name}</h4>
-                                    <p class="text-[9px] font-bold" style="color:${appData.color}">${c.year}</p>
+                        <div class="page-break-safe">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center" style="color:${appData.color}">
+                                    <i class="fas fa-certificate"></i>
                                 </div>
-                            `).join('')}
+                                <h2 class="text-xl font-black text-gray-800 uppercase tracking-tight">${t.cert}</h2>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                ${d.certifications.map(c => `
+                                    <div class="p-3 bg-gray-50 rounded border border-gray-100 page-break-safe">
+                                        <h4 class="text-[10px] font-bold text-gray-800">${c.name}</h4>
+                                        <p class="text-[9px] font-bold" style="color:${appData.color}">${c.year}</p>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>` : ''}
                     </div>
                 </div>`;
-            } else if(d.template === 'contemporary-grid') {
+            } 
+            // CONTEMPORARY GRID TEMPLATE
+            else if(d.template === 'contemporary-grid') {
                 page.innerHTML = `
-                <div class="p-16 h-full flex flex-col bg-[#fcfcfc]">
-                    <div class="flex items-center gap-8 mb-12">
+                <div class="contemp-container">
+                    <div class="flex items-center gap-8 mb-12 contemp-header">
                         <img src="${photoUrl}" class="w-32 h-32 rounded-full grayscale object-cover">
                         <div>
                             <h1 class="text-4xl font-black text-gray-900 uppercase tracking-tighter leading-none mb-2">${p.name}</h1>
@@ -626,39 +871,38 @@
                             ${d.showSummary ? `<p class="text-[11px] text-gray-500 leading-relaxed max-w-xl italic">${p.summary}</p>` : ''}
                         </div>
                     </div>
-                    <div class="contemp-grid flex-grow">
+                    <div class="contemp-grid">
                         <div class="space-y-12">
-                            <section>
+                            <section class="page-break-safe">
                                 <div class="flex items-center gap-3 mb-6">
                                     <i class="fas fa-briefcase text-gray-400"></i>
                                     <h2 class="contemp-section-title">${t.work}</h2>
                                 </div>
                                 <div class="space-y-8">
                                     ${d.work.map(w => `
-                                        <div class="relative pl-6">
+                                        <div class="relative pl-6 page-break-safe">
                                             <div class="absolute left-0 top-1.5 w-2 h-2 rounded-full" style="background-color:${appData.color}"></div>
                                             <div class="flex justify-between items-baseline mb-1">
                                                 <div class="flex items-center gap-2">
-                                                    ${w.logo ? `<img src="${w.logo}" class="w-6 h-6 object-contain">` : ''}
                                                     <h4 class="text-sm font-bold text-gray-900">${w.pos}</h4>
                                                 </div>
                                                 <span class="text-[9px] font-black text-gray-300 uppercase">${w.startYear} - ${w.endYear}</span>
                                             </div>
                                             <p class="text-[11px] font-medium text-gray-500 mb-2">${w.instansi}</p>
-                                            <p class="text-[10px] text-gray-600 leading-relaxed">${w.desc}</p>
+                                            <p class="text-[10px] text-gray-600 leading-relaxed text-justify">${w.desc}</p>
                                         </div>
                                     `).join('')}
                                 </div>
                             </section>
                             
-                            <section>
+                            <section class="page-break-safe">
                                 <div class="flex items-center gap-3 mb-6">
                                     <i class="fas fa-graduation-cap text-gray-400"></i>
                                     <h2 class="contemp-section-title">${t.edu}</h2>
                                 </div>
                                 <div class="space-y-6">
                                     ${d.education.map(e => `
-                                        <div>
+                                        <div class="page-break-safe">
                                             <h4 class="text-sm font-bold text-gray-900">${e.instansi}</h4>
                                             <div class="flex justify-between items-center text-gray-500">
                                                 <span class="text-[11px] italic">${e.major}</span>
@@ -670,37 +914,37 @@
                             </section>
 
                             ${d.showCert ? `
-                            <section>
+                            <section class="page-break-safe">
                                 <div class="flex items-center gap-3 mb-6">
                                     <i class="fas fa-certificate text-gray-400"></i>
                                     <h2 class="contemp-section-title">${t.cert}</h2>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4">
                                     ${d.certifications.map(c => `
-                                        <div class="mb-2">
+                                        <div class="mb-2 page-break-safe">
                                             <h4 class="text-[10px] font-bold text-gray-900">${c.name}</h4>
-                                            <p class="text-[9px] text-gray-400 font-bold uppercase">${c.year}</p>
+                                            <p class="text-[9px] font-bold text-gray-400 font-bold uppercase">${c.year}</p>
                                         </div>
                                     `).join('')}
                                 </div>
                             </section>` : ''}
                         </div>
-                        <aside class="space-y-12 bg-gray-50/50 p-8 rounded-2xl border border-gray-100 h-fit">
-                            <section>
+                        <aside class="space-y-10 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 h-fit">
+                            <section class="page-break-safe">
                                 <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">${t.contact}</h3>
                                 <div class="space-y-4 text-[10px]">
-                                    <div class="flex items-center gap-3"><i class="fas fa-envelope text-gray-400"></i> ${p.email}</div>
+                                    <div class="flex items-center gap-3"><i class="fas fa-envelope text-gray-400"></i> <span class="break-all">${p.email}</span></div>
                                     <div class="flex items-center gap-3"><i class="fas fa-phone text-gray-400"></i> ${p.phone}</div>
                                     <div class="flex items-center gap-3"><i class="fas fa-map-marker-alt text-gray-400"></i> ${p.location}</div>
                                 </div>
                             </section>
-                            <section>
+                            <section class="page-break-safe">
                                 <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">${t.lang}</h3>
                                 <div class="space-y-2">
                                     ${d.languages.map(l => `<div class="flex justify-between text-[10px] font-bold text-gray-600"><span>${l.name}</span><span class="text-gray-400 font-normal">${l.level}</span></div>`).join('')}
                                 </div>
                             </section>
-                            <section>
+                            <section class="page-break-safe">
                                 <h3 class="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">${t.skill}</h3>
                                 <div class="flex flex-wrap gap-2">
                                     ${d.skills.map(s => `<span class="bg-white border border-gray-200 text-[8px] font-bold px-3 py-1.5 rounded uppercase tracking-tighter shadow-sm">${s.name}</span>`).join('')}
@@ -709,64 +953,65 @@
                         </aside>
                     </div>
                 </div>`;
-            } else {
+            } 
+            // MINIMALIST TEMPLATE
+            else {
                 page.innerHTML = `
-                <div class="p-20 h-full flex flex-col items-center">
-                    <img src="${photoUrl}" class="w-32 h-32 rounded-full mb-8 border-4 border-white shadow-xl">
-                    <header class="text-center mb-16">
-                        <h1 class="text-5xl font-black tracking-tight text-gray-900 mb-2">${p.name}</h1>
+                <div class="p-20 min-h-full flex flex-col items-center print:block print:p-10">
+                    <img src="${photoUrl}" class="w-32 h-32 rounded-full mb-8 border-4 border-white shadow-xl object-cover mx-auto print:mb-4">
+                    <header class="text-center mb-16 print:mb-small break-after-avoid page-break-after-avoid print:mx-auto">
+                        <h1 class="text-5xl font-black tracking-tight text-gray-900 mb-2 print:text-4xl">${p.name}</h1>
                         <p class="text-base font-medium tracking-[0.2em] uppercase" style="color:${appData.color}">${p.title}</p>
                     </header>
-                    <div class="w-full max-w-3xl grid grid-cols-3 gap-16">
-                        <div class="col-span-1 space-y-12">
-                            <section>
+                    <div class="w-full max-w-3xl grid grid-cols-3 gap-16 flex-grow text-left print:block">
+                        <div class="col-span-1 space-y-12 print:mb-8 print:mx-auto print:w-full print:text-center print:grid print:grid-cols-3 print:gap-4">
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-4">${t.contact}</h2>
                                 <div class="space-y-3 text-[10px] text-gray-600">
-                                    <p>${p.email}</p><p>${p.phone}</p><p>${p.location}</p>
+                                    <p class="break-all">${p.email}</p><p>${p.phone}</p><p>${p.location}</p>
                                 </div>
                             </section>
-                            <section>
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-4">${t.lang}</h2>
                                 <div class="space-y-2 text-[10px] text-gray-600">
                                     ${d.languages.map(l => `<p>${l.name} <span class="text-gray-400">(${l.level})</span></p>`).join('')}
                                 </div>
                             </section>
-                            <section>
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-4">${t.skill}</h2>
                                 <div class="space-y-2 text-[10px] font-medium text-gray-800">
                                     ${d.skills.map(s => `<p>${s.name}</p>`).join('')}
                                 </div>
                             </section>
                         </div>
-                        <div class="col-span-2 space-y-12">
+                        <div class="col-span-2 space-y-12 print:w-full">
                             ${d.showSummary ? `
-                            <section>
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-4">${t.about.toUpperCase()}</h2>
-                                <p class="text-[12px] text-gray-600 leading-relaxed">${p.summary}</p>
+                                <p class="text-[12px] text-gray-600 leading-relaxed text-justify">${p.summary}</p>
                             </section>` : ''}
-                            <section>
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-6">${t.work.toUpperCase()}</h2>
                                 <div class="space-y-10">
                                     ${d.work.map(w => `
-                                        <div>
+                                        <div class="page-break-safe">
                                             <div class="flex justify-between items-baseline mb-2">
                                                 <div class="flex items-center gap-2">
-                                                    ${w.logo ? `<img src="${w.logo}" class="w-5 h-5 object-contain">` : ''}
                                                     <h4 class="text-sm font-bold uppercase tracking-wide">${w.pos}</h4>
                                                 </div>
                                                 <span class="text-[9px] text-gray-400 font-bold">${w.startYear} - ${w.endYear}</span>
                                             </div>
                                             <p class="text-[10px] font-bold mb-3" style="color:${appData.color}">${w.instansi}</p>
-                                            <p class="text-[10px] text-gray-600">${w.desc}</p>
+                                            <p class="text-[10px] text-gray-600 text-justify">${w.desc}</p>
                                         </div>
                                     `).join('')}
                                 </div>
                             </section>
-                            <section>
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-6">${t.edu.toUpperCase()}</h2>
                                 <div class="space-y-4">
                                     ${d.education.map(e => `
-                                        <div>
+                                        <div class="page-break-safe">
                                             <div class="flex justify-between">
                                                 <h4 class="text-xs font-bold text-gray-800">${e.instansi}</h4>
                                                 <span class="text-[9px] text-gray-400 font-bold">${e.startYear} - ${e.endYear}</span>
@@ -777,11 +1022,11 @@
                                 </div>
                             </section>
                             ${d.showCert ? `
-                            <section>
+                            <section class="page-break-safe">
                                 <h2 class="text-[11px] font-black uppercase tracking-widest text-gray-300 mb-6">${t.cert.toUpperCase()}</h2>
                                 <div class="space-y-4">
                                     ${d.certifications.map(c => `
-                                        <div>
+                                        <div class="page-break-safe">
                                             <h4 class="text-xs font-bold text-gray-800">${c.name}</h4>
                                             <p class="text-[9px] font-bold" style="color:${appData.color}">${c.year}</p>
                                         </div>
@@ -795,5 +1040,4 @@
         }
     </script>
 </body>
-
 </html>
