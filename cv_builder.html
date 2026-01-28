@@ -38,8 +38,9 @@
         /* Ukuran Kertas A4 Dinamis */
         .page-preview {
             width: 210mm;
-            min-height: 297mm; /* Minimal A4, tapi bisa bertambah */
-            height: auto;      /* Biarkan tinggi menyesuaikan konten */
+            height: 297mm;
+            /* min-height: 297mm;  Minimal A4, tapi bisa bertambah */
+            /* height: auto;       Biarkan tinggi menyesuaikan konten */
             background: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             position: relative;
@@ -51,7 +52,8 @@
             
             /* CSS Logic untuk Halaman Berlanjut */
             display: flex;
-            flex-direction: column;
+            flex-shrink: 0;
+            /* flex-direction: column; */
         }
 
         /* Container Pembungkus untuk Scaling */
@@ -59,8 +61,17 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            overflow: visible;
-            padding-bottom: 100px; /* Ruang untuk scroll */
+            overflow: auto;
+            
+        }
+        .preview-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* ⬅️ JANGAN stretch */
+            overflow-x: hidden;
+            overflow-y: auto;
+            /* padding-bottom: 100px;  Ruang untuk scroll */
         }
 
         /* ATS Specific Styles */
@@ -615,41 +626,25 @@
             }
         }
 
-        function resizePreview() {
-            if (window.matchMedia('print').matches) return; // Jangan scale saat print dialog
-            
+       function resizePreview() {
+            if (window.matchMedia('print').matches) return;
+
             const wrapper = document.querySelector('.preview-wrapper');
             const page = document.querySelector('.page-preview');
-            const containerWidth = wrapper.parentElement.clientWidth; // Lebar main area
-            const A4Width = 794; // approx px width of 210mm
-            const padding = 40; // safety padding
 
-            // Hitung skala dasar (Fit Width)
-            let baseScale = (containerWidth - padding) / A4Width;
-            if (baseScale > 1 && !isManualZoom) baseScale = 1; // Jika layar besar, jangan stretch kecuali zoom manual
-            
-            // Aplikasikan Zoom Multiplier
-            let finalScale = baseScale * zoomLevel;
-            
-            // Terapkan Transform
-            page.style.transform = `scale(${finalScale})`;
-            
-            // Atur margin bawah negatif agar tidak ada whitespace besar karena scaling
-            const h = page.getBoundingClientRect().height;
-            // Reset margin untuk kalkulasi ulang
-            page.style.marginBottom = '0px';
-            
-            // Kalkulasi ulang margin bottom berdasarkan tinggi yang berubah
-            // Tinggi asli (unscaled)
-            const unscaledHeight = page.offsetHeight;
-            // Perbedaan tinggi visual vs layout flow
-            const marginAdjust = (unscaledHeight * finalScale) - unscaledHeight;
-            
-            // Jika scale < 1, kita butuh negative margin. Jika > 1, positive margin.
-            // Namun transform scale biasanya menyisakan ruang asli.
-            // Rumus akurat untuk transform-origin: top center
-            page.style.marginBottom = `${(finalScale - 1) * unscaledHeight}px`;
+            const wrapperWidth = wrapper.clientWidth;
+            const A4_WIDTH_PX = page.offsetWidth; // ukuran ASLI A4
+
+            const padding = 32;
+            let scale = (wrapperWidth - padding) / A4_WIDTH_PX;
+
+            if (scale > 1) scale = 1;
+
+            scale *= zoomLevel;
+
+            page.style.transform = `scale(${scale})`;
         }
+
 
         // Event Listeners
         window.addEventListener('resize', resizePreview);
