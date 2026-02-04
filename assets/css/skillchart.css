@@ -1,0 +1,64 @@
+.cart {
+    width: 100%;
+    background-color: #ddd;
+}
+
+.skills {
+    text-align: right;
+    font-size: 7px;
+    margin-top: -25px;
+    margin-bottom: 0px;
+    color: white;
+    height: 7px;
+
+}
+
+.htmls {
+    width: 95%;
+    background-color: #2196F3;
+}
+
+.css {
+    width: 90%;
+    background-color: #2196F3;
+}
+
+.js {
+    width: 77%;
+    background-color: #2196F3;
+}
+
+.php {
+    width: 63%;
+    background-color: #2196F3;
+}
+
+.sql {
+    width: 63%;
+    background-color: #2196F3;
+}
+
+.ps {
+    width: 92%;
+    background-color: #2196F3;
+}
+
+.lr {
+    width: 85%;
+    background-color: #2196F3;
+}
+
+.ai {
+    width: 78%;
+    background-color: #2196F3;
+}
+
+.pr {
+    width: 80%;
+    background-color: #2196F3;
+}
+
+.ae {
+    width: 62%;
+    background-color: #2196F3;
+}

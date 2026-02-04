@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_blank">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact UdaOjan</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/css/materialize.min.css"> -->
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-alpha.4/css/materialize.min.css">
+    <style>
+        .disclaimer {
+            width: 480px;
+            color: #646464;
+            margin: 20px auto;
+            padding: 0 16px;
+            text-align: center;
+            font: 400 12px Roboto, Helvetica, Arial, sans-serif
+        }
+
+        .disclaimer a {
+            color: #3f7df1
+        }
+
+        #credit {
+            display: none
+        }
+    </style>
+    <style>
+        .input-field input:focus+label {
+            color: rgb(40, 119, 238) !important;
+        }
+
+        .input-field textarea:focus+label {
+            color: rgb(40, 119, 238) !important;
+        }
+
+        .input-field select:focus+label {
+            color: rgb(40, 119, 238) !important;
+        }
+
+        /* label underline focus color */
+        .row .input-field input:focus {
+            border-bottom: 1px solid rgb(30, 103, 240) !important;
+            box-shadow: 0 1px 0 0 rgb(10, 140, 216) !important
+        }
+
+        .row .input-field textarea:focus {
+            border-bottom: 1px solid rgb(30, 103, 240) !important;
+            box-shadow: 0 1px 0 0 rgb(10, 140, 216) !important
+        }
+
+        .row .input-field select:focus {
+            border-bottom: 1px solid rgb(30, 103, 240) !important;
+            box-shadow: 0 1px 0 0 rgb(10, 140, 216) !important
+        }
+
+        input[type=submit] {
+            background-color: #0191FF;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+
+        }
+
+        input[type=submit]:hover {
+            background-color: #50b8e7;
+        }
+
+        legend {
+            color: rgb(10, 140, 216);
+            font-weight: bold;
+        }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.js"></script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="ajaxdata.js"></script>
+
+
+</head>
+
+<body>
+
+    <form class="main" id="form" novalidate="novalidate"
+        action="https://script.google.com/macros/s/AKfycbySsMy8jI_0ezEt5bRN29zzpVNyqHTNFOznQyjCRmvrmPaDM0g/exec"
+        method="POST" style="max-width: 480px;margin: 40px auto;" target="hidden-form">
+        <div id="forminner">
+            <div class="row">
+                <div class="col s12">
+                    <h5 class="center-align teal-text"><b style="color:rgb(51, 131, 235);">Request Project</b></h5>
+                    <!-- <p class="disclaimer">Fill up all fields.</p> -->
+                </div>
+            </div>
+            <font size="2">
+                <p style="text-align: justify; max-width:400px; margin: 0px auto;"><b>Budget</b> dan <b>Jumlah
+                        Revisi</b> untuk
+                    pengerjaan setiap project dapat anda ajukan terlebih dahulu, saya akan mengkonfirmasi melalui email
+                    tentang
+                    kesediaan (Saya ataupun rekan Tim) serta kesepakatan lebih lanjut.</p>
+            </font><br>
+            <legend>1. Requester Information</legend>
+            <input type="hidden" id="idpro" name="idpro">
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="fullname" type="text" name="Fullname" class="validate" required="" aria-required="true">
+                    <label for="fullname">Nama Lengkap (Fullname) *</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="email" type="email" name="Email" class="validate" required="" aria-required="true">
+                    <label for="email">Email *</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="nohp" type="number" name="nohp" class="validate" required="" aria-required="true">
+                    <label for="nohp">No HP (Phone Number) *</label>
+                </div>
+            </div>
+            <legend>2. Project Information</legend>
+            <div class="row">
+                <div class="input-field col s12">
+                    <select id="jasa" className="browser-default" name="jasa" required="" aria-required="true" multiple>
+                        <option value="" disabled selected style="color: grey;">Choose Project *</option>
+                        <optgroup label="Web and Programming">
+                            <option value="website_dev">Website Development, </option>
+                            <option value="web_apps">Web based application (smartphone), </option>
+                            <option value="sistem_kasir">Cash Register System (sistem kasir), </option>
+                        </optgroup>
+                        <optgroup label="Graphic Design (just design)">
+                            <option value="logo_design">Logo/Brand Design, </option>
+                            <option value="product_catalog">Product Catalog, </option>
+                            <option value="poster-brosur">Poster/Flyer/Brochure, </option>
+                            <option value="photobooth">Photobooth, </option>
+                            <option value="sertifikat">Certificate, </option>
+                            <option value="typhography">Typhography, </option>
+                            <option value="cv_kreatif">Creative CV, </option>
+                            <option value="kartu_nama">Name Card, </option>
+                            <option value="cover_book">Book Cover, </option>
+                            <option value="vector_art">Vector Art Face (line art, WPAP, dll), </option>
+                            <option value="kartu_undangan">Invitation Card, </option>
+                            <option value="kartu_ulangtahun">Bithday Card, </option>
+                        </optgroup>
+                        <optgroup label="Photography & Videography">
+                            <option value="prod_photoshoot">Product Photoshoot, </option>
+                            <option value="edit_foto">Photo Manipulation (not for crime), </option>
+                            <option value="video_produk">Product Promotion Videos, </option>
+                            <option value="edit_video">Only Edit Videos, </option>
+                        </optgroup>
+                        <optgroup label="OTHER">
+                            <option value="in_description">Write on the description, </option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="deadline" type="text" name="deadline" class="datepicker" required=""
+                        aria-required="true">
+                    <label for="deadline">Batas Pengerjaan (Deadline) *</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="budget" type="number" name="budget">
+                    <label for="budget">Budget (harapan) Anda</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input id="jrev" type="number" name="jrev">
+                    <label for="jrev">Jumlah Revisi (Number of Revisions)</label>
+                </div>
+            </div>
+            <div class="row">
+                <div class="input-field col s12">
+                    <textarea id="desk" type="textarea" name="desk" class="materialize-textarea"></textarea>
+                    <label for="desk">Deskripsi Tambahan (Additional Description)</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="file-field input-field col s12">
+                    <div class="btn" style="background-color: rgb(39, 133, 240);">
+                        <span>File</span>
+                        <div id="data"></div>
+                        <input name="file" id="uploadfile" type="file">
+                    </div>
+                    <div class="file-path-wrapper">
+                        <input class="file-path" type="text" id="namafile"
+                            placeholder="Unggah sebuah file jika diperlukan">
+                    </div>
+                </div>
+            </div>
+            <legend><b>* <u>Keterangan:</u></b></legend>
+            <font size="2">
+                <p style="text-align: justify; max-width:400px; margin: 0px auto;">
+                    Jika anda memiliki file untuk saya review, silahkan di upload dengan menekan tombol file. Apabila
+                    file lebih
+                    dari 1 (satu), silahkan satukan file dan unggah dengan format .zip atau .rar.
+                </p>
+            </font>
+
+            <div class="row">
+                <div class="input-field col s6">
+                    <input type="submit" name="Submit" id="Submit" onclick="idProyek(); postContactToGoogle();"
+                        value="Submit">
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <IFRAME style="display:none" name="hidden-form"></IFRAME>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <!--   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js"></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0-alpha.4/js/materialize.min.js"></script>
+
+    <script>
+        (function ($) {
+            $(function () {
+                // Plugin initialization
+                $('select').not('.disabled').formSelect();
+            });
+        })(jQuery); // end of jQuery name space
+    </script>
+
+    <!-- Input ID Hidden -->
+    <script>
+        function idProyek() {
+            var d = new Date();
+            var n = d.valueOf();
+            document.getElementById("idpro").value = n;
+        }
+    </script>
+    <!-- Input ID Hidden -->
+
+    <script>
+        $('#uploadfile').on("change", function () {
+            var file = this.files[0];
+            var fr = new FileReader();
+            fr.fileName = file.name;
+            fr.onload = function (e) {
+                e.target.result
+                html = '<input type="hidden" name="data" value="' + e.target.result.replace(/^.*,/, '') +
+                    '" >';
+                html += '<input type="hidden" name="mimetype" value="' + e.target.result.match(/^.*(?=;)/)[
+                    0] + '" >';
+                html += '<input type="hidden" name="filename" value="' + e.target.fileName + '" >';
+                $("#data").empty().append(html);
+            }
+            fr.readAsDataURL(file);
+        });
+    </script>
+
+    <script>
+        $(document).ready(function () {
+            $('.datepicker').datepicker();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <title>Uda Ojan: Request</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <link rel="shortcut icon" href="../images/favicon.ico">
+  <link rel="stylesheet" href="../assets/css/main.css" />
+  <noscript>
+    <link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <script src="../activenav.js"></script>
+  <style>
+    .navbar {
+      bottom: 0;
+    }
+  </style>
+  <style>
+    /* Center the loader */
+    #loader {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 1;
+      width: 150px;
+      height: 150px;
+      margin: -75px 0 0 -75px;
+      border: 16px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 16px solid #3498db;
+      width: 120px;
+      height: 120px;
+      -webkit-animation: spin 2s linear infinite;
+      animation: spin 2s linear infinite;
+    }
+
+    @-webkit-keyframes spin {
+      0% {
+        -webkit-transform: rotate(0deg);
+      }
+
+      100% {
+        -webkit-transform: rotate(360deg);
+      }
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Add animation to "page content" */
+    .animate-bottom {
+      position: relative;
+      -webkit-animation-name: animatebottom;
+      -webkit-animation-duration: 1s;
+      animation-name: animatebottom;
+      animation-duration: 1s
+    }
+
+    @-webkit-keyframes animatebottom {
+      from {
+        bottom: -100px;
+        opacity: 0
+      }
+
+      to {
+        bottom: 0px;
+        opacity: 1
+      }
+    }
+
+    @keyframes animatebottom {
+      from {
+        bottom: -100px;
+        opacity: 0
+      }
+
+      to {
+        bottom: 0;
+        opacity: 1
+      }
+    }
+
+    #myDiv {
+      display: none;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body onload="myFunction()" style="margin:0;">
+
+  <div id="loader"></div>
+
+  <!-- Navbar Mobile -->
+  <div class="navbar" id="navbar">
+    <table style="width:100%">
+      <tr id="menuss">
+        <td>
+          <a href="../">
+            <div class="icon"><i class="fa fa-home" arial-hidden="true"></i></div>
+            <div class="tmenu" data-text="home">Home</div>
+          </a>
+        </td>
+        <td>
+          <a href="../#about">
+            <div class="icon"><i class="fa fa-info-circle" arial-hidden="true"></i></div>
+            <div class="tmenu" data-text="about">About</div>
+          </a>
+        </td>
+        <td>
+          <a href="../#contact">
+            <div class="icon"><i class="fa fa-address-book" arial-hidden="true"></i></div>
+            <div class="tmenu" data-text="contact">Contact</div>
+          </a>
+        </td>
+        <td>
+          <a href="#" class="active">
+            <div class="icon"><i class="fa fa-paper-plane" arial-hidden="true"></i></div>
+            <div class="tmenu" data-text="request">Request</div>
+          </a>
+        </td>
+      </tr>
+    </table>
+  </div>
+  <div>
+    <table style="position: fixed; background: #4F98E6; margin-top: -1px; z-index: 2;">
+      <tr>
+        <td style="margin: 0px 30px;">
+          <a href="../">
+            <div class="icon" style="margin: -8px 0px"><i class="fa fa-arrow-left"
+                style="color:white; margin-left: 10px;"></i></div>
+          </a></td>
+      </tr>
+    </table>
+  </div>
+  <div style="display:none;" id="myDiv" class="animate-bottom">
+    <br />
+    <br />
+    <!-- FORM -->
+    <iframe src="request.html" style="border: none; height: 1400px; width: 100%; " scrolling="no"></iframe>
+    <br />
+
+    <!-- Footer -->
+    <footer id="footer">
+      <ul class="icons">
+        <li><a href="https://www.facebook.com/ojanemwe" class="icon brands fa-facebook-f">
+            <span class="label">Facebook</span></a></li>
+        <li><a href="https://www.twitter.com/ojanemwe" class="icon brands fa-twitter">
+            <span class="label">Twitter</span></a></li>
+        <li><a href="https://www.instagram.com/ojanemwe" class="icon brands fa-instagram">
+            <span class="label">Instagran</span></a></li>
+        <li><a href="https://www.youtube.com/channel/UCF0eRRVrwk-vqitrtYCECBA?sub_confirmation=1"
+            class="icon brands fa-youtube">
+            <span class="label">Youtube</span></a></li>
+        <li><a href="https://udaojan.blogspot.com" class="icon brands fa-blogger-b">
+            <span class="label">linkedin</span></a></li>
+        <li><a href="https://id.linkedin.com/in/ojan-mw" class="icon brands fa-linkedin-in">
+            <span class="label">linkedin</span></a></li>
+      </ul>
+      <p class="copyright">&copy; <a href="https://udaojan.blogspot.com">2019 Fauzan Putra MW</a></p>
+    </footer>
+  </div>
+  <!-- Scripts -->
+  <!-- <script src="../assets/js/jquery.min.js"></script> -->
+  <script src="../assets/js/jquery.scrolly.min.js"></script>
+  <script src="../assets/js/browser.min.js"></script>
+  <script src="../assets/js/breakpoints.min.js"></script>
+  <script src="../assets/js/util.js"></script>
+  <script src="../assets/js/main.js"></script>
+
+  <!--
+  <script>
+    var prevScrollpos = window.pageYOffset;
+    window.onscroll = function () {
+      var currentScrollPos = window.pageYOffset;
+      if (prevScrollpos < currentScrollPos) {
+        document.getElementById("navbar").style.bottom = "0";
+      }
+      prevScrollpos = currentScrollPos;
+    }
+  </script>
+-->
+  <script>
+    var myVar;
+
+    function myFunction() {
+      myVar = setTimeout(showPage, 3000);
+    }
+
+    function showPage() {
+      document.getElementById("loader").style.display = "none";
+      document.getElementById("myDiv").style.display = "block";
+    }
+  </script>
+
+</body>
+
+</html>
