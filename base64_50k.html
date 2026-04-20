@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Kompresi foto ke Base64 maksimal 50.000 karakter. Mendukung JPG, PNG (Transparan), WebP, dan GIF.">
+    <title>Kompresi Base64 Max 50k Karakter</title>
+
+    <!-- Preconnect untuk mempercepat resolusi DNS -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+    <!-- Pico CSS (Lightweight, No Tailwind/Bootstrap) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    
+    <style>
+        /* Desain UI Minimalis & Elegan murni Vanilla CSS via Pico Variables */
+        :root {
+            --pico-primary: #3b82f6; 
+            --pico-primary-background: #2563eb; 
+            --pico-primary-hover-background: #1d4ed8; 
+            --pico-border-radius: 1rem;
+            --pico-box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+        }
+
+        body {
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .upload-card {
+            background: #ffffff;
+            padding: 2.5rem 2rem;
+            border-radius: var(--pico-border-radius);
+            box-shadow: var(--pico-box-shadow);
+            width: 100%;
+            max-width: 520px;
+            margin: 0;
+        }
+
+        .drop-zone {
+            position: relative;
+            background-color: #eff6ff;
+            border: 2px dashed #93c5fd;
+            border-radius: 0.75rem;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            margin-bottom: 1.5rem;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            background-color: #dbeafe;
+            border-color: var(--pico-primary);
+        }
+
+        .drop-zone svg {
+            color: var(--pico-primary);
+            margin-bottom: 0.75rem;
+            width: 48px;
+            height: 48px;
+        }
+
+        .drop-zone p { margin-bottom: 0.2rem; color: #4b5563; font-size: 1rem;}
+        .drop-zone small { color: #6b7280; font-size: 0.8rem;}
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0; cursor: pointer;
+        }
+
+        .stats-box {
+            background-color: #f9fafb;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+        .stat-item:last-child { margin-bottom: 0; }
+        
+        .badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .badge-success { background: #dcfce7; color: #16a34a; }
+        .badge-warning { background: #fef08a; color: #b45309; }
+        .badge-info { background: #dbeafe; color: #1d4ed8; }
+
+        .hidden-el { display: none !important; }
+
+        #preview {
+            max-height: 220px;
+            width: auto;
+            margin: 0 auto 1.5rem auto;
+            display: block;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            background-image: repeating-linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0), repeating-linear-gradient(45deg, #f0f0f0 25%, #ffffff 25%, #ffffff 75%, #f0f0f0 75%, #f0f0f0);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px; /* Checkerboard untuk melihat transparansi */
+        }
+
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-icon svg { width: 18px; height: 18px; fill: currentColor; }
+        
+        #warningGif {
+            font-size: 0.75rem;
+            color: #b45309;
+            background: #fef3c7;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="upload-card">
+        <header style="text-align: center; margin-bottom: 1.5rem;">
+            <h2 style="margin-bottom: 0.2rem; color: #1f2937; font-weight: 700;">Konverter Base64</h2>
+            <p style="color: #6b7280; font-size: 0.9rem;">Auto-Kompres Maksimal < 50.000 Karakter</p>
+        </header>
+        
+        <div class="drop-zone" id="dropZone">
+            <!-- Inline SVG Upload Icon (Ganti FontAwesome) -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p><strong>Klik unggah</strong> atau seret file kesini</p>
+            <small>PNG (Transparan), WebP, JPG, GIF</small>
+            <input type="file" id="uploadInput" accept="image/png, image/jpeg, image/webp, image/gif" />
+        </div>
+        
+        <div id="loading" class="hidden-el" style="text-align: center; padding: 1rem 0;">
+            <button aria-busy="true" class="outline" style="border: none; pointer-events: none; color: var(--pico-primary);">Memproses Cerdas...</button>
+        </div>
+
+        <div id="infoBox" class="hidden-el">
+            <img id="preview" alt="Preview Gambar">
+            <div id="warningGif" class="hidden-el">GIF terlalu besar. Dikonversi menjadi statis (WebP) agar muat di bawah 50k karakter.</div>
+            
+            <div class="stats-box">
+                <div class="stat-item">
+                    <span style="color: #374151; font-weight: 600;">Status:</span>
+                    <span id="status" class="badge badge-success">Selesai</span>
+                </div>
+                <div class="stat-item">
+                    <span style="color: #374151; font-weight: 600;">Metode:</span>
+                    <span id="metodeProses" style="color: #4b5563; font-size: 0.8rem;">-</span>
+                </div>
+                <div class="stat-item">
+                    <span style="color: #374151; font-weight: 600;">Ukuran Teks:</span>
+                    <span><strong style="color: var(--pico-primary);" id="baseLength">0</strong> char</span>
+                </div>
+                <div class="stat-item">
+                    <span style="color: #374151; font-weight: 600;">Resolusi:</span>
+                    <span id="dimensiAkhir" style="color: #4b5563;">-</span>
+                </div>
+            </div>
+            
+            <label for="base64Output" style="font-weight: 600; font-size: 0.875rem; color: #374151;">Hasil Kode Base64:</label>
+            <textarea id="base64Output" readonly rows="3" style="font-family: monospace; font-size: 0.75rem; resize: vertical; margin-bottom: 1rem; background: #fdfdfd;"></textarea>
+            
+            <div class="grid">
+                <button id="copyBtn" class="btn-icon">
+                    <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 
+                    Salin Base64
+                </button>
+                <button id="copyHtmlBtn" class="secondary outline btn-icon">
+                    <svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
+                    Tag HTML
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const uploadInput = document.getElementById('uploadInput');
+            const preview = document.getElementById('preview');
+            const infoBox = document.getElementById('infoBox');
+            const baseLengthSpan = document.getElementById('baseLength');
+            const dimensiAkhirSpan = document.getElementById('dimensiAkhir');
+            const metodeProsesSpan = document.getElementById('metodeProses');
+            const base64Output = document.getElementById('base64Output');
+            const statusSpan = document.getElementById('status');
+            const loading = document.getElementById('loading');
+            const warningGif = document.getElementById('warningGif');
+            
+            const copyBtn = document.getElementById('copyBtn');
+            const copyHtmlBtn = document.getElementById('copyHtmlBtn');
+
+            const MAX_BASE64_LENGTH = 50000;
+
+            // Efek Drag & Drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+            });
+
+            uploadInput.addEventListener('change', handleFile);
+            dropZone.addEventListener('drop', (e) => {
+                let dt = e.dataTransfer;
+                if(dt.files && dt.files.length) {
+                    uploadInput.files = dt.files;
+                    handleFile({ target: uploadInput });
+                }
+            });
+
+            function handleFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Reset UI
+                loading.classList.remove('hidden-el');
+                infoBox.classList.add('hidden-el');
+                warningGif.classList.add('hidden-el');
+                resetButtons();
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const rawBase64 = e.target.result;
+                    const img = new Image();
+                    
+                    img.onload = function() {
+                        // SMART PASSTHROUGH: Jika file asli sudah di bawah 50k, JANGAN diapa-apakan!
+                        // Ini mempertahankan animasi GIF dan kualitas 100% dari PNG transparan kecil.
+                        if (rawBase64.length <= MAX_BASE64_LENGTH) {
+                            tampilkanHasil(rawBase64, img.width, img.height, "Original (Kualitas 100%)", file.type);
+                            return;
+                        }
+
+                        // Jika lebih dari 50k, kita harus kompres
+                        setTimeout(() => { compressImage(img, file.type); }, 50);
+                    };
+                    img.src = rawBase64;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function compressImage(img, mimeType) {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                let width = img.width;
+                let height = img.height;
+
+                // Tentukan Format Output: Gunakan WEBP untuk PNG/GIF agar transparansi tetap ada. JPEG untuk JPG.
+                const outputFormat = (mimeType === 'image/jpeg' || mimeType === 'image/jpg') ? 'image/jpeg' : 'image/webp';
+
+                // Tampilkan warning jika GIF animasi terpaksa dijadikan statis
+                if (mimeType === 'image/gif') warningGif.classList.remove('hidden-el');
+
+                // Resize awal jika resolusi raksasa (lebih cepat & aman)
+                const MAX_START_DIM = 1200; 
+                if (width > MAX_START_DIM || height > MAX_START_DIM) {
+                    const ratio = Math.min(MAX_START_DIM / width, MAX_START_DIM / height);
+                    width = Math.floor(width * ratio);
+                    height = Math.floor(height * ratio);
+                }
+
+                let quality = 0.95;
+                let dataUrl = "";
+                
+                // Algoritma Degradasi Bertahap yang lebih halus untuk menjaga kualitas
+                let safetyLoop = 0;
+                while(safetyLoop < 30) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    dataUrl = canvas.toDataURL(outputFormat, quality);
+
+                    if (dataUrl.length <= MAX_BASE64_LENGTH) break; // Berhasil!
+
+                    // Logika: Kurangi kualitas dulu sampai batas wajar, baru kecilkan dimensi
+                    if (quality > 0.4) {
+                        quality -= 0.15;
+                    } else {
+                        // Jika kualitas sudah rendah tapi ukuran masih besar, kecilkan resolusi
+                        width = Math.floor(width * 0.85);
+                        height = Math.floor(height * 0.85);
+                        quality = 0.8; // Angkat lagi kualitasnya setelah resolusi turun
+                    }
+                    
+                    if (width < 50) break; // Batas bawah
+                    safetyLoop++;
+                }
+
+                tampilkanHasil(dataUrl, width, height, `Dikontrol (${outputFormat.split('/')[1].toUpperCase()})`, mimeType);
+            }
+
+            function tampilkanHasil(dataUrl, w, h, metode, originalMime) {
+                preview.src = dataUrl;
+                base64Output.value = dataUrl;
+                baseLengthSpan.innerText = dataUrl.length.toLocaleString('id-ID');
+                dimensiAkhirSpan.innerText = `${w} x ${h} px`;
+                metodeProsesSpan.innerText = metode;
+                
+                if (dataUrl.length <= MAX_BASE64_LENGTH) {
+                    statusSpan.innerText = "Berhasil";
+                    statusSpan.className = "badge badge-success";
+                } else {
+                    statusSpan.innerText = "Terbatas";
+                    statusSpan.className = "badge badge-warning";
+                }
+
+                loading.classList.add('hidden-el');
+                infoBox.classList.remove('hidden-el');
+            }
+
+            // Utilitas Copy (Mendukung browser modern & legacy)
+            async function copyToClipboard(text, buttonEl, iconHTML, label) {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    suksesCopy(buttonEl, iconHTML, label);
+                } catch (err) {
+                    const tempTextArea = document.createElement("textarea");
+                    tempTextArea.value = text;
+                    document.body.appendChild(tempTextArea);
+                    tempTextArea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(tempTextArea);
+                    suksesCopy(buttonEl, iconHTML, label);
+                }
+            }
+
+            function suksesCopy(btn, iconHTML, text) {
+                const checkIcon = `<svg viewBox="0 0 24 24" style="color: #16a34a;"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+                btn.innerHTML = `${checkIcon} Tersalin!`;
+                btn.style.borderColor = "#16a34a";
+                btn.style.color = "#16a34a";
+                setTimeout(() => { 
+                    btn.innerHTML = `${iconHTML} ${text}`; 
+                    btn.style.borderColor = "";
+                    btn.style.color = "";
+                }, 2000);
+            }
+
+            function resetButtons() {
+                const iconCopy = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+                const iconCode = `<svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+                copyBtn.innerHTML = `${iconCopy} Salin Base64`;
+                copyHtmlBtn.innerHTML = `${iconCode} Tag HTML`;
+            }
+
+            copyBtn.addEventListener('click', () => {
+                const iconCopy = `<svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>`;
+                copyToClipboard(base64Output.value, copyBtn, iconCopy, 'Salin Base64');
+            });
+
+            copyHtmlBtn.addEventListener('click', () => {
+                const iconCode = `<svg viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>`;
+                const htmlTag = `<img src="${base64Output.value}" alt="Compressed Image" loading="lazy" />`;
+                copyToClipboard(htmlTag, copyHtmlBtn, iconCode, 'Tag HTML');
+            });
+        });
+    </script>
+</body>
+</html>
