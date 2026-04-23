@@ -1,0 +1,4186 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoPas - IDE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Dracula Theme Colors - Better for reading code */
+            --bg-primary: #282a36;
+            --bg-secondary: #21222c;
+            --bg-tertiary: #44475a;
+            --bg-hover: #3a3c4a;
+            --bg-active: #6272a4;
+            --text-primary: #f8f8f2;
+            --text-secondary: #bd93f9;
+            --accent: #bd93f9;
+            --accent-hover: #ff79c6;
+            --border: #44475a;
+            --sidebar-width: 250px;
+            --sidebar-width-collapsed: 50px;
+            --header-height: 40px;
+            --statusbar-height: 22px;
+
+            /* Better code text colors */
+            --code-text: #f8f8f2;
+            --code-keyword: #ff79c6;
+            --code-string: #f1fa8c;
+            --code-number: #bd93f9;
+            --code-comment: #6272a4;
+            --code-function: #50fa7b;
+            --code-tag: #ff79c6;
+            --code-attribute: #8be9fd;
+            --code-property: #ffb86c;
+            --code-html-tag: #ff79c6;
+            --code-html-attribute: #50fa7b;
+            --code-html-value: #f1fa8c;
+            --code-css-property: #66d9ef;
+            --code-css-value: #f1fa8c;
+            --code-css-selector: #ff79c6;
+            --code-js-keyword: #ff79c6;
+            --code-js-string: #f1fa8c;
+            --code-js-function: #50fa7b;
+            --code-js-comment: #6272a4;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header (compact: half-height) */
+        .header {
+            height: auto;
+            min-height: 24px;
+            background: var(--bg-tertiary);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .header-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-right: 14px;
+        }
+
+        /* Main Tabs in Header */
+        .header-tabs {
+            display: flex;
+            gap: 2px;
+            margin-right: 14px;
+        }
+
+        .header-tab {
+            padding: 4px 10px;
+            font-size: 11px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+            top: 1px;
+        }
+
+        .header-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .header-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: var(--bg-primary);
+        }
+
+        /* Preview Toolbar (Responsive) - Only visible when Preview tab active */
+        .preview-toolbar {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            margin-left: 14px;
+        }
+
+        .preview-toolbar.visible {
+            display: flex;
+        }
+
+        .preview-toolbar label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .device-select {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 2px 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .device-select:focus {
+            border-color: var(--accent);
+        }
+
+        .header-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 6px;
+        }
+
+        .header-btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 3px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background 0.2s;
+            line-height: 1.3;
+        }
+
+        .header-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .header-btn.secondary {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .header-btn.secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.2s ease;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-width-collapsed);
+        }
+
+        .sidebar-header {
+            padding: 12px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar.collapsed .sidebar-header span {
+            display: none;
+        }
+
+        .sidebar.collapsed .add-project-btn {
+            display: none;
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .sidebar-toggle:hover {
+            color: var(--accent);
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .file-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .file-list::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        .file-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .file-item {
+            padding: 7px 10px 7px 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .file-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-item.active {
+            background: var(--bg-active);
+            border-left-color: var(--accent);
+        }
+
+        .sidebar.collapsed .file-item span {
+            display: none;
+        }
+
+        /* Project folder row */
+        .project-folder {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-left: 3px solid transparent;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        .project-folder:hover { background: var(--bg-hover); }
+        .project-folder.active-project { border-left-color: var(--accent); background: var(--bg-hover); }
+        .project-folder .folder-toggle { font-size: 10px; color: var(--text-secondary); flex-shrink: 0; }
+        .project-folder .folder-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .project-folder .proj-actions { display: flex; gap: 4px; margin-left: auto; flex-shrink: 0; }
+        .project-folder .proj-actions span {
+            opacity: 0.55; font-size: 13px; cursor: pointer; transition: opacity 0.2s;
+        }
+        .project-folder .proj-actions span:hover { opacity: 1; }
+
+        /* Files inside project */
+        .project-files { overflow: hidden; transition: max-height 0.2s ease; }
+        .project-files.collapsed { max-height: 0 !important; }
+
+        /* Add-project icon button */
+        .add-project-btn {
+            background: none; border: none; color: var(--text-secondary);
+            cursor: pointer; font-size: 15px; padding: 2px 4px;
+            transition: color 0.2s; line-height: 1;
+        }
+        .add-project-btn:hover { color: var(--accent); }
+
+        .file-icon {
+            font-size: 16px;
+            min-width: 16px;
+        }
+
+        .file-item .file-icon.html { color: var(--code-tag); }
+        .file-item .file-icon.css { color: var(--code-attribute); }
+        .file-item .file-icon.js { color: var(--code-string); }
+        .file-item .file-icon.json { color: var(--code-number); }
+        .file-item .file-icon.svg { color: var(--code-property); }
+        .file-item .file-icon.image { color: var(--code-keyword); }
+        .file-item .file-icon.env { color: var(--code-comment); }
+        .file-item .file-icon.folder { color: var(--code-property); }
+
+        /* Find & Replace panel (VSCode-like) */
+        .find-replace-panel {
+            position: absolute;
+            top: 6px;
+            right: 18px;
+            z-index: 60;
+            background: var(--bg-tertiary, #282a36);
+            border: 1px solid var(--border, #44475a);
+            border-radius: 5px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+            padding: 6px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 340px;
+            font-size: 12px;
+            color: var(--text-primary, #f8f8f2);
+        }
+        .find-replace-panel.active { display: flex; }
+        .find-replace-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .find-replace-row input[type="text"] {
+            flex: 1;
+            background: var(--bg-primary, #1e1f29);
+            border: 1px solid transparent;
+            color: var(--text-primary, #f8f8f2);
+            padding: 4px 6px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+            min-width: 0;
+        }
+        .find-replace-row input[type="text"]:focus {
+            border-color: var(--accent, #bd93f9);
+        }
+        .find-replace-row input.no-match {
+            border-color: #ff5555;
+        }
+        .find-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary, #6272a4);
+            cursor: pointer;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            line-height: 1;
+            min-width: 24px;
+        }
+        .find-btn:hover {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary, #f8f8f2);
+        }
+        .find-btn.toggle.active {
+            background: rgba(189, 147, 249, 0.25);
+            color: var(--accent, #bd93f9);
+        }
+        .find-count {
+            font-size: 11px;
+            color: var(--text-secondary, #6272a4);
+            min-width: 70px;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .find-count.no-match { color: #ff5555; }
+
+        /* Highlight overlay marks for find matches */
+        .code-highlight mark.find-match {
+            background: rgba(241, 250, 140, 0.35);
+            color: inherit;
+            border-radius: 2px;
+            padding: 0;
+        }
+        .code-highlight mark.find-match.current {
+            background: rgba(255, 184, 108, 0.6);
+            outline: 1px solid #ffb86c;
+        }
+
+        /* Asset preview area for binary files */
+        .asset-preview {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-primary, #1e1f29);
+            color: var(--text-secondary, #6272a4);
+            padding: 20px;
+            text-align: center;
+            gap: 10px;
+            overflow: auto;
+            z-index: 5;
+        }
+        .asset-preview.active { display: flex; }
+        .asset-preview img {
+            max-width: 90%;
+            max-height: 60vh;
+            border: 1px solid var(--border, #44475a);
+            border-radius: 4px;
+            background:
+                linear-gradient(45deg, #2a2c38 25%, transparent 25%),
+                linear-gradient(-45deg, #2a2c38 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #2a2c38 75%),
+                linear-gradient(-45deg, transparent 75%, #2a2c38 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+        }
+        .asset-preview .asset-name {
+            font-weight: 600;
+            color: var(--text-primary, #f8f8f2);
+            font-size: 13px;
+        }
+        .asset-preview .asset-meta {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        /* File action buttons (rename, delete) */
+        .file-item div[style*="margin-left: auto"] span:hover {
+            opacity: 1 !important;
+            transform: scale(1.2);
+            transition: all 0.2s;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Editor Panel */
+        .editor-panel {
+            flex: 1;
+            display: none;
+            overflow: hidden;
+        }
+
+        .editor-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Welcome Panel */
+        .welcome-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-primary);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-panel h2 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .welcome-panel p {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .welcome-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .welcome-btn {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 14px 28px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .welcome-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(189, 147, 249, 0.3);
+        }
+
+        .welcome-btn.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .welcome-btn.secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Editor Tabs (HTML, CSS, JS) - HIDDEN */
+        .editor-tabs-container {
+            display: none; /* Hide the tab buttons */
+        }
+
+        .editor-tab {
+            padding: 10px 20px;
+            font-size: 13px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .editor-tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+        }
+
+        .editor-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: var(--bg-primary);
+        }
+
+        /* Editor Container */
+        .editor-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .editor-wrapper.hidden {
+            display: none;
+        }
+
+        .editor-wrapper.active {
+            flex: 1;
+        }
+
+        /* Code Area with Syntax Highlighting - FIXED VERSION */
+        .editor-with-lines {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+            background: var(--bg-primary);
+        }
+
+        .line-numbers {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            padding: 15px 12px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: right;
+            user-select: none;
+            border-right: 1px solid var(--border);
+            min-width: 50px;
+            flex-shrink: 0;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        .code-editor-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: var(--bg-primary);
+        }
+
+        /* Both highlight and textarea use same container.
+           CRITICAL: every property that affects glyph layout / wrapping
+           MUST be identical on .code-highlight and .code-area, otherwise
+           syntax highlighting drifts away from the typed text. */
+        .code-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: 0;
+            padding: 15px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            font-variant-ligatures: none;
+            letter-spacing: 0;
+            tab-size: 4;
+            -moz-tab-size: 4;
+            border: 0;
+            /* CRITICAL: force the SAME scrollbar reservation on every layer
+               so the available content width is identical. If only the
+               textarea shows a vertical scrollbar, its content box becomes
+               narrower than the highlight/measure layers and wrap points
+               drift, which throws off line numbers and cursor alignment. */
+            overflow-y: scroll;
+            overflow-x: auto;
+            scrollbar-gutter: stable;
+            white-space: pre;
+            word-spacing: 0;
+            box-sizing: border-box;
+            background: transparent;
+        }
+
+        .code-measure {
+            pointer-events: none;
+            z-index: 0;
+            visibility: hidden;
+            color: transparent;
+        }
+
+        /* Hide visible scrollbars on the non-interactive layers but keep
+           the gutter reserved (handled by scrollbar-gutter on .code-layer)
+           so their content width matches the textarea exactly. */
+        .code-highlight::-webkit-scrollbar,
+        .code-measure::-webkit-scrollbar { width: 0; height: 0; }
+        .code-highlight { scrollbar-width: none; }
+        .code-measure { scrollbar-width: none; }
+
+        .code-measure .ml {
+            display: block;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            text-indent: 0;
+            min-height: 1.6em;
+        }
+
+        .code-highlight {
+            pointer-events: none;
+            z-index: 1;
+            color: var(--code-text);
+            display: block;
+        }
+
+        /* Per-source-line wrapper inside the highlight layer.
+           Always block-level so we can measure each line's height for
+           the gutter, even when wrap is disabled. NO padding / indent /
+           margin here — those would shift glyph positions away from the
+           textarea and break highlight alignment. */
+        .code-highlight .cl {
+            display: block;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            text-indent: 0;
+            min-height: 1.6em;
+        }
+
+        .code-area {
+            color: transparent;
+            caret-color: var(--accent);
+            background: transparent;
+            resize: none;
+            outline: none;
+            z-index: 2;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Word Wrap mode — applied to BOTH layers identically so wrap
+           positions match exactly. */
+        .code-layer.word-wrap {
+            white-space: pre-wrap;
+            word-break: normal;
+            overflow-wrap: break-word;
+            overflow-x: hidden;
+        }
+        .code-highlight.word-wrap .cl {
+            white-space: pre-wrap;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+        .code-measure.word-wrap .ml {
+            white-space: pre-wrap;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        /* Line numbers wrap support */
+        .line-numbers .ln {
+            display: block;
+            box-sizing: border-box;
+        }
+
+        /* Syntax Highlighting Classes */
+        .token-html-tag { color: var(--code-html-tag); }
+        .token-html-attribute { color: var(--code-html-attribute); }
+        .token-html-value { color: var(--code-html-value); }
+        .token-html-comment { color: var(--code-comment); }
+        .token-css-selector { color: var(--code-css-selector); }
+        .token-css-property { color: var(--code-css-property); }
+        .token-css-value { color: var(--code-css-value); }
+        .token-css-comment { color: var(--code-comment); }
+        .token-js-keyword { color: var(--code-js-keyword); }
+        .token-js-string { color: var(--code-js-string); }
+        .token-js-function { color: var(--code-js-function); }
+        .token-js-comment { color: var(--code-js-comment); }
+        .token-js-number { color: var(--code-number); }
+
+        /* Preview Panel */
+        .preview-panel {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--bg-primary);
+            min-height: 0; /* Important for flex child overflow */
+        }
+
+        .preview-panel.active {
+            display: flex;
+        }
+
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            position: absolute;
+            display: none;
+            background: #1e1f29;
+            border: 1px solid #44475a;
+            border-radius: 6px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+            max-height: 260px;
+            overflow-y: auto;
+            z-index: 999999;
+            min-width: 300px;
+            max-width: 460px;
+        }
+
+        .autocomplete-dropdown.active {
+            display: block;
+        }
+
+        .autocomplete-item {
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12.5px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            border-bottom: 1px solid rgba(68,71,90,0.25);
+            transition: background 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 0;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background: #44475a;
+        }
+
+        .autocomplete-item abbr {
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .autocomplete-item .preview {
+            color: #6272a4;
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+
+        .autocomplete-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .autocomplete-dropdown::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .autocomplete-dropdown::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+
+        /* Preview Container - Desktop: tanpa padding */
+        .preview-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1b26;
+            padding: 20px;
+            overflow: auto;
+        }
+
+        .preview-container.mode-desktop {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .preview-container.mode-mobile-tablet {
+            overflow: hidden;
+        }
+
+        .preview-frame {
+            background: white;
+            border: none;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            transition: width 0.3s, height 0.3s;
+        }
+
+        /* Device Frame Styles */
+        .preview-frame.device-mobile {
+            width: 375px;
+            height: 667px;
+        }
+
+        .preview-frame.device-tablet {
+            width: 768px;
+            height: 1024px;
+        }
+
+        /* Preview wrapper for mobile and tablet scaling */
+        .preview-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center center;
+            transition: transform 0.3s ease;
+        }
+
+        /* Mobile & Tablet: wrapper dengan overflow scroll */
+        .preview-wrapper.mode-mobile-tablet {
+            overflow: auto;
+        }
+
+        /* Custom scrollbar for mobile & tablet wrapper */
+        .preview-wrapper.mode-mobile-tablet::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .preview-wrapper.mode-mobile-tablet::-webkit-scrollbar-track {
+            background: #1a1b26;
+        }
+
+        .preview-wrapper.mode-mobile-tablet::-webkit-scrollbar-thumb {
+            background: #44475a;
+            border-radius: 5px;
+        }
+
+        .preview-wrapper.mode-mobile-tablet::-webkit-scrollbar-thumb:hover {
+            background: #6272a4;
+        }
+
+        /* Desktop: wrapper mengikuti preview-panel 100% */
+        .preview-wrapper.mode-desktop {
+            width: 100%;
+            height: 100%;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+
+        /* Desktop: iframe mengikuti wrapper 100% */
+        .preview-frame.device-desktop {
+            width: 100%;
+            height: 100%;
+            box-shadow: none;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            height: var(--statusbar-height);
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 11px;
+            color: var(--bg-primary);
+            font-weight: 500;
+        }
+
+        .status-bar-item {
+            margin-right: 20px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            min-width: 320px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .modal-input {
+            width: 100%;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 12px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent);
+        }
+
+        /* File Upload Input */
+        .file-upload-container {
+            margin-bottom: 20px;
+        }
+
+        .file-upload-label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .file-upload-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-primary);
+            border: 2px dashed var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+
+        .file-upload-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--bg-hover);
+        }
+
+        .file-upload-btn.selected {
+            border-color: #50fa7b;
+            color: #50fa7b;
+            background: rgba(80, 250, 123, 0.1);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .selected-file-name {
+            display: none;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: rgba(80, 250, 123, 0.1);
+            border-radius: 4px;
+            color: #50fa7b;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .selected-file-name.show {
+            display: block;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .modal-buttons button {
+            padding: 8px 16px;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .modal-buttons .cancel {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .modal-buttons .cancel:hover {
+            background: var(--bg-hover);
+        }
+
+        .modal-buttons .confirm {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .modal-buttons .confirm:hover {
+            background: var(--accent-hover);
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #44475a;
+            color: #f8f8f2;
+            padding: 10px 22px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            z-index: 99999;
+            opacity: 0;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success { border-left: 3px solid #50fa7b; }
+        .toast.error   { border-left: 3px solid #ff5555; }
+        .toast.info    { border-left: 3px solid #8be9fd; }
+
+        /* Beautify button pulse animation */
+        @keyframes beautify-pulse {
+            0%   { box-shadow: 0 0 0 0 rgba(189,147,249,0.6); }
+            70%  { box-shadow: 0 0 0 8px rgba(189,147,249,0); }
+            100% { box-shadow: 0 0 0 0 rgba(189,147,249,0); }
+        }
+        #beautifyBtn.running {
+            animation: beautify-pulse 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .header-title {
+                font-size: 11px;
+            }
+
+            .header-tab {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- LINK UNTUK PWA -->
+    <link rel="manifest" href="./manifest.json">
+    <!-- <meta name="theme-color" content="#007bff"> -->
+    <link rel="stylesheet" href="pwa.css">
+    <!-- END UNTUK PWA -->
+</head>
+<body>
+    <!-- Header with Tabs -->
+    <div class="header">
+        <span class="header-title">📝 Kang CoPas - IDE</span>
+        <div class="header-tabs">
+            <button class="header-tab active" onclick="switchMainTab('editor')" data-tab="editor">
+                💻 Editor
+            </button>
+            <button class="header-tab" onclick="switchMainTab('preview')" data-tab="preview">
+                👁 Preview
+            </button>
+        </div>
+        <!-- Preview Toolbar (Only visible when Preview tab active) -->
+        <div class="preview-toolbar" id="previewToolbar">
+            <label>📱 Device:</label>
+            <select class="device-select" id="deviceSelect" onchange="changeDevice()">
+                <option value="desktop">🖥 Desktop</option>
+                <option value="tablet">📱 Tablet (768x1024)</option>
+                <option value="mobile">📱 Mobile (375x667)</option>
+            </select>
+            <button class="header-btn" onclick="runPreview()">🔄 Refresh</button>
+        </div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="showNewFileModal()">+ New File</button>
+            <button class="header-btn secondary" id="wordWrapBtn" onclick="toggleWordWrap()" title="Toggle Word Wrap">↵ Wrap</button>
+            <button class="header-btn secondary" id="beautifyBtn" onclick="beautifyCurrentFile()" title="Format kode aktif (Shift+Alt+F)">✨ Beautify</button>
+            <button class="header-btn secondary" onclick="runPreview()">▶ Run Preview</button>
+            <button class="header-btn secondary" onclick="downloadAll()">⬇ Export</button>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <span>📁 Explorer</span>
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <button class="add-project-btn" onclick="createNewProject()" title="Add Project">＋</button>
+                    <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+                </div>
+            </div>
+            <div class="file-list" id="fileList"></div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Editor Panel -->
+            <div class="editor-panel active" id="editorPanel">
+                <div class="welcome-panel" id="welcomePanel">
+                    <h2>Welcome to Simple Code Editor</h2>
+                    <p>Start coding your HTML, CSS, and JavaScript projects in browser!</p>
+                    <div class="welcome-actions">
+                        <button class="welcome-btn" onclick="createNewProject()">🚀 New Project</button>
+                    </div>
+                </div>
+
+                <div id="editorWorkspace" style="display: none; flex-direction: column; flex: 1; overflow: hidden;">
+                    <!-- Editor Tabs -->
+                    <div class="editor-tabs-container">
+                        <button class="editor-tab active" onclick="switchEditorTab('html')" data-type="html">
+                            🌐 HTML
+                        </button>
+                        <button class="editor-tab" onclick="switchEditorTab('css')" data-type="css">
+                            🎨 CSS
+                        </button>
+                        <button class="editor-tab" onclick="switchEditorTab('js')" data-type="js">
+                            ⚡ JavaScript
+                        </button>
+                    </div>
+
+                    <!-- Editor Container -->
+                    <div class="editor-container">
+                        <!-- HTML Editor -->
+                        <div class="editor-wrapper active" id="htmlEditor">
+                            <div class="editor-with-lines">
+                                <div class="line-numbers" id="htmlLines">1</div>
+                                <div class="code-editor-container" id="htmlContainer">
+                                    <div class="code-layer code-measure" id="htmlMeasure" aria-hidden="true"></div>
+                                    <div class="code-layer code-highlight" id="htmlHighlight" aria-hidden="true"></div>
+                                    <textarea class="code-layer code-area" id="htmlCode" spellcheck="false" placeholder="Write your HTML code here..." oninput="handleInput('html'); autoSave();" onscroll="syncScroll('html')" onkeydown="handleKeyDown(event, 'html')"></textarea>
+                                    <div class="autocomplete-dropdown" id="htmlAutocomplete"></div>
+                                    <div class="find-replace-panel" id="htmlFindPanel" data-type="html"></div>
+                                    <div class="asset-preview" id="htmlAssetPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CSS Editor -->
+                        <div class="editor-wrapper hidden" id="cssEditor">
+                            <div class="editor-with-lines">
+                                <div class="line-numbers" id="cssLines">1</div>
+                                <div class="code-editor-container" id="cssContainer">
+                                    <div class="code-layer code-measure" id="cssMeasure" aria-hidden="true"></div>
+                                    <div class="code-layer code-highlight" id="cssHighlight" aria-hidden="true"></div>
+                                    <textarea class="code-layer code-area" id="cssCode" spellcheck="false" placeholder="Write your CSS code here..." oninput="handleInput('css'); autoSave();" onscroll="syncScroll('css')" onkeydown="handleKeyDown(event, 'css')"></textarea>
+                                    <div class="autocomplete-dropdown" id="cssAutocomplete"></div>
+                                    <div class="find-replace-panel" id="cssFindPanel" data-type="css"></div>
+                                    <div class="asset-preview" id="cssAssetPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- JS Editor -->
+                        <div class="editor-wrapper hidden" id="jsEditor">
+                            <div class="editor-with-lines">
+                                <div class="line-numbers" id="jsLines">1</div>
+                                <div class="code-editor-container" id="jsContainer">
+                                    <div class="code-layer code-measure" id="jsMeasure" aria-hidden="true"></div>
+                                    <div class="code-layer code-highlight" id="jsHighlight" aria-hidden="true"></div>
+                                    <textarea class="code-layer code-area" id="jsCode" spellcheck="false" placeholder="Write your JavaScript code here..." oninput="handleInput('js'); autoSave();" onscroll="syncScroll('js')" onkeydown="handleKeyDown(event, 'js')"></textarea>
+                                    <div class="autocomplete-dropdown" id="jsAutocomplete"></div>
+                                    <div class="find-replace-panel" id="jsFindPanel" data-type="js"></div>
+                                    <div class="asset-preview" id="jsAssetPreview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="preview-panel" id="previewPanel">
+                <div class="preview-container">
+                    <div class="preview-wrapper" id="previewWrapper">
+                        <iframe class="preview-frame device-desktop" id="previewFrame" sandbox="allow-scripts allow-same-origin allow-modals"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span class="status-bar-item" id="statusText">Ready</span>
+        <span class="status-bar-item" id="fileCount">Files: 0</span>
+        <span class="status-bar-item" style="margin-left: auto;">Simple IDE v1.0 | Dracula Theme</span>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal" id="newProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">📁 New Project</div>
+            <input type="text" class="modal-input" id="newProjectName" placeholder="Project name (e.g., My App)">
+            <div class="modal-buttons">
+                <button class="cancel" onclick="closeModal('newProjectModal')">Cancel</button>
+                <button class="confirm" onclick="confirmNewProject()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename Project Modal -->
+    <div class="modal" id="renameProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">✎ Rename Project</div>
+            <input type="text" class="modal-input" id="renameProjectName" placeholder="New project name">
+            <div class="modal-buttons">
+                <button class="cancel" onclick="closeModal('renameProjectModal')">Cancel</button>
+                <button class="confirm" onclick="confirmRenameProject()">Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New File Modal -->
+    <div class="modal" id="newFileModal">
+        <div class="modal-content">
+            <div class="modal-header">📄 New File</div>
+            <input type="text" class="modal-input" id="newFileName" placeholder="Enter filename (e.g., about.html)">
+            
+            <div class="file-upload-container">
+                <span class="file-upload-label">— or upload an existing file —</span>
+                <label class="file-upload-btn" id="fileUploadBtn" for="fileInput">
+                    📁 Click to select a file
+                </label>
+                <input type="file" id="fileInput" accept=".html,.htm,.css,.js,.mjs,.json,.svg,.png,.webp,.env,text/*,image/png,image/webp,image/svg+xml,application/json" onchange="handleFileSelect(event)">
+                <div class="selected-file-name" id="selectedFileName"></div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="cancel" onclick="closeModal('newFileModal')">Cancel</button>
+                <button class="confirm" onclick="createNewFile()">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rename File Modal -->
+    <div class="modal" id="renameFileModal">
+        <div class="modal-content">
+            <div class="modal-header">✎ Rename File</div>
+            <input type="text" class="modal-input" id="renameFileName" placeholder="Enter new filename">
+            <div class="modal-buttons">
+                <button class="cancel" onclick="closeModal('renameFileModal')">Cancel</button>
+                <button class="confirm" onclick="renameFile()">Rename</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global State - Multi Project
+        let projects = []; // Array of { id, name, files: {filename: {type, content}}, collapsed: bool }
+        let activeProjectId = null; // ID project yang sedang aktif
+        let currentEditingFile = { filename: null, type: null, projectId: null }; // File yang sedang diedit
+        let fileToRename = null; // { filename, projectId }
+        let selectedUploadedFile = null; // { name, content } for file upload
+        let currentEditorTab = 'html';
+        let currentMainTab = 'editor';
+        let sidebarCollapsed = false;
+
+        // ===== File-type helpers =====
+        // Map file extension -> internal type.
+        // Editable types: html, css, js, json, svg, env, text
+        // Binary asset types: image (png/webp). Stored as data URL in `content`.
+        function getFileTypeFromName(filename) {
+            const name = (filename || '').toLowerCase();
+            const ext = name.includes('.') ? name.split('.').pop() : '';
+            switch (ext) {
+                case 'html': case 'htm': return 'html';
+                case 'css': return 'css';
+                case 'js': case 'mjs': case 'cjs': return 'js';
+                case 'json': return 'json';
+                case 'svg': return 'svg';
+                case 'png': case 'webp': case 'jpg': case 'jpeg': case 'gif': return 'image';
+                case 'env': return 'env';
+                default:
+                    if (name === '.env' || name.startsWith('.env.')) return 'env';
+                    return 'text';
+            }
+        }
+        // Editor-tab type used to host editable text (html/css/js editors).
+        // Asset types map to a generic editor; binary maps to preview only.
+        function getEditorTabForType(type) {
+            if (type === 'css') return 'css';
+            if (type === 'js' || type === 'json') return 'js';
+            // html, svg, env, text -> html editor (plain text-ish)
+            return 'html';
+        }
+        function isBinaryType(type) { return type === 'image'; }
+        function isEditableType(type) { return !isBinaryType(type); }
+
+        // MIME type for preview (used for blob/data url fallback)
+        function getMimeForFile(filename, type) {
+            const ext = (filename || '').toLowerCase().split('.').pop();
+            if (type === 'image') {
+                if (ext === 'png') return 'image/png';
+                if (ext === 'webp') return 'image/webp';
+                if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+                if (ext === 'gif') return 'image/gif';
+                return 'application/octet-stream';
+            }
+            if (type === 'svg' || ext === 'svg') return 'image/svg+xml';
+            if (type === 'json' || ext === 'json') return 'application/json';
+            if (type === 'css') return 'text/css';
+            if (type === 'js') return 'application/javascript';
+            if (type === 'html') return 'text/html';
+            return 'text/plain';
+        }
+
+        // Helper: get project by id
+        function getProject(id) { return projects.find(p => p.id === id); }
+        // Helper: get active project
+        function getActiveProject() { return getProject(activeProjectId); }
+
+        // Autocomplete State
+        let autocompleteState = {
+            html: { visible: false, selectedIndex: -1, suggestions: [] },
+            css: { visible: false, selectedIndex: -1, suggestions: [] },
+            js: { visible: false, selectedIndex: -1, suggestions: [] }
+        };
+
+        // Emmet Abbreviations Database (HTML)
+        const htmlEmmetAbbreviations = {
+            // Singkatan Penting HTML
+            '!': '<!DOCTYPE html>\n<html lang="id">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Document</title>\n</head>\n<body>\n    \n</body>\n</html>',
+            'a': '<a href=""></a>',
+            'link:css': '<link rel="stylesheet" href="style.css">',
+            'script:src': '<script src=""><\/script>',
+            'img': '<img src="" alt="">',
+            'input:t': '<input type="text" name="" id="">',
+
+            // Elemen Umum HTML
+            'html:5': '<!DOCTYPE html>\n<html lang="id">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Document</title>\n</head>\n<body>\n    \n</body>\n</html>',
+            'html': '<html lang="id"></html>',
+            'head': '<head></head>',
+            'body': '<body></body>',
+            'meta': '<meta charset="UTF-8">',
+            'link': '<link rel="stylesheet" href="">',
+            'style': '<style><\/style>',
+            'script': '<script><\/script>',
+
+            // Heading & Teks
+            'h1': '<h1></h1>',
+            'h2': '<h2></h2>',
+            'h3': '<h3></h3>',
+            'h4': '<h4></h4>',
+            'h5': '<h5></h5>',
+            'h6': '<h6></h6>',
+            'p': '<p></p>',
+            'a:link': '<a href="http://"></a>',
+            'br': '<br>',
+            'hr': '<hr>',
+            'strong': '<strong></strong>',
+            'b': '<b></b>',
+            'em': '<em></em>',
+            'i': '<i></i>',
+            'small': '<small></small>',
+            'span': '<span></span>',
+
+            // Lists
+            'ul': '<ul>\n    <li></li>\n</ul>',
+            'ol': '<ol>\n    <li></li>\n</ol>',
+            'li': '<li></li>',
+            'dl': '<dl>\n    <dt></dt>\n    <dd></dd>\n</dl>',
+            'dt': '<dt></dt>',
+            'dd': '<dd></dd>',
+
+            // Tables
+            'table': '<table>\n    <tr>\n        <td></td>\n    </tr>\n</table>',
+            'tr': '<tr>\n    <td></td>\n</tr>',
+            'td': '<td></td>',
+            'th': '<th></th>',
+            'thead': '<thead>\n    <tr>\n        <th></th>\n    </tr>\n</thead>',
+            'tbody': '<tbody>\n    <tr>\n        <td></td>\n    </tr>\n</tbody>',
+            'tfoot': '<tfoot>\n    <tr>\n        <td></td>\n    </tr>\n</tfoot>',
+
+            // Forms
+            'form': '<form action="">\n    \n</form>',
+            'input': '<input type="text">',
+            'input:text': '<input type="text" name="" id="">',
+            'input:password': '<input type="password" name="" id="">',
+            'input:email': '<input type="email" name="" id="">',
+            'input:number': '<input type="number" name="" id="">',
+            'input:tel': '<input type="tel" name="" id="">',
+            'input:url': '<input type="url" name="" id="">',
+            'input:search': '<input type="search" name="" id="">',
+            'input:file': '<input type="file" name="" id="">',
+            'input:checkbox': '<input type="checkbox" name="" id="">',
+            'input:radio': '<input type="radio" name="" id="">',
+            'input:submit': '<input type="submit" value="">',
+            'input:button': '<input type="button" value="">',
+            'input:reset': '<input type="reset" value="">',
+            'input:hidden': '<input type="hidden" name="">',
+            'textarea': '<textarea name="" id="" cols="30" rows="10"></textarea>',
+            'select': '<select name="" id="">\n    <option value=""></option>\n</select>',
+            'option': '<option value=""></option>',
+            'button': '<button></button>',
+            'button:submit': '<button type="submit"></button>',
+            'button:reset': '<button type="reset"></button>',
+            'label': '<label for=""></label>',
+            'fieldset': '<fieldset>\n    <legend></legend>\n    \n</fieldset>',
+            'legend': '<legend></legend>',
+
+            // HTML5 Semantic
+            'header': '<header></header>',
+            'footer': '<footer></footer>',
+            'nav': '<nav></nav>',
+            'aside': '<aside></aside>',
+            'article': '<article></article>',
+            'section': '<section></section>',
+            'main': '<main></main>',
+            'figure': '<figure>\n    <img src="" alt="">\n    <figcaption></figcaption>\n</figure>',
+            'figcaption': '<figcaption></figcaption>',
+            'div': '<div></div>',
+            'video': '<video src="" controls></video>',
+            'audio': '<audio src="" controls></audio>',
+            'iframe': '<iframe src=""></iframe>',
+            'canvas': '<canvas></canvas>',
+            'svg': '<svg></svg>',
+
+            // Lainnya
+            'blockquote': '<blockquote></blockquote>',
+            'pre': '<pre></pre>',
+            'code': '<code></code>',
+            'p.': '<p class="">',
+            'a.': '<a class="" href="">',
+            'img.': '<img class="" src="" alt="">',
+        };
+
+        // Emmet Abbreviations Database (CSS)
+        const cssEmmetAbbreviations = {
+            // Box Model - Margin & Padding
+            'm': 'margin',
+            'mt': 'margin-top',
+            'mr': 'margin-right',
+            'mb': 'margin-bottom',
+            'ml': 'margin-left',
+            'p': 'padding',
+            'pt': 'padding-top',
+            'pr': 'padding-right',
+            'pb': 'padding-bottom',
+            'pl': 'padding-left',
+            'w': 'width',
+            'h': 'height',
+            'mw': 'min-width',
+            'mh': 'min-height',
+
+            // Visual & Latar Belakang
+            'bg': 'background',
+            'bg+': 'background: #fff url() 0 0 no-repeat',
+            'bd': 'border',
+            'bd+': 'border: 1px solid #000',
+            'bxsh': 'box-shadow',
+            'op': 'opacity',
+
+            // Tipografi
+            'ff': 'font-family',
+            'fz': 'font-size',
+            'fw': 'font-weight',
+            'ta': 'text-align',
+            'td': 'text-decoration',
+            'c': 'color: #000',
+
+            // Posisi (Positioning)
+            'pos': 'position: relative',
+            'pos:a': 'position: absolute',
+            'pos:f': 'position: fixed',
+            't': 'top',
+            'r': 'right',
+            'b': 'bottom',
+            'l': 'left',
+            'z': 'z-index',
+        };
+
+        // JavaScript Keywords for Autocomplete
+        const jsKeywords = [
+            'const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'do',
+            'switch', 'case', 'break', 'continue', 'class', 'extends', 'new', 'this', 'super',
+            'import', 'export', 'from', 'default', 'async', 'await', 'try', 'catch', 'finally',
+            'throw', 'typeof', 'instanceof', 'in', 'of', 'true', 'false', 'null', 'undefined',
+            'document', 'window', 'console', 'addEventListener', 'querySelector', 'querySelectorAll',
+            'getElementById', 'getElementsByClassName', 'getElementsByTagName', 'createElement',
+            'appendChild', 'removeChild', 'replaceChild', 'insertBefore', 'parentNode',
+            'classList', 'className', 'style', 'textContent', 'innerHTML', 'outerHTML',
+            'setAttribute', 'getAttribute', 'hasAttribute', 'removeAttribute', 'dataset',
+            'JSON', 'parse', 'stringify', 'Object', 'keys', 'values', 'entries', 'assign',
+            'Array', 'from', 'isArray', 'push', 'pop', 'shift', 'unshift', 'slice', 'splice',
+            'map', 'filter', 'reduce', 'forEach', 'find', 'findIndex', 'some', 'every',
+            'includes', 'indexOf', 'lastIndexOf', 'join', 'split', 'reverse', 'sort',
+            'String', 'toUpperCase', 'toLowerCase', 'trim', 'split', 'replace', 'match',
+            'Number', 'parseInt', 'parseFloat', 'toFixed', 'toString', 'Math', 'Math.round',
+            'Math.floor', 'Math.ceil', 'Math.abs', 'Math.max', 'Math.min', 'Math.random',
+            'Math.pow', 'Math.sqrt', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval',
+            'Promise', 'resolve', 'reject', 'all', 'race', 'fetch', 'async', 'await'
+        ];
+
+        // Default Code Templates
+        const defaultHTML = `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Website</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Selamat Datang!</h1>
+            <p>Ini adalah website pertama saya</p>
+        </header>
+        
+        <main>
+            <section class="hero">
+                <h2>Tentang Saya</h2>
+                <p>Halo! Saya sedang belajar membuat website dengan HTML, CSS, dan JavaScript.</p>
+            </section>
+            
+            <section class="features">
+                <h3>Fitur Website</h3>
+                <ul>
+                    <li>Desain Responsif</li>
+                    <li>Animasi Menarik</li>
+                    <li>Interaktif</li>
+                </ul>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 My Website. Dibuat dengan ❤️</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"><\/script>
+</body>
+</html>`;
+
+        const defaultCSS = `/* Reset CSS */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+header {
+    text-align: center;
+    color: white;
+    padding: 40px 20px;
+    animation: fadeInDown 0.6s ease;
+}
+
+header h1 {
+    font-size: 48px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+}
+
+header p {
+    font-size: 20px;
+    opacity: 0.9;
+}
+
+/* Main Content */
+main {
+    background: white;
+    border-radius: 10px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.hero {
+    text-align: center;
+    margin-bottom: 30px;
+    animation: fadeIn 0.8s ease;
+}
+
+.hero h2 {
+    color: #667eea;
+    font-size: 32px;
+    margin-bottom: 15px;
+}
+
+.hero p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #666;
+}
+
+/* Features Section */
+.features h3 {
+    color: #764ba2;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.features ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.features li {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.features li:hover {
+    transform: translateX(5px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 32px;
+    }
+    
+    header p {
+        font-size: 16px;
+    }
+    
+    main {
+        padding: 20px;
+    }
+    
+    .features ul {
+        grid-template-columns: 1fr;
+    }
+}`;
+
+        const defaultJS = `// JavaScript Code
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Website loaded!');
+    
+    // Tambahkan interaksi pada fitur
+    const features = document.querySelectorAll('.features li');
+    
+    features.forEach(feature => {
+        feature.addEventListener('click', function() {
+            this.style.backgroundColor = '#667eea';
+            this.color = 'white';
+            
+            setTimeout(() => {
+                this.style.backgroundColor = '#f8f9fa';
+                this.style.color = '#333';
+            }, 500);
+        });
+    });
+    
+    // Efek parallax pada header
+    window.addEventListener('scroll', function() {
+        const scrolled = window.pageYOffset;
+        const header = document.querySelector('header');
+        
+        if (header) {
+            header.style.transform = \`translateY(\${scrolled * 0.3}px)\`;
+        }
+    });
+    
+    // Menampilkan pesan selamat datang
+    const message = document.createElement('div');
+    message.style.cssText = \`
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        animation: slideIn 0.5s ease;
+        z-index: 1000;
+    \`;
+    message.textContent = '🎉 Selamat datang di website saya!';
+    
+    document.body.appendChild(message);
+    
+    setTimeout(() => {
+        message.style.animation = 'slideOut 0.5s ease';
+        setTimeout(() => message.remove(), 500);
+    }, 3000);
+});
+
+// Tambahkan CSS animasi
+const style = document.createElement('style');
+style.textContent = \`
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+\`;
+document.head.appendChild(style);`;
+
+        // Syntax Highlighting Functions
+        function highlightHTML(code) {
+            let escaped = code
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            escaped = escaped.replace(/(&lt;!--[\s\S]*?--&gt;)/g, '<span class="token-html-comment">$1</span>');
+            escaped = escaped.replace(/(&lt;!DOCTYPE[^&gt;]*&gt;)/gi, '<span class="token-html-tag">$1</span>');
+
+            escaped = escaped.replace(/(&lt;)([\w-]+)((?:\s+[\w-]+(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'))?)*)?(&gt;)/g, function(match, lt, tagName, attributes, gt) {
+                let result = lt + '<span class="token-html-tag">' + tagName + '</span>';
+                if (attributes) {
+                    result += attributes.replace(/\s+([\w-]+)(\s*=\s*(?:"([^"]*)"|'([^\']*)'))?/g, function(attrMatch, attrName, equals, doubleQuoteValue, singleQuoteValue) {
+                        if (equals) {
+                            const value = doubleQuoteValue !== undefined ? doubleQuoteValue : (singleQuoteValue !== undefined ? singleQuoteValue : '');
+                            const quote = doubleQuoteValue !== undefined ? '"' : "'";
+                            return ' <span class="token-html-attribute">' + attrName + '</span>=' + quote + '<span class="token-html-value">' + value + '</span>' + quote;
+                        } else {
+                            return ' <span class="token-html-attribute">' + attrName + '</span>';
+                        }
+                    });
+                }
+                return result + gt;
+            });
+
+            escaped = escaped.replace(/(&lt;\/)([\w-]+)(&gt;)/g, '$1<span class="token-html-tag">$2</span>$3');
+            return escaped;
+        }
+
+        function highlightCSS(code) {
+            const esc = (s) => s
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            let out = '';
+            let i = 0;
+            const n = code.length;
+            let state = 'selector';
+
+            const numUnitRe = /^(\d+\.?\d*)(px|em|rem|%|vh|vw|deg|s|ms|fr|ch|ex)?\b/;
+            const hexRe = /^#[a-fA-F0-9]{3,8}\b/;
+            const fnColorRe = /^(rgb|hsl)a?\([^)]*\)/i;
+            const identRe = /^[\w-]+/;
+
+            const wrap = (cls, text) => `<span class="${cls}">${esc(text)}</span>`;
+
+            while (i < n) {
+                const ch = code[i];
+
+                if (ch === '/' && code[i + 1] === '*') {
+                    const end = code.indexOf('*/', i + 2);
+                    const stop = end === -1 ? n : end + 2;
+                    out += wrap('token-css-comment', code.slice(i, stop));
+                    i = stop;
+                    continue;
+                }
+
+                if (/\s/.test(ch)) {
+                    out += ch;
+                    i++;
+                    continue;
+                }
+
+                if (state === 'selector') {
+                    if (ch === '{') {
+                        out += '{';
+                        i++;
+                        state = 'block';
+                        continue;
+                    }
+                    if (ch === '}') {
+                        out += '}';
+                        i++;
+                        continue;
+                    }
+                    let j = i;
+                    while (j < n && !/[\s{}]/.test(code[j]) && !(code[j] === '/' && code[j + 1] === '*')) {
+                        j++;
+                    }
+                    out += wrap('token-css-selector', code.slice(i, j));
+                    i = j;
+                    continue;
+                }
+
+                if (state === 'block') {
+                    if (ch === '}') {
+                        out += '}';
+                        i++;
+                        state = 'selector';
+                        continue;
+                    }
+                    if (ch === ';') {
+                        out += ';';
+                        i++;
+                        continue;
+                    }
+                    if (ch === ':') {
+                        out += ':';
+                        i++;
+                        state = 'value';
+                        continue;
+                    }
+                    const m = code.slice(i).match(identRe);
+                    if (m) {
+                        out += wrap('token-css-property', m[0]);
+                        i += m[0].length;
+                        continue;
+                    }
+                    out += esc(ch);
+                    i++;
+                    continue;
+                }
+
+                if (state === 'value') {
+                    if (ch === ';') {
+                        out += ';';
+                        i++;
+                        state = 'block';
+                        continue;
+                    }
+                    if (ch === '}') {
+                        out += '}';
+                        i++;
+                        state = 'selector';
+                        continue;
+                    }
+                    let m = code.slice(i).match(hexRe);
+                    if (m) {
+                        out += wrap('token-html-value', m[0]);
+                        i += m[0].length;
+                        continue;
+                    }
+                    m = code.slice(i).match(fnColorRe);
+                    if (m) {
+                        out += wrap('token-html-value', m[0]);
+                        i += m[0].length;
+                        continue;
+                    }
+                    m = code.slice(i).match(numUnitRe);
+                    if (m) {
+                        out += wrap('token-js-number', m[0]);
+                        i += m[0].length;
+                        continue;
+                    }
+                    if (ch === '"' || ch === "'") {
+                        const quote = ch;
+                        let j = i + 1;
+                        while (j < n && code[j] !== quote) {
+                            if (code[j] === '\\') j++;
+                            j++;
+                        }
+                        if (j < n) j++;
+                        out += wrap('token-js-string', code.slice(i, j));
+                        i = j;
+                        continue;
+                    }
+                    m = code.slice(i).match(identRe);
+                    if (m) {
+                        out += wrap('token-css-value', m[0]);
+                        i += m[0].length;
+                        continue;
+                    }
+                    out += esc(ch);
+                    i++;
+                    continue;
+                }
+            }
+            return out;
+        }
+
+        function highlightJS(code) {
+            let escaped = code
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+
+            const tokens = [];
+            let pos = 0;
+
+            const addToken = (text, type = null) => {
+                if (text) {
+                    tokens.push({ text, type });
+                }
+            };
+
+            const patterns = [
+                { regex: /(\/\*[\s\S]*?\*\/)/, type: 'token-js-comment' },
+                { regex: /(\/\/[^\n]*)/gm, type: 'token-js-comment' },
+                { regex: /(`(?:[^`\\]|\\.)*`)/g, type: 'token-js-string' },
+                { regex: /("(?:[^"\\]|\\.)*")/g, type: 'token-js-string' },
+                { regex: /('(?:[^'\\]|\\.)*')/g, type: 'token-js-string' },
+                { regex: /\b(\d+\.?\d*)\b/g, type: 'token-js-number' },
+            ];
+
+            const keywords = ['const', 'let', 'var', 'function', 'return', 'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue', 'class', 'extends', 'new', 'this', 'super', 'import', 'export', 'from', 'default', 'async', 'await', 'try', 'catch', 'finally', 'throw', 'typeof', 'instanceof', 'in', 'of', 'true', 'false', 'null', 'undefined', 'document', 'window', 'console'];
+            const keywordRegex = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
+
+            while (pos < escaped.length) {
+                let bestMatch = null;
+                let bestPattern = null;
+
+                for (const pattern of patterns) {
+                    pattern.regex.lastIndex = pos;
+                    const match = pattern.regex.exec(escaped);
+                    if (match && match.index === pos) {
+                        bestMatch = match;
+                        bestPattern = pattern;
+                        break;
+                    }
+                }
+
+                if (bestMatch) {
+                    addToken(bestMatch[0], bestPattern.type);
+                    pos = bestMatch.index + bestMatch[0].length;
+                } else {
+                    keywordRegex.lastIndex = pos;
+                    const keywordMatch = keywordRegex.exec(escaped);
+                    if (keywordMatch && keywordMatch.index === pos) {
+                        addToken(keywordMatch[0], 'token-js-keyword');
+                        pos = keywordMatch.index + keywordMatch[0].length;
+                    } else {
+                        const funcMatch = escaped.substring(pos).match(/^(\w+)(\s*\()/);
+                        if (funcMatch) {
+                            addToken(funcMatch[1], 'token-js-function');
+                            pos += funcMatch[1].length;
+                        } else {
+                            addToken(escaped[pos]);
+                            pos++;
+                        }
+                    }
+                }
+            }
+
+            return tokens.map(token => {
+                if (token.type) {
+                    return `<span class="${token.type}">${token.text}</span>`;
+                }
+                return token.text;
+            }).join('');
+        }
+
+        function handleInput(type) {
+            const textarea = document.getElementById(`${type}Code`);
+            const highlight = document.getElementById(`${type}Highlight`);
+            const measure = document.getElementById(`${type}Measure`);
+            const lines = document.getElementById(`${type}Lines`);
+            let code = textarea.value;
+
+            code = code.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+            let highlightedCode = '';
+            if (type === 'html') {
+                highlightedCode = highlightHTML(code);
+            } else if (type === 'css') {
+                highlightedCode = highlightCSS(code);
+            } else if (type === 'js') {
+                highlightedCode = highlightJS(code);
+            }
+
+            const rawLines = code.split('\n');
+            const htmlLines = splitHighlightedByLines(highlightedCode, rawLines.length);
+            let perLineHTML = '';
+            let measureHTML = '';
+            for (let i = 0; i < rawLines.length; i++) {
+                const inner = htmlLines[i] || '';
+                const rawText = rawLines[i];
+                const isEmptyLine = rawText.length === 0;
+                const safeInner = isEmptyLine ? `${inner}<br>` : inner;
+                const safeText = rawText.length === 0 ? '<br>' : escapeHTML(rawText);
+                perLineHTML += `<div class="cl">${safeInner}</div>`;
+                measureHTML += `<div class="ml">${safeText}</div>`;
+            }
+            highlight.innerHTML = perLineHTML;
+            measure.innerHTML = measureHTML;
+
+            const renderLines = () => {
+                const lineEls = measure.querySelectorAll('.ml');
+                let lnHTML = '';
+                for (let i = 0; i < lineEls.length; i++) {
+                    const h = lineEls[i].getBoundingClientRect().height;
+                    lnHTML += `<div class="ln" style="height:${h}px;line-height:${h}px">${i + 1}</div>`;
+                }
+                lines.innerHTML = lnHTML;
+            };
+            renderLines();
+            requestAnimationFrame(renderLines);
+
+            checkAutocomplete(type);
+
+            if (findState[type] && findState[type].query) {
+                runFindHighlights(type);
+            }
+        }
+
+        function escapeHTML(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function splitHighlightedByLines(html, expectedCount) {
+            const out = [];
+            let current = '';
+            const openTagStack = [];
+            let i = 0;
+            while (i < html.length) {
+                if (html[i] === '<') {
+                    const end = html.indexOf('>', i);
+                    if (end === -1) { current += html.slice(i); break; }
+                    const tag = html.slice(i, end + 1);
+                    if (tag.startsWith('</')) {
+                        current += tag;
+                        openTagStack.pop();
+                    } else if (tag.endsWith('/>')) {
+                        current += tag;
+                    } else {
+                        current += tag;
+                        openTagStack.push(tag);
+                    }
+                    i = end + 1;
+                } else {
+                    const nl = html.indexOf('\n', i);
+                    if (nl === -1) {
+                        current += html.slice(i);
+                        i = html.length;
+                    } else {
+                        current += html.slice(i, nl);
+                        for (let k = openTagStack.length - 1; k >= 0; k--) {
+                            const t = openTagStack[k];
+                            const name = t.match(/^<\s*([a-zA-Z][\w-]*)/);
+                            if (name) current += `</${name[1]}>`;
+                        }
+                        out.push(current);
+                        current = '';
+                        for (let k = 0; k < openTagStack.length; k++) current += openTagStack[k];
+                        i = nl + 1;
+                    }
+                }
+            }
+            out.push(current);
+            while (out.length < expectedCount) out.push('');
+            if (out.length > expectedCount) out.length = expectedCount;
+            return out;
+        }
+
+        function syncScroll(type) {
+            const textarea = document.getElementById(`${type}Code`);
+            const highlight = document.getElementById(`${type}Highlight`);
+            const measure = document.getElementById(`${type}Measure`);
+            const lines = document.getElementById(`${type}Lines`);
+
+            highlight.scrollTop = textarea.scrollTop;
+            highlight.scrollLeft = textarea.scrollLeft;
+            measure.scrollTop = textarea.scrollTop;
+            measure.scrollLeft = textarea.scrollLeft;
+            lines.scrollTop = textarea.scrollTop;
+        }
+
+        function setupEditorResizeObservers() {
+            if (window.__editorResizeObserversReady) return;
+
+            const rerender = (type) => {
+                clearTimeout(window.__editorResizeTimers?.[type]);
+                window.__editorResizeTimers = window.__editorResizeTimers || {};
+                window.__editorResizeTimers[type] = setTimeout(() => handleInput(type), 30);
+            };
+
+            ['html', 'css', 'js'].forEach(type => {
+                const container = document.getElementById(`${type}Container`);
+                const textarea = document.getElementById(`${type}Code`);
+                const measure = document.getElementById(`${type}Measure`);
+                if (!container || !textarea || !measure) return;
+                const ro = new ResizeObserver(() => rerender(type));
+                ro.observe(container);
+                ro.observe(textarea);
+                ro.observe(measure);
+                window.__editorResizeObservers = window.__editorResizeObservers || [];
+                window.__editorResizeObservers.push(ro);
+            });
+
+            window.addEventListener('resize', () => {
+                ['html', 'css', 'js'].forEach(rerender);
+            });
+
+            window.__editorResizeObserversReady = true;
+        }
+
+        // ==================== AUTOCOMPLETE / EMMET FUNCTIONS ====================
+
+        function getCurrentWord(textarea) {
+            const value = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const match = textBeforeCursor.match(/([a-zA-Z0-9_:#.!@*^>+~-]+)$/);
+            return match ? match[1] : '';
+        }
+
+        function getCaretPixelPos(textarea) {
+            const style = window.getComputedStyle(textarea);
+            const canvas = getCaretPixelPos._canvas || (getCaretPixelPos._canvas = document.createElement('canvas'));
+            const ctx = canvas.getContext('2d');
+            ctx.font = `${style.fontSize} ${style.fontFamily}`;
+
+            const value = textarea.value;
+            const cursorPos = textarea.selectionStart;
+            const textBeforeCursor = value.substring(0, cursorPos);
+            const lines = textBeforeCursor.split('\n');
+            const currentLine = lines[lines.length - 1];
+            const lineIndex = lines.length - 1;
+
+            const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.6;
+            const paddingTop = parseFloat(style.paddingTop) || 15;
+            const paddingLeft = parseFloat(style.paddingLeft) || 15;
+
+            const x = paddingLeft + ctx.measureText(currentLine).width - textarea.scrollLeft;
+            const y = paddingTop + lineIndex * lineHeight - textarea.scrollTop;
+
+            return { x, y, lineHeight };
+        }
+
+        function getSuggestions(type, word) {
+            if (!word || word.length < 1) return [];
+
+            const suggestions = [];
+            const lowerWord = word.toLowerCase();
+
+            if (type === 'html') {
+                for (const [abbr, expansion] of Object.entries(htmlEmmetAbbreviations)) {
+                    if (abbr.toLowerCase().startsWith(lowerWord)) {
+                        let previewExpansion = expansion.replace(/\\\//g, '/');
+                        suggestions.push({
+                            abbr,
+                            expansion,
+                            preview: previewExpansion.replace(/\n\s*/g, ' ').substring(0, 55) + (previewExpansion.length > 55 ? '…' : ''),
+                            type: 'emmet'
+                        });
+                    }
+                }
+            } else if (type === 'css') {
+                for (const [abbr, expansion] of Object.entries(cssEmmetAbbreviations)) {
+                    if (abbr.toLowerCase().startsWith(lowerWord)) {
+                        suggestions.push({
+                            abbr,
+                            expansion,
+                            preview: expansion.substring(0, 55) + (expansion.length > 55 ? '…' : ''),
+                            type: 'emmet'
+                        });
+                    }
+                }
+            } else if (type === 'js') {
+                for (const keyword of jsKeywords) {
+                    if (keyword.toLowerCase().startsWith(lowerWord)) {
+                        suggestions.push({
+                            abbr: keyword,
+                            expansion: keyword,
+                            preview: keyword,
+                            type: 'keyword'
+                        });
+                    }
+                }
+            }
+
+            suggestions.sort((a, b) => {
+                if (a.abbr === lowerWord) return -1;
+                if (b.abbr === lowerWord) return 1;
+                return a.abbr.length - b.abbr.length;
+            });
+
+            return suggestions.slice(0, 12);
+        }
+
+        function showAutocomplete(type) {
+            const textarea = document.getElementById(`${type}Code`);
+            const dropdown = document.getElementById(`${type}Autocomplete`);
+
+            const currentWord = getCurrentWord(textarea);
+            const suggestions = getSuggestions(type, currentWord);
+
+            if (suggestions.length === 0) {
+                hideAutocomplete(type);
+                return;
+            }
+
+            dropdown.innerHTML = '';
+
+            suggestions.forEach((s, index) => {
+                const item = document.createElement('div');
+                item.className = `autocomplete-item ${index === 0 ? 'selected' : ''}`;
+                item.dataset.index = index;
+
+                const badge = document.createElement('span');
+                badge.style.cssText = `
+                    font-size: 9px; font-weight: bold; padding: 1px 4px; border-radius: 3px;
+                    margin-right: 6px; flex-shrink: 0; letter-spacing: 0.5px;
+                    background: ${s.type === 'emmet' ? 'rgba(80,250,123,0.2)' : 'rgba(255,184,108,0.2)'};
+                    color: ${s.type === 'emmet' ? '#50fa7b' : '#ffb86c'};
+                    border: 1px solid ${s.type === 'emmet' ? '#50fa7b44' : '#ffb86c44'};
+                `;
+                badge.textContent = s.type === 'emmet' ? 'emmet' : 'kw';
+                item.appendChild(badge);
+
+                const abbrEl = document.createElement('span');
+                abbrEl.style.cssText = 'color: var(--accent); font-weight: bold; font-family: monospace; min-width: 60px;';
+                abbrEl.textContent = s.abbr;
+                item.appendChild(abbrEl);
+
+                const previewEl = document.createElement('span');
+                previewEl.className = 'preview';
+                previewEl.textContent = s.preview;
+                item.appendChild(previewEl);
+
+                if (index === 0) {
+                    const hintEl = document.createElement('span');
+                    hintEl.style.cssText = 'font-size: 10px; color: #6272a4; margin-left: auto; flex-shrink: 0; padding-left: 8px;';
+                    hintEl.textContent = 'Tab';
+                    item.appendChild(hintEl);
+                }
+
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectSuggestion(type, index);
+                });
+
+                dropdown.appendChild(item);
+            });
+
+            autocompleteState[type] = {
+                visible: true,
+                selectedIndex: 0,
+                suggestions: suggestions
+            };
+
+            dropdown.classList.add('active');
+            positionDropdown(type, textarea, dropdown);
+        }
+
+        function positionDropdown(type, textarea, dropdown) {
+            const { x, y, lineHeight } = getCaretPixelPos(textarea);
+            const container = document.getElementById(`${type}Container`);
+            const containerRect = container.getBoundingClientRect();
+            const dropdownH = dropdown.offsetHeight || 200;
+            const dropdownW = dropdown.offsetWidth || 260;
+            const containerH = container.offsetHeight;
+            const containerW = container.offsetWidth;
+
+            let top = y + lineHeight;
+            let left = x;
+
+            if (top + dropdownH > containerH - 10) {
+                top = y - dropdownH;
+            }
+
+            if (left + dropdownW > containerW - 10) {
+                left = containerW - dropdownW - 10;
+            }
+            if (left < 5) left = 5;
+            if (top < 5) top = 5;
+
+            dropdown.style.top = `${top}px`;
+            dropdown.style.left = `${left}px`;
+        }
+
+        function hideAutocomplete(type) {
+            const dropdown = document.getElementById(`${type}Autocomplete`);
+            dropdown.classList.remove('active');
+            autocompleteState[type] = {
+                visible: false,
+                selectedIndex: -1,
+                suggestions: []
+            };
+        }
+
+        function placeCursorSmart(textarea, expansion, insertStart) {
+            const cursorMarker = '{{CURSOR}}';
+            let withMarker = expansion;
+
+            if (expansion.includes('></')) {
+                withMarker = expansion.replace('></', `>${cursorMarker}</`);
+            } else if (expansion.includes('\n')) {
+                const lines = expansion.split('\n');
+                if (lines.length >= 2) {
+                    let targetLine = 1;
+                    for (let i = 1; i < lines.length - 1; i++) {
+                        if (lines[i].trim() === '' || lines[i].match(/^\s+$/)) {
+                            targetLine = i;
+                            break;
+                        }
+                    }
+                    lines[targetLine] = lines[targetLine] + cursorMarker;
+                    withMarker = lines.join('\n');
+                }
+            }
+
+            if (withMarker.includes(cursorMarker)) {
+                const markerIndex = withMarker.indexOf(cursorMarker);
+                const cleanExpansion = withMarker.replace(cursorMarker, '');
+                const cursorPos = insertStart + markerIndex;
+                textarea.value = textarea.value.substring(0, insertStart) + cleanExpansion + textarea.value.substring(insertStart + expansion.length);
+                textarea.selectionStart = cursorPos;
+                textarea.selectionEnd = cursorPos;
+            } else {
+                const pos = insertStart + expansion.length;
+                textarea.selectionStart = pos;
+                textarea.selectionEnd = pos;
+            }
+        }
+
+        function selectSuggestion(type, index) {
+            const textarea = document.getElementById(`${type}Code`);
+
+            if (index < 0 || index >= autocompleteState[type].suggestions.length) return;
+
+            const suggestion = autocompleteState[type].suggestions[index];
+            const currentWord = getCurrentWord(textarea);
+
+            const cursorPos = textarea.selectionStart;
+            const wordStartPos = cursorPos - currentWord.length;
+            const textBefore = textarea.value.substring(0, wordStartPos);
+            const textAfter = textarea.value.substring(cursorPos);
+
+            let expansion = suggestion.expansion.replace(/\\\//g, '/');
+
+            if (type === 'css' && !expansion.includes(':')) {
+                expansion = expansion + ': ';
+            } else if (type === 'css' && !expansion.endsWith(';') && !expansion.endsWith(' ')) {
+                expansion = expansion + ': ';
+            }
+
+            textarea.value = textBefore + expansion + textAfter;
+
+            placeCursorSmart(textarea, expansion, wordStartPos);
+
+            hideAutocomplete(type);
+            handleInput(type);
+            textarea.focus();
+        }
+
+        // ==================== TOGGLE COMMENT (Ctrl+/) ====================
+        function toggleComment(type, textarea) {
+            const val = textarea.value;
+            let start = textarea.selectionStart;
+            let end = textarea.selectionEnd;
+
+            // Perluas seleksi teks ke baris penuh (full line)
+            let lineStart = val.lastIndexOf('\n', start - 1) + 1;
+            let lineEnd = val.indexOf('\n', end);
+            if (lineEnd === -1) lineEnd = val.length;
+            
+            // Khusus: Jika kursor berada di paling awal baris baru, jangan ikutkan ke seleksi
+            if (end > start && val.charAt(end - 1) === '\n') {
+                lineEnd = end - 1;
+            }
+
+            const selectedText = val.substring(lineStart, lineEnd);
+            if (selectedText === '' && lineStart === lineEnd) return; // Tidak ada teks yg bisa di comment
+
+            let newText = '';
+
+            if (type === 'js') {
+                // Line Comment mode untuk JS //
+                const lines = selectedText.split('\n');
+                const allCommented = lines.every(line => line.trim() === '' || line.trim().startsWith('//'));
+                
+                if (allCommented) {
+                    // Uncomment
+                    newText = lines.map(line => line.replace(/^(\s*)\/\/\s?/, '$1')).join('\n');
+                } else {
+                    // Comment
+                    newText = lines.map(line => {
+                        if (line.trim() === '') return line;
+                        const match = line.match(/^(\s*)(.*)/);
+                        return match[1] + '// ' + match[2];
+                    }).join('\n');
+                }
+            } else if (type === 'css') {
+                // Block Comment mode untuk CSS /* */
+                const isCommented = /^\s*\/\*[\s\S]*\*\/\s*$/.test(selectedText);
+                if (isCommented) {
+                    newText = selectedText.replace(/^(\s*)\/\*\s?/, '$1').replace(/\s?\*\/(\s*)$/, '$1');
+                } else {
+                    newText = selectedText.replace(/^(\s*)([\s\S]*?)(\s*)$/, (match, p1, p2, p3) => {
+                        return p1 + '/* ' + p2 + ' */' + p3;
+                    });
+                }
+            } else if (type === 'html') {
+                // Block Comment mode untuk HTML <!-- -->
+                const isCommented = /^\s*<!--[\s\S]*-->\s*$/.test(selectedText);
+                if (isCommented) {
+                    newText = selectedText.replace(/^(\s*)<!--\s?/, '$1').replace(/\s?-->(\s*)$/, '$1');
+                } else {
+                    newText = selectedText.replace(/^(\s*)([\s\S]*?)(\s*)$/, (match, p1, p2, p3) => {
+                        return p1 + '<!-- ' + p2 + ' -->' + p3;
+                    });
+                }
+            }
+
+            // Ganti teks pada textarea dengan yang sudah dimodifikasi
+            textarea.value = val.substring(0, lineStart) + newText + val.substring(lineEnd);
+            
+            // Pertahankan blok seleksi (sesuaikan dengan panjang karakter baru)
+            textarea.selectionStart = lineStart;
+            textarea.selectionEnd = lineStart + newText.length;
+            
+            // Update Tampilan Highlighting & Auto Save
+            handleInput(type);
+            autoSave();
+        }
+
+        // Handle keyboard events for autocomplete and editor shortcuts
+        function handleKeyDown(event, type) {
+            const state = autocompleteState[type];
+            const textarea = document.getElementById(`${type}Code`);
+
+            // --- SHORTCUT: Ctrl+/ untuk Toggle Comment ---
+            if ((event.ctrlKey || event.metaKey) && event.key === '/') {
+                event.preventDefault();
+                toggleComment(type, textarea);
+                return;
+            }
+
+            if (event.key === 'Tab') {
+                event.preventDefault();
+                if (state.visible) {
+                    selectSuggestion(type, state.selectedIndex);
+                } else {
+                    const start = textarea.selectionStart;
+                    const end   = textarea.selectionEnd;
+                    textarea.value = textarea.value.substring(0, start) + '    ' + textarea.value.substring(end);
+                    textarea.selectionStart = textarea.selectionEnd = start + 4;
+                    handleInput(type);
+                }
+                return;
+            }
+
+            if (event.key === 'Enter') {
+                if (state.visible) {
+                    event.preventDefault();
+                    selectSuggestion(type, state.selectedIndex);
+                    return;
+                }
+                event.preventDefault();
+                const start = textarea.selectionStart;
+                const val = textarea.value;
+                const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+                const currentLine = val.substring(lineStart, start);
+                const indentMatch = currentLine.match(/^(\s*)/);
+                const indent = indentMatch ? indentMatch[1] : '';
+                let extraIndent = '';
+                const trimmed = currentLine.trimEnd();
+                if (trimmed.endsWith('{') || trimmed.endsWith('(') || trimmed.endsWith('[')) {
+                    extraIndent = '    ';
+                } else if (type === 'html') {
+                    const openTagMatch = trimmed.match(/<([a-zA-Z][a-zA-Z0-9]*)(?:\s[^>]*)?>$/);
+                    const voidTags = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+                    if (openTagMatch && !voidTags.has(openTagMatch[1].toLowerCase())) {
+                        extraIndent = '    ';
+                    }
+                }
+                const insertion = '\n' + indent + extraIndent;
+                textarea.value = val.substring(0, start) + insertion + val.substring(textarea.selectionEnd);
+                textarea.selectionStart = textarea.selectionEnd = start + insertion.length;
+                handleInput(type);
+                return;
+            }
+
+            if (!state.visible) return;
+
+            switch (event.key) {
+                case 'ArrowDown':
+                    event.preventDefault();
+                    state.selectedIndex = Math.min(state.selectedIndex + 1, state.suggestions.length - 1);
+                    updateDropdownSelection(type);
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    state.selectedIndex = Math.max(state.selectedIndex - 1, 0);
+                    updateDropdownSelection(type);
+                    break;
+                case 'Escape':
+                    event.preventDefault();
+                    hideAutocomplete(type);
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    hideAutocomplete(type);
+                    break;
+            }
+        }
+
+        function updateDropdownSelection(type) {
+            const dropdown = document.getElementById(`${type}Autocomplete`);
+            const items = dropdown.querySelectorAll('.autocomplete-item');
+
+            items.forEach((item, index) => {
+                if (index === autocompleteState[type].selectedIndex) {
+                    item.classList.add('selected');
+                    item.scrollIntoView({ block: 'nearest' });
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        function checkAutocomplete(type) {
+            const textarea = document.getElementById(`${type}Code`);
+            const currentWord = getCurrentWord(textarea);
+
+            if (currentWord.length >= 1) {
+                showAutocomplete(type);
+            } else {
+                hideAutocomplete(type);
+            }
+        }
+
+        let wordWrapEnabled = true;
+
+        function applyWordWrap() {
+            const layers = document.querySelectorAll('.code-layer');
+            layers.forEach(el => {
+                if (wordWrapEnabled) el.classList.add('word-wrap');
+                else el.classList.remove('word-wrap');
+            });
+            const btn = document.getElementById('wordWrapBtn');
+            if (btn) {
+                btn.style.color = wordWrapEnabled ? 'var(--accent)' : '';
+                btn.style.borderColor = wordWrapEnabled ? 'var(--accent)' : '';
+            }
+            ['html', 'css', 'js'].forEach(t => {
+                const ta = document.getElementById(`${t}Code`);
+                if (ta) handleInput(t);
+            });
+        }
+
+        function toggleWordWrap() {
+            wordWrapEnabled = !wordWrapEnabled;
+            applyWordWrap();
+        }
+
+        function genId() { return 'p_' + Date.now() + '_' + Math.floor(Math.random()*10000); }
+
+        function createNewProject() {
+            document.getElementById('newProjectModal').classList.add('active');
+            const inp = document.getElementById('newProjectName');
+            inp.value = 'My Project ' + (projects.length + 1);
+            inp.focus();
+            inp.select();
+        }
+
+        function confirmNewProject() {
+            const name = document.getElementById('newProjectName').value.trim() || ('My Project ' + (projects.length + 1));
+            closeModal('newProjectModal');
+            const newProj = {
+                id: genId(),
+                name: name,
+                collapsed: false,
+                files: {
+                    'index.html': { type: 'html', content: defaultHTML },
+                    'style.css':  { type: 'css',  content: defaultCSS },
+                    'script.js':  { type: 'js',   content: defaultJS }
+                }
+            };
+            projects.push(newProj);
+            activeProjectId = newProj.id;
+            currentEditingFile = { filename: 'index.html', type: 'html', projectId: newProj.id };
+            document.getElementById('htmlCode').value = newProj.files['index.html'].content;
+            document.getElementById('cssCode').value = '';
+            document.getElementById('jsCode').value = '';
+            handleInput('html'); handleInput('css'); handleInput('js');
+            showEditor();
+            renderFileList();
+            saveProjectsToStorage();
+            updateStatus('Project "' + name + '" created!');
+        }
+
+        let projectToRename = null;
+        function showRenameProjectModal(projectId) {
+            projectToRename = projectId;
+            const proj = getProject(projectId);
+            const inp = document.getElementById('renameProjectName');
+            inp.value = proj ? proj.name : '';
+            document.getElementById('renameProjectModal').classList.add('active');
+            inp.focus(); inp.select();
+        }
+
+        function confirmRenameProject() {
+            const newName = document.getElementById('renameProjectName').value.trim();
+            if (!newName) return;
+            const proj = getProject(projectToRename);
+            if (proj) { proj.name = newName; }
+            closeModal('renameProjectModal');
+            renderFileList();
+            saveProjectsToStorage();
+            updateStatus('Project renamed!');
+        }
+
+        function deleteProject(projectId) {
+            const proj = getProject(projectId);
+            if (!proj) return;
+            if (!confirm('Hapus project "' + proj.name + '" beserta semua filenya?')) return;
+            projects = projects.filter(p => p.id !== projectId);
+            if (activeProjectId === projectId) {
+                activeProjectId = projects.length > 0 ? projects[0].id : null;
+                currentEditingFile = { filename: null, type: null, projectId: null };
+                document.getElementById('htmlCode').value = '';
+                document.getElementById('cssCode').value = '';
+                document.getElementById('jsCode').value = '';
+                handleInput('html'); handleInput('css'); handleInput('js');
+            }
+            if (projects.length === 0) {
+                document.getElementById('welcomePanel').style.display = '';
+                document.getElementById('editorWorkspace').style.display = 'none';
+            }
+            renderFileList();
+            saveProjectsToStorage();
+            updateStatus('Project deleted!');
+        }
+
+        function toggleProjectCollapse(projectId) {
+            const proj = getProject(projectId);
+            if (proj) proj.collapsed = !proj.collapsed;
+            renderFileList();
+        }
+
+        function setActiveProject(projectId) {
+            activeProjectId = projectId;
+            renderFileList();
+        }
+
+        let newFileTargetProjectId = null;
+        function showAddFileModal(projectId) {
+            newFileTargetProjectId = projectId;
+            const inp = document.getElementById('newFileName');
+            inp.value = '';
+            resetFileUpload(); 
+            document.getElementById('newFileModal').classList.add('active');
+            inp.focus();
+        }
+
+        function renderFileList() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+
+            if (projects.length === 0) {
+                fileList.innerHTML = '<div style="padding:16px;color:var(--text-secondary);font-size:12px;">Klik ＋ untuk membuat project baru</div>';
+                updateFileCount();
+                return;
+            }
+
+            projects.forEach(proj => {
+                const folderRow = document.createElement('div');
+                folderRow.className = 'project-folder' + (proj.id === activeProjectId ? ' active-project' : '');
+
+                const fileCount = Object.keys(proj.files).length;
+                folderRow.innerHTML = `
+                    <span class="folder-toggle">${proj.collapsed ? '▶' : '▼'}</span>
+                    <span style="font-size:15px;">📁</span>
+                    <span class="folder-name" title="${proj.name}">${proj.name}</span>
+                    <div class="proj-actions">
+                        <span onclick="event.stopPropagation(); showAddFileModal('${proj.id}')" title="Add File">📄+</span>
+                        <span onclick="event.stopPropagation(); showRenameProjectModal('${proj.id}')" title="Rename Project">✎</span>
+                        <span onclick="event.stopPropagation(); deleteProject('${proj.id}')" title="Delete Project">✕</span>
+                    </div>
+                `;
+                folderRow.addEventListener('click', () => {
+                    activeProjectId = proj.id;
+                    toggleProjectCollapse(proj.id);
+                });
+                fileList.appendChild(folderRow);
+
+                const filesContainer = document.createElement('div');
+                filesContainer.className = 'project-files' + (proj.collapsed ? ' collapsed' : '');
+                const totalHeight = fileCount * 36;
+                filesContainer.style.maxHeight = proj.collapsed ? '0' : (totalHeight + 'px');
+
+                for (let [filename, file] of Object.entries(proj.files)) {
+                    const isActive = currentEditingFile.projectId === proj.id && currentEditingFile.filename === filename;
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item' + (isActive ? ' active' : '');
+
+                    let icon = '📄';
+                    if (file.type === 'html') icon = '🌐';
+                    else if (file.type === 'css') icon = '🎨';
+                    else if (file.type === 'js') icon = '⚡';
+                    else if (file.type === 'json') icon = '🧾';
+                    else if (file.type === 'svg') icon = '🖼️';
+                    else if (file.type === 'image') icon = '🖼️';
+                    else if (file.type === 'env') icon = '🔐';
+
+                    const safeFn = filename.replace(/'/g, "\\'");
+                    fileItem.innerHTML = `
+                        <span class="file-icon ${file.type}">${icon}</span>
+                        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${filename}</span>
+                        <div style="display:flex;gap:4px;flex-shrink:0;">
+                            <span style="cursor:pointer;opacity:0.6;font-size:13px;" title="Rename" onclick="event.stopPropagation();showRenameModal('${proj.id}','${safeFn}')">✎</span>
+                            <span style="cursor:pointer;opacity:0.6;font-size:13px;" title="Delete" onclick="event.stopPropagation();deleteFile('${proj.id}','${safeFn}')">✕</span>
+                        </div>
+                    `;
+                    fileItem.addEventListener('click', () => openFile(proj.id, filename));
+                    filesContainer.appendChild(fileItem);
+                }
+                fileList.appendChild(filesContainer);
+            });
+
+            updateFileCount();
+        }
+
+        function openFile(projectId, filename) {
+            saveCurrentFile();
+
+            const proj = getProject(projectId);
+            if (!proj) return;
+            const file = proj.files[filename];
+            if (!file) { alert('File not found: ' + filename); return; }
+
+            activeProjectId = projectId;
+            currentEditingFile = { filename, type: file.type, projectId };
+
+            ['html', 'css', 'js'].forEach(t => {
+                const ov = document.getElementById(`${t}AssetPreview`);
+                if (ov) ov.classList.remove('active');
+            });
+
+            const tab = getEditorTabForType(file.type);
+            switchEditorTab(tab);
+
+            if (isBinaryType(file.type)) {
+                const ed = document.getElementById(`${tab}Code`);
+                ed.value = '';
+                handleInput(tab);
+                showAssetPreview(tab, filename, file);
+            } else {
+                const ed = document.getElementById(`${tab}Code`);
+                ed.value = file.content || '';
+                handleInput(tab);
+            }
+
+            showEditor();
+            renderFileList();
+            updateStatus('Editing: ' + filename);
+        }
+
+        function showAssetPreview(tab, filename, file) {
+            const ov = document.getElementById(`${tab}AssetPreview`);
+            if (!ov) return;
+            const mime = getMimeForFile(filename, file.type);
+            const src = (typeof file.content === 'string' && file.content.startsWith('data:'))
+                ? file.content
+                : 'data:' + mime + ';base64,' + (file.content || '');
+            ov.innerHTML = `
+                <div class="asset-name">${filename}</div>
+                <img alt="${filename}" src="${src}">
+                <div class="asset-meta">${mime} — preview only (binary asset)</div>
+                <div class="asset-meta">Reference it in HTML/CSS/JS by its filename, e.g. <code>&lt;img src="${filename}"&gt;</code></div>
+            `;
+            ov.classList.add('active');
+        }
+
+        function saveCurrentFile() {
+            if (!currentEditingFile.filename || !currentEditingFile.projectId) return;
+            const proj = getProject(currentEditingFile.projectId);
+            if (!proj || !proj.files[currentEditingFile.filename]) return;
+            const file = proj.files[currentEditingFile.filename];
+            if (isBinaryType(file.type)) return;
+            const tab = getEditorTabForType(file.type);
+            const content = getContentForType(tab);
+            file.content = content;
+        }
+
+        function getContentForType(type) {
+            if (type === 'html') return document.getElementById('htmlCode').value;
+            if (type === 'css')  return document.getElementById('cssCode').value;
+            if (type === 'js')   return document.getElementById('jsCode').value;
+            return '';
+        }
+
+        function deleteFile(projectId, filename) {
+            if (!confirm('Delete ' + filename + '?')) return;
+            const proj = getProject(projectId);
+            if (!proj) return;
+            const file = proj.files[filename];
+            if (currentEditingFile.projectId === projectId && currentEditingFile.filename === filename) {
+                const tab = getEditorTabForType(file.type);
+                document.getElementById(`${tab}Code`).value = '';
+                handleInput(tab);
+                const ov = document.getElementById(`${tab}AssetPreview`);
+                if (ov) ov.classList.remove('active');
+                currentEditingFile = { filename: null, type: null, projectId: null };
+            }
+            delete proj.files[filename];
+            renderFileList();
+            saveProjectsToStorage();
+            updateStatus('Deleted: ' + filename);
+        }
+
+        function showRenameModal(projectId, filename) {
+            fileToRename = { filename, projectId };
+            const input = document.getElementById('renameFileName');
+            input.value = filename;
+            document.getElementById('renameFileModal').classList.add('active');
+            input.focus();
+            const lastDotIndex = filename.lastIndexOf('.');
+            if (lastDotIndex > 0) input.setSelectionRange(0, lastDotIndex);
+            else input.select();
+        }
+
+        function renameFile() {
+            const newFilename = document.getElementById('renameFileName').value.trim();
+            if (!newFilename) { alert('Please enter a filename!'); return; }
+            if (!fileToRename) return;
+
+            const { filename: oldName, projectId } = fileToRename;
+            const proj = getProject(projectId);
+            if (!proj) return;
+
+            if (newFilename === oldName) { closeModal('renameFileModal'); return; }
+            if (proj.files[newFilename]) { alert('File "' + newFilename + '" already exists!'); return; }
+
+            const oldExtension = (oldName.includes('.') ? oldName.split('.').pop() : '').toLowerCase();
+            const newExtension = (newFilename.includes('.') ? newFilename.split('.').pop() : '').toLowerCase();
+            if (oldExtension !== newExtension) { alert('File extension must be ".' + oldExtension + '"!'); return; }
+
+            proj.files[newFilename] = proj.files[oldName];
+            delete proj.files[oldName];
+            if (currentEditingFile.projectId === projectId && currentEditingFile.filename === oldName) {
+                currentEditingFile.filename = newFilename;
+            }
+            renderFileList();
+            saveProjectsToStorage();
+            closeModal('renameFileModal');
+            updateStatus('Renamed: ' + oldName + ' → ' + newFilename);
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileType = getFileTypeFromName(file.name);
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const content = e.target.result;
+
+                selectedUploadedFile = {
+                    name: file.name,
+                    content: content, 
+                    type: fileType
+                };
+
+                const uploadBtn = document.getElementById('fileUploadBtn');
+                const fileNameDisplay = document.getElementById('selectedFileName');
+
+                uploadBtn.classList.add('selected');
+                uploadBtn.textContent = '✓ File selected: ' + file.name;
+                fileNameDisplay.textContent = '📄 ' + file.name + ' (' + formatFileSize(file.size) + ')';
+                fileNameDisplay.classList.add('show');
+
+                document.getElementById('newFileName').value = file.name;
+            };
+
+            reader.onerror = function() {
+                alert('Error reading file. Please try again.');
+            };
+
+            if (isBinaryType(fileType)) {
+                reader.readAsDataURL(file);
+            } else {
+                reader.readAsText(file);
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        function resetFileUpload() {
+            selectedUploadedFile = null;
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('fileUploadBtn');
+            const fileNameDisplay = document.getElementById('selectedFileName');
+            
+            fileInput.value = '';
+            uploadBtn.classList.remove('selected');
+            uploadBtn.textContent = '📁 Click to select a file';
+            fileNameDisplay.textContent = '';
+            fileNameDisplay.classList.remove('show');
+            document.getElementById('newFileName').value = '';
+        }
+
+        function showNewFileModal() {
+            if (!activeProjectId) { alert('Pilih atau buat project terlebih dahulu!'); return; }
+            showAddFileModal(activeProjectId);
+        }
+
+        function createNewFile() {
+            const filename = document.getElementById('newFileName').value.trim();
+            if (!filename) { 
+                alert('Please enter a filename or select a file to upload'); 
+                return; 
+            }
+
+            const projId = newFileTargetProjectId || activeProjectId;
+            if (!projId) { alert('Pilih project terlebih dahulu!'); return; }
+            const proj = getProject(projId);
+            if (!proj) return;
+
+            if (proj.files[filename]) { 
+                alert('File already exists'); 
+                return; 
+            }
+
+            let content = '';
+            let fileType = getFileTypeFromName(filename);
+
+            if (selectedUploadedFile && selectedUploadedFile.name === filename) {
+                content = selectedUploadedFile.content;
+                fileType = selectedUploadedFile.type;
+            } else {
+                if (isBinaryType(fileType)) {
+                    alert('File biner (.png/.webp) hanya dapat dibuat melalui Upload File.');
+                    return;
+                }
+                content = '';
+            }
+
+            proj.files[filename] = { type: fileType, content: content };
+            
+            openFile(projId, filename);
+            
+            document.getElementById('newFileName').value = '';
+            resetFileUpload();
+            closeModal('newFileModal');
+            saveProjectsToStorage();
+            
+            if (selectedUploadedFile) {
+                updateStatus('Imported: ' + filename);
+            } else {
+                updateStatus('Created: ' + filename);
+            }
+        }
+
+        function showEditor() {
+            document.getElementById('welcomePanel').style.display = 'none';
+            document.getElementById('editorWorkspace').style.display = 'flex';
+        }
+
+        let autoSaveTimeout;
+        function autoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                saveCurrentFile();
+                saveProjectsToStorage();
+                updateStatus('Auto saved');
+            }, 1000);
+        }
+
+        function saveProjectsToStorage() {
+            try { localStorage.setItem('simpleIDEProjects', JSON.stringify({ projects, activeProjectId })); }
+            catch (e) { console.log('Could not save to localStorage'); }
+        }
+
+        function loadProjectFromStorage() {
+            try {
+                const saved = localStorage.getItem('simpleIDEProjects');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    projects = data.projects || [];
+                    activeProjectId = data.activeProjectId || null;
+                    if (projects.length > 0) {
+                        showEditor();
+                        renderFileList();
+                        const proj = getActiveProject() || projects[0];
+                        if (proj) {
+                            activeProjectId = proj.id;
+                            for (let [fn, f] of Object.entries(proj.files)) {
+                                if (f.type === 'html') { openFile(proj.id, fn); return; }
+                            }
+                            const first = Object.keys(proj.files)[0];
+                            if (first) openFile(proj.id, first);
+                        }
+                    }
+                }
+            } catch (e) { console.log('Could not load from localStorage'); }
+        }
+
+        function updateFileCount() {
+            const total = projects.reduce((s, p) => s + Object.keys(p.files).length, 0);
+            document.getElementById('fileCount').textContent =
+                'Projects: ' + projects.length + ' | Files: ' + total;
+        }
+
+        function updateStatus(text) {
+            document.getElementById('statusText').textContent = text;
+        }
+
+        function runPreview() {
+            saveCurrentFile();
+
+            if (currentMainTab !== 'preview') {
+                switchMainTab('preview');
+                return;
+            }
+
+            let htmlContent = '';
+            let proj = null;
+
+            if (currentEditingFile.filename && currentEditingFile.type === 'html' && currentEditingFile.projectId) {
+                proj = getProject(currentEditingFile.projectId);
+                if (proj && proj.files[currentEditingFile.filename]) {
+                    htmlContent = proj.files[currentEditingFile.filename].content || '';
+                }
+            } else if (activeProjectId) {
+                proj = getActiveProject();
+                if (proj) {
+                    for (let [fn, f] of Object.entries(proj.files)) {
+                        if (f.type === 'html') { htmlContent = f.content || ''; break; }
+                    }
+                }
+            }
+
+            if (!htmlContent) {
+                showToast('⚠️ Tidak ada file HTML aktif untuk di-preview', 'info');
+                return;
+            }
+
+            let fullHTML = htmlContent;
+
+            const buildAssetUrl = (filename, file) => {
+                if (!file) return null;
+                if (file.type === 'image') {
+                    return file.content || null;
+                }
+                const mime = getMimeForFile(filename, file.type);
+                const text = file.content || '';
+                try {
+                    const b64 = btoa(unescape(encodeURIComponent(text)));
+                    return 'data:' + mime + ';base64,' + b64;
+                } catch (e) {
+                    return 'data:' + mime + ',' + encodeURIComponent(text);
+                }
+            };
+
+            if (proj) {
+                fullHTML = fullHTML.replace(
+                    /<link\s[^>]*rel=["']stylesheet["'][^>]*>/gi,
+                    (tag) => {
+                        const hrefMatch = tag.match(/href=["']([^"']+)["']/i);
+                        if (!hrefMatch) return tag;
+                        const href = hrefMatch[1];
+                        const isLocal = !/^https?:\/\//i.test(href) && !/^\/\//i.test(href) && !/^data:/i.test(href);
+                        if (isLocal && proj.files[href] && proj.files[href].type === 'css') {
+                            return '<style>\n' + (proj.files[href].content || '') + '\n</style>';
+                        }
+                        return tag;
+                    }
+                );
+
+                fullHTML = fullHTML.replace(
+                    /<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>\s*<\/script>/gi,
+                    (tag, src) => {
+                        const isLocal = !/^https?:\/\//i.test(src) && !/^\/\//i.test(src) && !/^data:/i.test(src);
+                        if (isLocal && proj.files[src]) {
+                            const f = proj.files[src];
+                            if (f.type === 'js') {
+                                return '<script>\n' + (f.content || '') + '\n<\/script>';
+                            }
+                            if (f.type === 'json') {
+                                const safe = (f.content || 'null').replace(/<\/script/gi, '<\\/script');
+                                const key = src.replace(/[^a-zA-Z0-9_]/g, '_');
+                                return '<script>try{window["' + src + '"]=JSON.parse(' + JSON.stringify(safe) + ');window["' + key + '"]=window["' + src + '"];}catch(e){console.error("Invalid JSON in ' + src + '",e);}<\/script>';
+                            }
+                        }
+                        return tag;
+                    }
+                );
+
+                const rewriteAttr = (attr) => new RegExp('\\b' + attr + '=(["\'])([^"\']+)\\1', 'gi');
+                ['src', 'href', 'poster', 'data'].forEach(attr => {
+                    fullHTML = fullHTML.replace(rewriteAttr(attr), (full, q, val) => {
+                        const isLocal = !/^https?:\/\//i.test(val) && !/^\/\//i.test(val) && !/^data:/i.test(val) && !/^#/.test(val) && !/^mailto:/i.test(val) && !/^javascript:/i.test(val);
+                        if (!isLocal) return full;
+                        const file = proj.files[val];
+                        if (!file) return full;
+                        if (file.type === 'css' || file.type === 'js') return full;
+                        const url = buildAssetUrl(val, file);
+                        return url ? (attr + '=' + q + url + q) : full;
+                    });
+                });
+
+                fullHTML = fullHTML.replace(/<style\b[^>]*>([\s\S]*?)<\/style>/gi, (full, css) => {
+                    const newCss = css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (m, q, val) => {
+                        const isLocal = !/^https?:\/\//i.test(val) && !/^\/\//i.test(val) && !/^data:/i.test(val) && !/^#/.test(val);
+                        if (!isLocal) return m;
+                        const file = proj.files[val];
+                        if (!file) return m;
+                        const url = buildAssetUrl(val, file);
+                        return url ? ('url(' + q + url + q + ')') : m;
+                    });
+                    return full.replace(css, newCss);
+                });
+            }
+
+            const preview = document.getElementById('previewFrame');
+            const previewDoc = preview.contentDocument || preview.contentWindow.document;
+            previewDoc.open();
+            previewDoc.write(fullHTML);
+            previewDoc.close();
+
+            saveProjectsToStorage();
+            updateStatus('Preview updated!');
+        }
+
+        function downloadAll() {
+            if (projects.length === 0) { showToast('Tidak ada project!', 'info'); return; }
+
+            saveCurrentFile();
+
+            if (typeof JSZip === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                script.onload = () => doZipExport();
+                script.onerror = () => fallbackDownload();
+                document.head.appendChild(script);
+            } else {
+                doZipExport();
+            }
+        }
+
+        function doZipExport() {
+            const zip = new JSZip();
+            projects.forEach(proj => {
+                const folder = zip.folder(proj.name);
+                for (let [filename, file] of Object.entries(proj.files)) {
+                    folder.file(filename, file.content || '');
+                }
+            });
+            zip.generateAsync({ type: 'blob' }).then(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'projects.zip';
+                a.click();
+                URL.revokeObjectURL(url);
+                updateStatus('ZIP downloaded!');
+            });
+        }
+
+        function fallbackDownload() {
+            projects.forEach(proj => {
+                for (let [filename, file] of Object.entries(proj.files)) {
+                    const blob = new Blob([file.content || ''], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = proj.name + '_' + filename;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            });
+            updateStatus('Files downloaded!');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+
+            document.querySelectorAll('.header-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+            const previewToolbar = document.getElementById('previewToolbar');
+
+            if (tab === 'editor') {
+                document.getElementById('editorPanel').classList.add('active');
+                document.getElementById('previewPanel').classList.remove('active');
+                previewToolbar.classList.remove('visible');
+            } else {
+                document.getElementById('editorPanel').classList.remove('active');
+                document.getElementById('previewPanel').classList.add('active');
+                previewToolbar.classList.add('visible');
+                runPreview();
+                const device = document.getElementById('deviceSelect').value;
+                if (device === 'mobile' || device === 'tablet') {
+                    setTimeout(scalePreview, 100);
+                }
+            }
+        }
+
+        function switchEditorTab(type) {
+            currentEditorTab = type;
+            
+            document.querySelectorAll('.editor-tab').forEach(t => {
+                t.classList.remove('active');
+            });
+            document.querySelector(`[data-type="${type}"]`).classList.add('active');
+            
+            document.querySelectorAll('.editor-wrapper').forEach(w => {
+                w.classList.remove('active');
+                w.classList.add('hidden');
+            });
+            document.getElementById(`${type}Editor`).classList.add('active');
+            document.getElementById(`${type}Editor`).classList.remove('hidden');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebarCollapsed = !sidebarCollapsed;
+            sidebar.classList.toggle('collapsed');
+        }
+
+        function changeDevice() {
+            const device = document.getElementById('deviceSelect').value;
+            const frame = document.getElementById('previewFrame');
+            const wrapper = document.getElementById('previewWrapper');
+            const container = document.querySelector('.preview-container');
+
+            frame.className = 'preview-frame device-' + device;
+
+            if (device === 'desktop') {
+                wrapper.classList.add('mode-desktop');
+                wrapper.classList.remove('mode-mobile-tablet');
+                container.classList.add('mode-desktop');
+                container.classList.remove('mode-mobile-tablet');
+            } else {
+                wrapper.classList.remove('mode-desktop');
+                wrapper.classList.add('mode-mobile-tablet');
+                container.classList.remove('mode-desktop');
+                container.classList.add('mode-mobile-tablet');
+            }
+
+            if (device === 'mobile' || device === 'tablet') {
+                scalePreview();
+            } else {
+                wrapper.style.transform = 'scale(1)';
+            }
+        }
+
+        function scalePreview() {
+            const device = document.getElementById('deviceSelect').value;
+
+            if (device !== 'mobile' && device !== 'tablet') {
+                return;
+            }
+
+            const container = document.querySelector('.preview-container');
+            const wrapper = document.getElementById('previewWrapper');
+
+            const deviceDimensions = {
+                mobile: { width: 375, height: 667 },
+                tablet: { width: 768, height: 1024 }
+            };
+
+            const dim = deviceDimensions[device];
+            if (!dim) return;
+
+            const availableWidth = container.clientWidth - 40;
+            const availableHeight = container.clientHeight - 40;
+
+            const scaleX = availableWidth / dim.width;
+            const scaleY = availableHeight / dim.height;
+
+            let scale = Math.min(scaleX, scaleY);
+
+            if (scale > 1) {
+                scale = 1;
+            }
+
+            wrapper.style.transform = `scale(${scale.toFixed(4)})`;
+        }
+
+        // ==================== BEAUTIFIER ENGINE ====================
+
+        function showToast(msg, type = 'success', duration = 2200) {
+            let toast = document.getElementById('ideToast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'ideToast';
+                toast.className = 'toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.className = `toast ${type}`;
+            void toast.offsetWidth; 
+            toast.classList.add('show');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        function beautifyHTML(html) {
+            const INDENT = '    ';
+            const inlineTags = new Set(['a','abbr','acronym','b','bdo','big','br','button','cite',
+                'code','dfn','em','i','img','input','kbd','label','map','object','output',
+                'q','samp','select','small','span','strong','sub','sup','textarea','time',
+                'tt','u','var']);
+            const voidTags = new Set(['area','base','br','col','embed','hr','img','input',
+                'link','meta','param','source','track','wbr']);
+
+            let result = '';
+            let depth = 0;
+            let i = 0;
+            const len = html.length;
+
+            function indent() { return INDENT.repeat(Math.max(0, depth)); }
+
+            function flushText(text) {
+                const t = text.trim();
+                if (!t) return;
+                result += indent() + t + '\n';
+            }
+
+            let textBuf = '';
+
+            while (i < len) {
+                if (html.slice(i, i+9).toLowerCase() === '<!doctype') {
+                    flushText(textBuf); textBuf = '';
+                    const end = html.indexOf('>', i);
+                    result += html.slice(i, end + 1) + '\n';
+                    i = end + 1;
+                    continue;
+                }
+                if (html.slice(i, i+4) === '<!--') {
+                    flushText(textBuf); textBuf = '';
+                    const end = html.indexOf('-->', i);
+                    if (end === -1) { result += indent() + html.slice(i) + '\n'; break; }
+                    const comment = html.slice(i, end + 3);
+                    result += indent() + comment.trim() + '\n';
+                    i = end + 3;
+                    continue;
+                }
+                if (html.slice(i, i+7).toLowerCase() === '<script' || html.slice(i, i+6).toLowerCase() === '<style') {
+                    flushText(textBuf); textBuf = '';
+                    const isScript = html.slice(i, i+7).toLowerCase() === '<script';
+                    const tagName = isScript ? 'script' : 'style';
+                    const closeTag = `</${tagName}`;
+                    const openEnd = html.indexOf('>', i);
+                    const openTag = html.slice(i, openEnd + 1);
+                    const closeIdx = html.toLowerCase().indexOf(closeTag, openEnd);
+                    if (closeIdx === -1) { result += indent() + html.slice(i) + '\n'; break; }
+                    const inner = html.slice(openEnd + 1, closeIdx);
+                    const closeEnd = html.indexOf('>', closeIdx);
+                    const closeTagFull = html.slice(closeIdx, closeEnd + 1);
+                    const innerLines = inner.split('\n').map(l => l.trim()).filter(l => l);
+                    result += indent() + openTag + '\n';
+                    depth++;
+                    innerLines.forEach(l => { result += indent() + l + '\n'; });
+                    depth--;
+                    result += indent() + closeTagFull + '\n';
+                    i = closeEnd + 1;
+                    continue;
+                }
+                if (html[i] === '<') {
+                    flushText(textBuf); textBuf = '';
+                    const end = html.indexOf('>', i);
+                    if (end === -1) { result += html.slice(i); break; }
+                    const raw = html.slice(i, end + 1);
+                    const isClose  = raw[1] === '/';
+                    const isSingle = raw[raw.length - 2] === '/';
+                    const tagMatch = raw.match(/^<\/?([a-zA-Z][a-zA-Z0-9]*)/);
+                    const tagName  = tagMatch ? tagMatch[1].toLowerCase() : '';
+                    const isVoid   = voidTags.has(tagName);
+                    const isInline = inlineTags.has(tagName);
+
+                    if (isClose) {
+                        depth = Math.max(0, depth - 1);
+                        result += indent() + raw + '\n';
+                    } else if (isVoid || isSingle) {
+                        result += indent() + raw + '\n';
+                    } else {
+                        result += indent() + raw + '\n';
+                        if (!isInline) depth++;
+                    }
+                    i = end + 1;
+                    continue;
+                }
+                textBuf += html[i];
+                i++;
+            }
+            flushText(textBuf);
+            return result.replace(/\n{3,}/g, '\n\n').trim();
+        }
+
+        function beautifyCSS(css) {
+            const INDENT = '    ';
+            const tokens = [];
+            let i = 0;
+            while (i < css.length) {
+                if (css.slice(i, i+2) === '/*') {
+                    const end = css.indexOf('*/', i + 2);
+                    if (end === -1) { tokens.push({ type: 'comment', val: css.slice(i) }); break; }
+                    tokens.push({ type: 'comment', val: css.slice(i, end + 2) });
+                    i = end + 2; continue;
+                }
+                if (css[i] === '"' || css[i] === "'") {
+                    const q = css[i]; let j = i + 1;
+                    while (j < css.length && css[j] !== q) { if (css[j] === '\\') j++; j++; }
+                    tokens.push({ type: 'string', val: css.slice(i, j + 1) });
+                    i = j + 1; continue;
+                }
+                if (css[i] === '{') { tokens.push({ type: 'open' }); i++; continue; }
+                if (css[i] === '}') { tokens.push({ type: 'close' }); i++; continue; }
+                if (css[i] === ';') { tokens.push({ type: 'semi' }); i++; continue; }
+                let j = i;
+                while (j < css.length && !'{};\'"'.includes(css[j]) && css.slice(j,j+2) !== '/*') j++;
+                if (j > i) tokens.push({ type: 'text', val: css.slice(i, j) });
+                i = j;
+            }
+
+            let result = '';
+            let depth = 0;
+            let buf = '';
+
+            function ind() { return INDENT.repeat(depth); }
+
+            for (const tok of tokens) {
+                if (tok.type === 'comment') {
+                    if (buf.trim()) { result += ind() + buf.trim() + '\n'; buf = ''; }
+                    result += tok.val.split('\n').map((l, idx) =>
+                        idx === 0 ? ind() + l.trimStart() : ind() + ' ' + l.trim()
+                    ).join('\n') + '\n';
+                } else if (tok.type === 'open') {
+                    result += (buf.trim() ? ' ' : ind()) + '{\n';
+                    buf = '';
+                    depth++;
+                } else if (tok.type === 'close') {
+                    if (buf.trim()) { result += ind() + buf.trim() + ';\n'; buf = ''; }
+                    depth = Math.max(0, depth - 1);
+                    result += ind() + '}\n\n';
+                } else if (tok.type === 'semi') {
+                    result += ind() + buf.trim() + ';\n';
+                    buf = '';
+                } else {
+                    buf += tok.val;
+                }
+            }
+            if (buf.trim()) result += buf.trim() + '\n';
+            return result.replace(/\n{3,}/g, '\n\n').trim();
+        }
+
+        function beautifyJS(js) {
+            const INDENT = '    ';
+            let result = '';
+            let depth = 0;
+            let i = 0;
+            let newline = true; 
+
+            function ind() { return INDENT.repeat(Math.max(0, depth)); }
+            function emit(s) {
+                if (newline && s.trim()) { result += ind(); newline = false; }
+                result += s;
+            }
+            function nl() { result += '\n'; newline = true; }
+
+            while (i < js.length) {
+                if (js.slice(i, i+2) === '//') {
+                    const end = js.indexOf('\n', i);
+                    const line = end === -1 ? js.slice(i) : js.slice(i, end);
+                    emit(line.trim());
+                    nl();
+                    i = end === -1 ? js.length : end + 1;
+                    continue;
+                }
+                if (js.slice(i, i+2) === '/*') {
+                    const end = js.indexOf('*/', i + 2);
+                    const comment = end === -1 ? js.slice(i) : js.slice(i, end + 2);
+                    comment.split('\n').forEach((l, idx) => {
+                        emit(idx === 0 ? l.trimStart() : ' ' + l.trim());
+                        nl();
+                    });
+                    i = end === -1 ? js.length : end + 2;
+                    continue;
+                }
+                if (js[i] === '`') {
+                    let j = i + 1;
+                    while (j < js.length) {
+                        if (js[j] === '\\') { j += 2; continue; }
+                        if (js[j] === '`') { j++; break; }
+                        j++;
+                    }
+                    emit(js.slice(i, j));
+                    i = j;
+                    continue;
+                }
+                if (js[i] === '"' || js[i] === "'") {
+                    const q = js[i]; let j = i + 1;
+                    while (j < js.length && js[j] !== q) { if (js[j] === '\\') j++; j++; }
+                    emit(js.slice(i, j + 1));
+                    i = j + 1;
+                    continue;
+                }
+                const prevResult = result.trimEnd();
+                const lastChar = prevResult ? prevResult[prevResult.length - 1] : '';
+                if (js[i] === '/' && '(,=![&|?:{;'.includes(lastChar)) {
+                    let j = i + 1;
+                    while (j < js.length && js[j] !== '/' && js[j] !== '\n') {
+                        if (js[j] === '\\') j++;
+                        j++;
+                    }
+                    if (js[j] === '/') j++;
+                    while (j < js.length && /[gimsuy]/.test(js[j])) j++;
+                    emit(js.slice(i, j));
+                    i = j;
+                    continue;
+                }
+
+                const ch = js[i];
+
+                if (ch === '{') {
+                    emit(' {');
+                    nl();
+                    depth++;
+                    i++;
+                    continue;
+                }
+                if (ch === '}') {
+                    depth = Math.max(0, depth - 1);
+                    if (!newline) nl();
+                    emit('}');
+                    let peek = i + 1;
+                    while (peek < js.length && /[ \t]/.test(js[peek])) peek++;
+                    const after = js.slice(peek, peek+7);
+                    if (/^(else|catch|finally)/.test(after)) {
+                        result += ' ';
+                        newline = false;
+                    } else {
+                        nl();
+                        if (depth === 0) nl();
+                    }
+                    i++;
+                    continue;
+                }
+                if (ch === ';') {
+                    emit(';');
+                    nl();
+                    i++;
+                    continue;
+                }
+                if (ch === '\n') {
+                    if (result.endsWith('\n\n')) { i++; continue; }
+                    if (!newline) nl();
+                    i++;
+                    continue;
+                }
+                if (ch === '\r') { i++; continue; }
+                if (ch === '\t') { emit('    '); i++; continue; }
+                if (ch === ' ') {
+                    if (!newline) emit(' ');
+                    i++;
+                    continue;
+                }
+                emit(ch);
+                i++;
+            }
+            return result.replace(/\n{3,}/g, '\n\n').trim();
+        }
+
+        function beautifyCurrentFile() {
+            if (!currentEditingFile || !currentEditingFile.filename) {
+                showToast('⚠️ Tidak ada file yang sedang diedit', 'error');
+                return;
+            }
+
+            const type = currentEditingFile.type;
+            const textarea = document.getElementById(`${type}Code`);
+            if (!textarea) return;
+
+            const original = textarea.value;
+            if (!original.trim()) {
+                showToast('⚠️ Editor kosong', 'info');
+                return;
+            }
+
+            let formatted = '';
+            try {
+                if (type === 'html')      formatted = beautifyHTML(original);
+                else if (type === 'css')  formatted = beautifyCSS(original);
+                else if (type === 'js')   formatted = beautifyJS(original);
+                else {
+                    showToast('ℹ️ Tipe file ini belum didukung', 'info');
+                    return;
+                }
+            } catch (e) {
+                showToast('❌ Gagal memformat: ' + e.message, 'error');
+                return;
+            }
+
+            if (formatted === original.trim()) {
+                showToast('✅ Kode sudah rapi!', 'info');
+                return;
+            }
+
+            textarea.value = formatted;
+            handleInput(type);
+            autoSave();
+
+            const btn = document.getElementById('beautifyBtn');
+            if (btn) {
+                btn.classList.remove('running');
+                void btn.offsetWidth;
+                btn.classList.add('running');
+                setTimeout(() => btn.classList.remove('running'), 600);
+            }
+
+            showToast(`✨ ${currentEditingFile.filename} berhasil diformat!`, 'success');
+        }
+
+        // ====================================================================
+        // FIND & REPLACE (VSCode-like)
+        // ====================================================================
+        const findState = {
+            html: { query: '', replace: '', caseSensitive: false, regex: false, wholeWord: false, matches: [], current: -1, replaceVisible: false },
+            css:  { query: '', replace: '', caseSensitive: false, regex: false, wholeWord: false, matches: [], current: -1, replaceVisible: false },
+            js:   { query: '', replace: '', caseSensitive: false, regex: false, wholeWord: false, matches: [], current: -1, replaceVisible: false },
+        };
+
+        function buildFindPanel(type) {
+            const panel = document.getElementById(`${type}FindPanel`);
+            if (!panel || panel.dataset.built === '1') return;
+            panel.dataset.built = '1';
+            panel.innerHTML = `
+                <div class="find-replace-row" data-row="find">
+                    <button class="find-btn toggle" data-action="toggle-replace" title="Toggle Replace (Ctrl+H)">▸</button>
+                    <input type="text" data-role="find" placeholder="Find" autocomplete="off" spellcheck="false">
+                    <span class="find-count" data-role="count">No results</span>
+                    <button class="find-btn toggle" data-action="case" title="Match Case (Alt+C)">Aa</button>
+                    <button class="find-btn toggle" data-action="word" title="Whole Word (Alt+W)">ab</button>
+                    <button class="find-btn toggle" data-action="regex" title="Regex (Alt+R)">.*</button>
+                    <button class="find-btn" data-action="prev" title="Previous (Shift+Enter)">▲</button>
+                    <button class="find-btn" data-action="next" title="Next (Enter)">▼</button>
+                    <button class="find-btn" data-action="close" title="Close (Esc)">✕</button>
+                </div>
+                <div class="find-replace-row" data-row="replace" style="display:none;">
+                    <span style="width:24px;"></span>
+                    <input type="text" data-role="replace" placeholder="Replace" autocomplete="off" spellcheck="false">
+                    <button class="find-btn" data-action="replace-one" title="Replace">⤷</button>
+                    <button class="find-btn" data-action="replace-all" title="Replace All">⇄</button>
+                    <span style="flex:0 0 auto;width:60px;"></span>
+                </div>
+            `;
+
+            const findInput = panel.querySelector('[data-role="find"]');
+            const replaceInput = panel.querySelector('[data-role="replace"]');
+
+            findInput.addEventListener('input', () => {
+                findState[type].query = findInput.value;
+                runFindHighlights(type, true);
+            });
+            findInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (e.shiftKey) findGoto(type, -1);
+                    else findGoto(type, +1);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeFindPanel(type);
+                }
+            });
+            replaceInput.addEventListener('input', () => {
+                findState[type].replace = replaceInput.value;
+            });
+            replaceInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    replaceOne(type);
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    closeFindPanel(type);
+                }
+            });
+
+            panel.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-action]');
+                if (!btn) return;
+                const action = btn.dataset.action;
+                if (action === 'next') findGoto(type, +1);
+                else if (action === 'prev') findGoto(type, -1);
+                else if (action === 'close') closeFindPanel(type);
+                else if (action === 'replace-one') replaceOne(type);
+                else if (action === 'replace-all') replaceAll(type);
+                else if (action === 'toggle-replace') toggleReplaceRow(type);
+                else if (action === 'case') { findState[type].caseSensitive = !findState[type].caseSensitive; btn.classList.toggle('active'); runFindHighlights(type); }
+                else if (action === 'word') { findState[type].wholeWord = !findState[type].wholeWord; btn.classList.toggle('active'); runFindHighlights(type); }
+                else if (action === 'regex') { findState[type].regex = !findState[type].regex; btn.classList.toggle('active'); runFindHighlights(type); }
+            });
+        }
+
+        function openFindPanel(type, withReplace) {
+            buildFindPanel(type);
+            const panel = document.getElementById(`${type}FindPanel`);
+            panel.classList.add('active');
+            if (withReplace) showReplaceRow(type, true);
+            const findInput = panel.querySelector('[data-role="find"]');
+            const ta = document.getElementById(`${type}Code`);
+            const sel = ta.value.substring(ta.selectionStart, ta.selectionEnd);
+            if (sel && !sel.includes('\n')) {
+                findInput.value = sel;
+                findState[type].query = sel;
+            }
+            findInput.focus();
+            findInput.select();
+            if (findState[type].query) runFindHighlights(type, true);
+        }
+
+        function closeFindPanel(type) {
+            const panel = document.getElementById(`${type}FindPanel`);
+            if (!panel) return;
+            panel.classList.remove('active');
+            findState[type].query = '';
+            findState[type].matches = [];
+            findState[type].current = -1;
+            handleInput(type);
+            const ta = document.getElementById(`${type}Code`);
+            ta.focus();
+        }
+
+        function toggleReplaceRow(type) {
+            const panel = document.getElementById(`${type}FindPanel`);
+            const row = panel.querySelector('[data-row="replace"]');
+            const btn = panel.querySelector('[data-action="toggle-replace"]');
+            const visible = row.style.display !== 'none';
+            showReplaceRow(type, !visible);
+        }
+        function showReplaceRow(type, visible) {
+            const panel = document.getElementById(`${type}FindPanel`);
+            const row = panel.querySelector('[data-row="replace"]');
+            const btn = panel.querySelector('[data-action="toggle-replace"]');
+            row.style.display = visible ? 'flex' : 'none';
+            btn.textContent = visible ? '▾' : '▸';
+            findState[type].replaceVisible = visible;
+        }
+
+        function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+        function buildFindRegex(type) {
+            const st = findState[type];
+            if (!st.query) return null;
+            let pattern = st.regex ? st.query : escapeRegex(st.query);
+            if (st.wholeWord) pattern = `\\b${pattern}\\b`;
+            const flags = 'g' + (st.caseSensitive ? '' : 'i');
+            try { return new RegExp(pattern, flags); } catch (e) { return null; }
+        }
+
+        function computeMatches(type) {
+            const st = findState[type];
+            const ta = document.getElementById(`${type}Code`);
+            const text = ta.value;
+            const re = buildFindRegex(type);
+            const out = [];
+            if (!re) { st.matches = []; return; }
+            let m;
+            let safety = 0;
+            while ((m = re.exec(text)) !== null) {
+                if (m.index === re.lastIndex) re.lastIndex++; 
+                out.push({ start: m.index, end: m.index + m[0].length });
+                if (++safety > 50000) break;
+            }
+            st.matches = out;
+            if (st.current >= out.length) st.current = out.length - 1;
+        }
+
+        function runFindHighlights(type, moveToFirst) {
+            computeMatches(type);
+            const st = findState[type];
+            const panel = document.getElementById(`${type}FindPanel`);
+            const findInput = panel ? panel.querySelector('[data-role="find"]') : null;
+            const countEl = panel ? panel.querySelector('[data-role="count"]') : null;
+
+            const highlight = document.getElementById(`${type}Highlight`);
+            highlight.querySelectorAll('mark.find-match').forEach(mk => {
+                const parent = mk.parentNode;
+                while (mk.firstChild) parent.insertBefore(mk.firstChild, mk);
+                parent.removeChild(mk);
+                parent.normalize && parent.normalize();
+            });
+
+            if (!st.query || st.matches.length === 0) {
+                if (findInput) findInput.classList.toggle('no-match', !!st.query);
+                if (countEl) {
+                    countEl.textContent = st.query ? 'No results' : 'No results';
+                    countEl.classList.toggle('no-match', !!st.query);
+                }
+                st.current = -1;
+                return;
+            }
+
+            if (findInput) findInput.classList.remove('no-match');
+            if (countEl) countEl.classList.remove('no-match');
+
+            if (moveToFirst || st.current < 0 || st.current >= st.matches.length) st.current = 0;
+
+            const ta = document.getElementById(`${type}Code`);
+            const text = ta.value;
+            const lineEls = highlight.querySelectorAll('.cl');
+            const lineStarts = [0];
+            for (let i = 0; i < text.length; i++) {
+                if (text[i] === '\n') lineStarts.push(i + 1);
+            }
+            for (let li = 0; li < lineEls.length; li++) {
+                const lineStart = lineStarts[li] ?? 0;
+                const lineEnd = (li + 1 < lineStarts.length) ? lineStarts[li + 1] - 1 : text.length;
+                const inLine = [];
+                for (let mi = 0; mi < st.matches.length; mi++) {
+                    const mt = st.matches[mi];
+                    if (mt.end <= lineStart) continue;
+                    if (mt.start >= lineEnd) break; 
+                    inLine.push({
+                        idx: mi,
+                        start: Math.max(0, mt.start - lineStart),
+                        end: Math.min(lineEnd - lineStart, mt.end - lineStart),
+                    });
+                }
+                if (inLine.length === 0) continue;
+                wrapMatchesInElement(lineEls[li], inLine, st.current);
+            }
+
+            if (countEl) countEl.textContent = `${st.current + 1} of ${st.matches.length}`;
+
+            scrollCurrentMatchIntoView(type);
+        }
+
+        function wrapMatchesInElement(el, ranges, currentGlobalIdx) {
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+            const nodes = [];
+            let offset = 0;
+            let n;
+            while ((n = walker.nextNode())) {
+                nodes.push({ node: n, start: offset, end: offset + n.nodeValue.length });
+                offset += n.nodeValue.length;
+            }
+            for (let r = ranges.length - 1; r >= 0; r--) {
+                const range = ranges[r];
+                if (range.start >= range.end) continue;
+                for (let i = nodes.length - 1; i >= 0; i--) {
+                    const info = nodes[i];
+                    if (info.end <= range.start) break;
+                    if (info.start >= range.end) continue;
+                    const localStart = Math.max(range.start, info.start) - info.start;
+                    const localEnd   = Math.min(range.end,   info.end)   - info.start;
+                    if (localStart >= localEnd) continue;
+                    let node = info.node;
+                    if (localEnd < node.nodeValue.length) {
+                        node.splitText(localEnd);
+                    }
+                    let middle = node;
+                    if (localStart > 0) {
+                        middle = node.splitText(localStart);
+                    }
+                    const mark = document.createElement('mark');
+                    mark.className = 'find-match' + (range.idx === currentGlobalIdx ? ' current' : '');
+                    middle.parentNode.insertBefore(mark, middle);
+                    mark.appendChild(middle);
+                }
+            }
+        }
+
+        function scrollCurrentMatchIntoView(type) {
+            const st = findState[type];
+            if (st.current < 0 || !st.matches[st.current]) return;
+            const m = st.matches[st.current];
+            const ta = document.getElementById(`${type}Code`);
+            try {
+                ta.focus({ preventScroll: true });
+                ta.setSelectionRange(m.start, m.end);
+                const before = ta.value.substring(0, m.start);
+                const lineCount = (before.match(/\n/g) || []).length;
+                const lineHeight = parseFloat(getComputedStyle(ta).lineHeight) || 22;
+                const desiredTop = Math.max(0, lineCount * lineHeight - ta.clientHeight / 2);
+                ta.scrollTop = desiredTop;
+                syncScroll(type);
+            } catch (e) {}
+            const panel = document.getElementById(`${type}FindPanel`);
+            const findInput = panel && panel.querySelector('[data-role="find"]');
+            if (findInput) findInput.focus();
+        }
+
+        function findGoto(type, dir) {
+            const st = findState[type];
+            if (st.matches.length === 0) return;
+            st.current = (st.current + dir + st.matches.length) % st.matches.length;
+            const highlight = document.getElementById(`${type}Highlight`);
+            highlight.querySelectorAll('mark.find-match').forEach(mk => mk.classList.remove('current'));
+            runFindHighlights(type, false);
+        }
+
+        function replaceOne(type) {
+            const st = findState[type];
+            if (!st.query) return;
+            computeMatches(type);
+            if (st.matches.length === 0) return;
+            if (st.current < 0 || st.current >= st.matches.length) st.current = 0;
+            const m = st.matches[st.current];
+            const ta = document.getElementById(`${type}Code`);
+            const before = ta.value.substring(0, m.start);
+            const after  = ta.value.substring(m.end);
+            const replacement = st.replace || '';
+            ta.value = before + replacement + after;
+            const pos = m.start + replacement.length;
+            ta.selectionStart = ta.selectionEnd = pos;
+            handleInput(type); 
+            findGoto(type, 0);
+        }
+
+        function replaceAll(type) {
+            const st = findState[type];
+            if (!st.query) return;
+            const re = buildFindRegex(type);
+            if (!re) return;
+            const ta = document.getElementById(`${type}Code`);
+            const original = ta.value;
+            const replaced = original.replace(re, st.replace || '');
+            if (replaced === original) {
+                showToast && showToast('No matches replaced', 'info');
+                return;
+            }
+            ta.value = replaced;
+            handleInput(type);
+            updateStatus && updateStatus(`Replaced all occurrences of "${st.query}"`);
+        }
+
+        function getCurrentEditorType() {
+            return currentEditorTab || 'html';
+        }
+
+        function init() {
+            loadProjectFromStorage();
+            updateFileCount();
+            handleInput('html');
+            handleInput('css');
+            handleInput('js');
+            applyWordWrap(); 
+            setupEditorResizeObservers();
+
+            const wrapper = document.getElementById('previewWrapper');
+            const container = document.querySelector('.preview-container');
+            if (wrapper) wrapper.classList.add('mode-desktop');
+            if (container) container.classList.add('mode-desktop');
+
+            if (!window.autocompleteListenersAdded) {
+                ['html', 'css', 'js'].forEach(type => {
+                    const textarea = document.getElementById(`${type}Code`);
+                    const dropdown = document.getElementById(`${type}Autocomplete`);
+
+                    textarea.addEventListener('click', () => {
+                        if (!autocompleteState[type].visible) checkAutocomplete(type);
+                    });
+
+                    textarea.addEventListener('scroll', () => {
+                        if (autocompleteState[type].visible) {
+                            const currentWord = getCurrentWord(textarea);
+                            if (currentWord.length > 0) positionDropdown(type, textarea, dropdown);
+                            else hideAutocomplete(type);
+                        }
+                    });
+
+                    document.addEventListener('click', (e) => {
+                        if (!dropdown.contains(e.target) && e.target !== textarea) hideAutocomplete(type);
+                    });
+                });
+                window.autocompleteListenersAdded = true;
+            }
+
+            if (projects.length === 0) {
+                document.getElementById('welcomePanel').style.display = '';
+                document.getElementById('editorWorkspace').style.display = 'none';
+                renderFileList();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('keydown', function(e) {
+                if (e.shiftKey && e.altKey && (e.key === 'F' || e.key === 'f')) {
+                    e.preventDefault();
+                    beautifyCurrentFile();
+                    return;
+                }
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === 'f' || e.key === 'F')) {
+                    if (currentMainTab !== 'editor') return;
+                    e.preventDefault();
+                    openFindPanel(getCurrentEditorType(), false);
+                    return;
+                }
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key === 'h' || e.key === 'H')) {
+                    if (currentMainTab !== 'editor') return;
+                    e.preventDefault();
+                    openFindPanel(getCurrentEditorType(), true);
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    const t = getCurrentEditorType();
+                    const panel = document.getElementById(`${t}FindPanel`);
+                    if (panel && panel.classList.contains('active')) {
+                        e.preventDefault();
+                        closeFindPanel(t);
+                    }
+                }
+            });
+
+            ['newFileName', 'newProjectName', 'renameProjectName', 'renameFileName'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        if (id === 'newFileName') createNewFile();
+                        else if (id === 'newProjectName') confirmNewProject();
+                        else if (id === 'renameProjectName') confirmRenameProject();
+                        else if (id === 'renameFileName') renameFile();
+                    }
+                });
+            });
+
+            window.addEventListener('resize', function() {
+                if (currentMainTab === 'preview') {
+                    const device = document.getElementById('deviceSelect').value;
+                    if (device === 'mobile' || device === 'tablet') scalePreview();
+                }
+                clearTimeout(window.__lnResizeTimer);
+                window.__lnResizeTimer = setTimeout(() => {
+                    ['html', 'css', 'js'].forEach(t => {
+                        if (document.getElementById(`${t}Code`)) handleInput(t);
+                    });
+                }, 80);
+            });
+
+            document.addEventListener('click', function(e) {
+                ['html', 'css', 'js'].forEach(type => {
+                    if (autocompleteState[type].visible) {
+                        const dropdown = document.getElementById(`${type}Autocomplete`);
+                        if (dropdown && !dropdown.contains(e.target)) {
+                            hideAutocomplete(type);
+                        }
+                    }
+                });
+            });
+
+            init();
+        });
+    </script>
+
+    <!--  Tombol UNTUK PWA -->
+    <button id="install-btn">Install ⬇</button>
+    <!-- JS UNTUK PWA -->
+    <script src="pwa.js" defer></script>
+</body>
+</html>
