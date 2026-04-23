@@ -1,0 +1,21 @@
+{
+  "name": "Kang CoPas-IDE",
+  "short_name": "CoPas",
+  "description": "Lightweight IDE for WebDev - By Ojanemwe",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#03073B",
+  "theme_color": "#03073B",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

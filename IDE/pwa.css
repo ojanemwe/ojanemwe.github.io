@@ -1,0 +1,27 @@
+/* Gaya untuk tombol install mengambang di pojok kanan bawah */
+#install-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 24px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: none; /* Sembunyikan sampai syarat PWA terpenuhi */
+    z-index: 9999;
+    transition: transform 0.2s ease-in-out;
+}
+
+#install-btn:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+#install-btn:active {
+    transform: scale(0.95);
+}
