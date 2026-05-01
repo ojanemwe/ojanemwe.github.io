@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BELI ATUH!</title>
+    <style>
+        /* Import font Poppins agar terlihat lebih modern */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body,
+        html {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Latar belakang gradient gelap yang elegan */
+            background: radial-gradient(circle at center, #1a1a2e 0%, #0f0f1a 100%);
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            perspective: 1000px;
+            /* Diperlukan untuk efek 3D parallax */
+        }
+
+        h1 {
+            color: #ffffff;
+            /* Ukuran font responsif: minimal 3rem, ideal 8vw, maksimal 7rem */
+            font-size: clamp(3rem, 8vw, 7rem);
+            text-align: center;
+            /* Efek bayangan neon awal */
+            text-shadow: 0 0 10px #00d2ff, 0 0 20px #00d2ff, 0 0 40px #3a7bd5;
+            cursor: default;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Kelas untuk masing-masing huruf */
+        .letter {
+            display: inline-block;
+            opacity: 0;
+            /* Posisi awal huruf sebelum muncul (berada di bawah dan terlipat) */
+            transform: translateY(50px) rotateX(-90deg);
+            transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Kelas yang ditambahkan via JS untuk memunculkan huruf */
+        .letter.visible {
+            opacity: 1;
+            transform: translateY(0) rotateX(0);
+        }
+
+        /* Animasi neon berkedip halus/pulsing yang berulang */
+        @keyframes pulseGlow {
+            0% {
+                text-shadow: 0 0 10px #00d2ff, 0 0 20px #00d2ff, 0 0 40px #3a7bd5;
+            }
+
+            50% {
+                text-shadow: 0 0 20px #00d2ff, 0 0 40px #00d2ff, 0 0 80px #3a7bd5, 0 0 120px #00d2ff;
+                color: #e6ffff;
+            }
+
+            100% {
+                text-shadow: 0 0 10px #00d2ff, 0 0 20px #00d2ff, 0 0 40px #3a7bd5;
+            }
+        }
+
+        /* Kelas untuk memicu animasi berulang setelah loading selesai */
+        .animate-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1 id="main-text"></h1>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const text = "Cari Apa Hayoo?";
+            const container = document.getElementById("main-text");
+
+            // 1. Memecah teks menjadi rentetan <span> untuk dianimasikan per huruf
+            text.split("").forEach((char, index) => {
+                const span = document.createElement("span");
+                // Mengganti spasi kosong dengan non-breaking space agar tidak hilang
+                span.textContent = char === " " ? "\u00A0" : char;
+                span.classList.add("letter");
+                // Memberikan delay bertahap untuk setiap huruf
+                span.style.transitionDelay = `${index * 0.1}s`;
+                container.appendChild(span);
+            });
+
+            // 2. Memicu animasi masuk (Entrance Animation)
+            // Menggunakan setTimeout kecil agar DOM sempat ter-render sebelum transisi dimulai
+            setTimeout(() => {
+                const letters = document.querySelectorAll(".letter");
+                letters.forEach(letter => {
+                    letter.classList.add("visible");
+                });
+
+                // Menambahkan efek glow berulang setelah animasi masuk selesai
+                setTimeout(() => {
+                    container.classList.add("animate-glow");
+                }, text.length * 100 + 600); // Waktu kalkulasi berdasarkan jumlah huruf + durasi transisi
+            }, 100);
+
+            // 3. Menambahkan efek Parallax 3D berdasarkan pergerakan Mouse
+            document.addEventListener("mousemove", (e) => {
+                // Menghitung kordinat tengah layar
+                const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+                const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+
+                // Menerapkan rotasi pada container teks
+                container.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+            });
+
+            // Reset posisi jika mouse keluar dari layar
+            document.addEventListener("mouseleave", () => {
+                container.style.transform = `rotateY(0deg) rotateX(0deg)`;
+                container.style.transition = `transform 0.5s ease`;
+            });
+
+            // Hapus transisi reset saat mouse masuk kembali agar tidak lag
+            document.addEventListener("mouseenter", () => {
+                container.style.transition = `transform 0.1s ease-out`;
+            });
+        });
+    </script>
+
+</body>
+
+</html>
