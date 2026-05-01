@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Candokio — Kasir POS</title>
+  <meta name="description" content="Candokio POS - Aplikasi Kasir Point of Sale Modern, Cepat, dan Responsif">
+  <meta name="theme-color" content="#6366F1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+  <!-- 1. RESOURCE HINTS (Performa) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+  <link rel="dns-prefetch" href="https://use.hugeicons.com">
+
+  <!-- 2. FONT (Preload + Load) -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    as="style">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+  <!-- 3. CSS -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/pwa.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css">
+
+  <!-- 4. JAVASCRIPT LIBRARIES (Defer) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-masker/1.2.0/vanilla-masker.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js" defer></script>
+</head>
+
+<body>
+
+  <!-- ================================================================ -->
+  <!-- LOGIN SCREEN (Tampilan awal saat belum login) -->
+  <!-- ================================================================ -->
+  <div id="login-screen" class="login-wrapper">
+    <div class="login-card">
+      <!-- Logo Brand -->
+      <div class="login-logo">C</div>
+      <h1>Candokio</h1>
+      <p>Masuk ke akun Anda untuk melanjutkan</p>
+
+      <!-- Form Login -->
+      <form id="login-form" autocomplete="off">
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input type="text" id="login-username" placeholder="Masukkan username" required autofocus
+            autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" placeholder="Masukkan password" required
+            autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary" id="btn-login">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+            <polyline points="10 17 15 12 10 7" />
+            <line x1="15" y1="12" x2="3" y2="12" />
+          </svg>
+          Masuk
+        </button>
+      </form>
+
+      <div class="login-footer">
+        <a href="#" id="link-register">Daftar Akun Baru</a>
+        <span style="margin: 0 0.5rem;">•</span>
+        <a href="#" id="link-forgot">Lupa Password?</a>
+      </div>
+
+      <div id="setup-db-container" style="text-align:center; margin-top: 1.5rem; display: none;">
+        <button type="button" class="btn btn-outline btn-sm"
+          onclick="document.getElementById('init-modal').classList.add('active')">
+          🚀 Setup Database Pertama Kali
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- INIT DATABASE MODAL (Ditampilkan saat DB kosong) -->
+  <!-- ================================================================ -->
+  <div id="init-modal" class="modal-overlay">
+    <div class="modal-content" style="max-width:440px;">
+      <div class="modal-header">
+        <h3>🚀 Inisialisasi Database</h3>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-muted mb-2">Database/Spreadsheet Anda saat ini kosong. Silakan buat akun
+          <strong>Super Admin</strong> pertama untuk menginisialisasi semua tabel.
+        </p>
+        <form id="init-form" autocomplete="off" style="text-align:left;">
+          <div class="form-group">
+            <label>Username Super Admin *</label>
+            <input type="text" id="init-username" required placeholder="Huruf kecil, tanpa spasi" pattern="[a-z0-9_]+"
+              autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>Nama Lengkap *</label>
+            <input type="text" id="init-nama" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>Password *</label>
+            <input type="password" id="init-password" required minlength="4" autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-primary w-full" id="btn-init">✨ Inisialisasi Sistem</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- APP SHELL (Tampil setelah login berhasil) -->
+  <!-- ================================================================ -->
+  <div id="app-shell" class="app-layout hidden">
+
+    <!-- ======================== SIDEBAR (Desktop) ======================== -->
+    <aside class="sidebar" id="sidebar">
+      <!-- Brand -->
+      <div class="sidebar-brand">
+        <div class="brand-icon">C</div>
+        <span class="brand-text">Candokio</span>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="sidebar-nav" id="sidebar-nav">
+        <!-- Menu Utama -->
+        <div class="nav-group-label">Menu Utama</div>
+
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-dashboard" href="#view-dashboard">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="9" rx="1" />
+              <rect x="14" y="3" width="7" height="5" rx="1" />
+              <rect x="14" y="12" width="7" height="9" rx="1" />
+              <rect x="3" y="16" width="7" height="5" rx="1" />
+            </svg>
+            <span class="nav-label">Dashboard</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-pos" href="#view-pos">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M2 10h20" />
+              <path d="M12 4v16" />
+            </svg>
+            <span class="nav-label">Kasir (POS)</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-products" href="#view-products">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            <span class="nav-label">Produk</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-customers" href="#view-customers">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+            <span class="nav-label">Pelanggan</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-debt" href="#view-debt">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M2 17l10 5 10-5" />
+              <path d="M2 12l10 5 10-5" />
+              <path d="M12 2L2 7l10 5 10-5L12 2z" />
+            </svg>
+            <span class="nav-label">Hutang</span>
+          </a>
+        </div>
+
+        <div class="sidebar-divider"></div>
+        <div class="nav-group-label">Keuangan</div>
+
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-kas" href="#view-kas">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+              <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
+              <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
+            </svg>
+            <span class="nav-label">KAS Harian</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-shift" href="#view-shift">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+            </svg>
+            <span class="nav-label">Shift</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-transactions" href="#view-transactions">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            <span class="nav-label">Transaksi</span>
+          </a>
+        </div>
+        <div class="nav-item">
+          <a class="nav-link" data-view="view-reports" href="#view-reports">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+            <span class="nav-label">Laporan</span>
+          </a>
+        </div>
+
+        <div class="sidebar-divider desktop-only"></div>
+        <div class="nav-group-label desktop-only">Akun</div>
+
+        <div class="nav-item desktop-only">
+          <a class="nav-link" data-view="view-profile" href="#view-profile">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span class="nav-label">Profil</span>
+          </a>
+        </div>
+        <div class="nav-item desktop-only" id="nav-settings-item">
+          <a class="nav-link" data-view="view-settings" href="#view-settings">
+            <svg class="nav-icon" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span class="nav-label">Pengaturan</span>
+          </a>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- ======================== MAIN AREA ======================== -->
+    <div class="main-wrapper">
+
+      <!-- HEADER -->
+      <header class="app-header">
+        <div class="header-left">
+          <!-- Toggle Sidebar (Desktop) -->
+          <button class="btn-toggle-sidebar" id="btn-toggle-sidebar" aria-label="Toggle Sidebar">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"
+              stroke-linecap="round">
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
+          <!-- Mobile Brand (Menggantikan global-search) -->
+          <div class="sidebar-brand mobile-only"
+            style="border:none; padding:0; height:auto; margin-left:0.5rem; gap:0.5rem;">
+            <div class="brand-icon">C</div>
+            <span class="brand-text" style="font-size:1.25rem; font-weight:700; color:var(--text-main);">Candokio</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <!-- Tombol Global Sync/Refresh -->
+          <button class="header-btn" id="btn-global-sync" aria-label="Sinkronisasi Data" title="Sinkronisasi Data">
+            <svg viewBox="0 0 24 24" id="sync-icon">
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            <span class="notif-badge" id="sync-badge" style="display:none;">0</span>
+          </button>
+          <!-- Tombol Install PWA -->
+          <button class="header-btn" id="install-btn" style="display:none;" aria-label="Install App">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <!-- Notifikasi Lonceng -->
+          <button class="header-btn" id="btn-notif" aria-label="Notifikasi">
+            <svg viewBox="0 0 24 24">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            <span class="notif-badge" id="notif-badge">0</span>
+          </button>
+          <!-- Tema Dark/Light (pojok kanan atas) -->
+          <button class="header-btn" id="btn-theme" aria-label="Ganti Tema">
+            <svg id="theme-icon" viewBox="0 0 24 24">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+          <!-- Avatar Profil -->
+          <button class="header-btn" id="btn-avatar" aria-label="Profil">
+            <img class="header-avatar" id="header-avatar-img"
+              src="https://api.dicebear.com/7.x/initials/svg?seed=User&backgroundColor=6366F1&textColor=ffffff"
+              alt="Avatar">
+          </button>
+        </div>
+      </header>
+
+      <!-- Notification Dropdown -->
+      <div class="notif-dropdown" id="notif-dropdown">
+        <div class="notif-header">
+          <span>Notifikasi</span>
+          <button class="btn btn-ghost btn-sm" id="btn-notif-clear">Tandai Dibaca</button>
+        </div>
+        <ul class="notif-list" id="notif-list">
+          <li class="notif-empty">Tidak ada notifikasi baru</li>
+        </ul>
+      </div>
+
+      <!-- ======================== SPA CONTENT AREA ======================== -->
+      <main class="app-content" id="app">
+        <!-- View fragments akan di-inject di sini oleh Router SPA -->
+        <div class="empty-state" id="app-loading">
+          <div class="spinner" style="margin: 0 auto 1rem;"></div>
+          <p>Memuat halaman...</p>
+        </div>
+      </main>
+    </div>
+
+    <!-- ======================== BOTTOM NAV (Mobile) ======================== -->
+    <nav class="bottom-nav" id="bottom-nav">
+      <ul class="bottom-nav-list">
+        <li>
+          <a class="bottom-link" data-view="view-dashboard" href="#view-dashboard">
+            <svg viewBox="0 0 24 24">
+              <rect x="3" y="3" width="7" height="9" rx="1" />
+              <rect x="14" y="3" width="7" height="5" rx="1" />
+              <rect x="14" y="12" width="7" height="9" rx="1" />
+              <rect x="3" y="16" width="7" height="5" rx="1" />
+            </svg>
+            <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a class="bottom-link" data-view="view-pos" href="#view-pos">
+            <svg viewBox="0 0 24 24">
+              <rect x="2" y="4" width="20" height="16" rx="2" />
+              <path d="M2 10h20" />
+              <path d="M12 4v16" />
+            </svg>
+            <span>Kasir</span>
+          </a>
+        </li>
+        <li>
+          <a class="bottom-link" data-view="view-products" href="#view-products">
+            <svg viewBox="0 0 24 24">
+              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <path d="M16 10a4 4 0 0 1-8 0" />
+            </svg>
+            <span>Produk</span>
+          </a>
+        </li>
+        <li>
+          <a class="bottom-link" data-view="view-transactions" href="#view-transactions">
+            <svg viewBox="0 0 24 24">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+            </svg>
+            <span>Transaksi</span>
+          </a>
+        </li>
+        <li>
+          <button class="bottom-link" id="btn-more-menu">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="12" cy="5" r="1" />
+              <circle cx="12" cy="19" r="1" />
+            </svg>
+            <span>Lainnya</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- ======================== MORE MODAL (Mobile) ======================== -->
+    <div class="modal-overlay bottom" id="more-modal">
+      <div class="modal-content" style="max-width: 100%; border-radius: 1rem 1rem 0 0;">
+        <div class="modal-header">
+          <h3>Menu Lainnya</h3>
+          <button class="modal-close" id="btn-close-more">
+            <svg viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body" style="padding-bottom: calc(var(--bottom-nav-h) + 1rem);">
+          <div class="nav-item">
+            <a class="nav-link" data-view="view-customers" href="#view-customers">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <span class="nav-label">Pelanggan</span>
+            </a>
+          </div>
+          <div class="nav-item">
+            <a class="nav-link" data-view="view-debt" href="#view-debt">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
+                <path d="M12 2L2 7l10 5 10-5L12 2z" />
+              </svg>
+              <span class="nav-label">Hutang</span>
+            </a>
+          </div>
+          <div class="nav-item">
+            <a class="nav-link" data-view="view-kas" href="#view-kas">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4" />
+                <path d="M4 6v12c0 1.1.9 2 2 2h14v-4" />
+                <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z" />
+              </svg>
+              <span class="nav-label">KAS Harian</span>
+            </a>
+          </div>
+          <div class="nav-item">
+            <a class="nav-link" data-view="view-shift" href="#view-shift">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+              </svg>
+              <span class="nav-label">Shift</span>
+            </a>
+          </div>
+          <div class="nav-item">
+            <a class="nav-link" data-view="view-reports" href="#view-reports">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+              </svg>
+              <span class="nav-label">Laporan</span>
+            </a>
+          </div>
+          <div class="sidebar-divider"></div>
+          <div class="nav-item">
+            <a class="nav-link" data-view="view-profile" href="#view-profile">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+              <span class="nav-label">Profil</span>
+            </a>
+          </div>
+          <div class="nav-item" id="more-settings-item">
+            <a class="nav-link" data-view="view-settings" href="#view-settings">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span class="nav-label">Pengaturan</span>
+            </a>
+          </div>
+          <div class="sidebar-divider"></div>
+          <div class="nav-item">
+            <button class="nav-link" id="btn-logout-mobile" style="color: var(--danger);">
+              <svg class="nav-icon" viewBox="0 0 24 24">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span class="nav-label">Keluar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- LOADING OVERLAY GLOBAL -->
+  <!-- ================================================================ -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div style="text-align:center;">
+      <div class="spinner"></div>
+      <p style="margin-top:1rem; color:#fff; font-size:0.875rem;" id="loading-text">Memproses...</p>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Global Cropper Modal -->
+  <div class="modal-overlay" id="cropper-modal">
+    <div class="modal-content" style="max-width:560px;">
+      <div class="modal-header">
+        <h3>Sesuaikan Foto</h3>
+        <button class="modal-close" id="cropper-btn-close"><svg viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg></button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div id="cropper-container"
+          style="width:100%; height:380px; background:#1a1a1a; overflow:hidden; position:relative;">
+          <img id="cropper-image" src="" alt="Crop" style="display:block; max-width:100%;">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" id="cropper-btn-cancel">Batal</button>
+        <button class="btn btn-primary btn-sm" id="cropper-btn-apply">✂️ Gunakan Foto Ini</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- JAVASCRIPT (Urutan penting!) -->
+  <!-- ================================================================ -->
+  <script>
+    window.ENV = {};
+    fetch('config.txt')
+      .then(res => {
+        if (!res.ok) throw new Error("Gagal memuat config.txt");
+        return res.text();
+      })
+      .then(text => {
+        text.split('\n').forEach(line => {
+          const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+          if (match) {
+            let key = match[1];
+            let value = match[2] || '';
+            if (value.startsWith('"') && value.endsWith('"')) value = value.substring(1, value.length - 1);
+            else if (value.startsWith("'") && value.endsWith("'")) value = value.substring(1, value.length - 1);
+            window.ENV[key] = value;
+          }
+        });
+      })
+      .catch(err => {
+        console.warn('Tidak dapat memuat .env. Memastikan aplikasi berjalan lewat server (bukan file://).', err);
+      })
+      .finally(() => {
+        const scripts = [
+          "js/localforage.min.js",
+          "js/app.js",
+          "js/offline-service.js",
+          "main.js",
+          "js/pwa.js"
+        ];
+
+        function loadScript(i) {
+          if (i >= scripts.length) return;
+          const s = document.createElement('script');
+          s.src = scripts[i];
+          s.onload = () => loadScript(i + 1);
+          document.body.appendChild(s);
+        }
+
+        loadScript(0);
+      });
+  </script>
+
+</body>
+
+</html>
