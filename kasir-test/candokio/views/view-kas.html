@@ -342,6 +342,22 @@
         document.getElementById('kas-modal').classList.add('active');
     });
 
+    // Helper: ambil ID shift yang sedang aktif untuk user saat ini dari cache lokal.
+    // view-kas.html tidak punya akses ke POS.activeShift, jadi baca langsung dari OfflineService.
+    async function getActiveShiftId() {
+        try {
+            const shifts = await OfflineService.cachedRead('Shift');
+            const active = (shifts || []).find(s =>
+                s.status && s.status.toLowerCase() === 'open' &&
+                s.kasir === App.currentUser.username
+            );
+            return active ? active.id : '';
+        } catch(e) {
+            console.warn('[KAS] Gagal baca shift aktif:', e);
+            return '';
+        }
+    }
+
     // === Simpan (Tambah / Edit) ===
     document.getElementById('kas-save').addEventListener('click', async () => {
         const editId = document.getElementById('kf-edit-id').value;
@@ -361,14 +377,20 @@
             });
         }
 
+        // Ambil shift_id aktif — hanya untuk entri baru (bukan edit).
+        // Saat edit, shift_id tidak diubah agar tidak merusak data historis.
+        const activeShiftId = editId ? undefined : await getActiveShiftId();
+
         const data = {
             tanggal: editId ? undefined : toISOWIB(),
             jenis: jenis,
             sumber_dana: jenis==='Pemasukan' ? document.getElementById('kf-sumber').value : '',
             tujuan_pengeluaran: jenis==='Pengeluaran' ? document.getElementById('kf-tujuan').value : '',
             jumlah: jumlah,
-            keterangan: document.getElementById('kf-keterangan').value,
-            shift_id: ''
+            keterangan: (document.getElementById('kf-keterangan').value.trim()
+                ? document.getElementById('kf-keterangan').value.trim() + ' '
+                : '') + 'dicatat oleh ' + (App.currentUser.username || '-'),
+            shift_id: activeShiftId !== undefined ? activeShiftId : undefined
         };
         // Attach foto only if new file selected
         if (buktiBase64) data.foto_bukti_base64 = buktiBase64;
