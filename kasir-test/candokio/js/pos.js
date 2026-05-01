@@ -5,7 +5,7 @@
  * Cart management, checkout, shift, barcode scanner, receipt printing
  * ============================================================================
  */
-(function() {
+(function () {
     'use strict';
 
     // ========================================================================
@@ -52,7 +52,10 @@
     async function loadShiftStatus() {
         try {
             const allShifts = await OfflineService.cachedRead('Shift');
-            const openShift = allShifts.find(s => s.status === 'Open' && s.kasir === App.currentUser.username);
+            const openShift = allShifts.find(s =>
+                s.status && s.status.toLowerCase() === 'open' &&
+                s.kasir === App.currentUser.username
+            );
             POS.activeShift = openShift || null;
             updateShiftUI();
         } catch (e) {
@@ -108,7 +111,13 @@
                     kasir: App.currentUser.username,
                     modal_awal: parseFloat(modal)
                 });
-                POS.activeShift = { id: shiftId, modal_awal: parseFloat(modal), waktu_buka: new Date().toISOString() };
+                POS.activeShift = {
+                    id: shiftId,
+                    kasir: App.currentUser.username,
+                    modal_awal: parseFloat(modal),
+                    waktu_buka: new Date().toISOString(),
+                    status: 'open'   // ← tambahkan ini agar konsisten dengan cache
+                };
                 updateShiftUI();
                 showToast('Shift berhasil dibuka (Offline Syncing)!', 'success');
             } catch (e) {
@@ -260,19 +269,19 @@
         const chipAll = document.querySelector('#pos-categories .pos-category-chip[data-cat="all"]');
         const chipFav = document.querySelector('#pos-categories .pos-category-chip[data-cat="fav"]');
         const dropWrap = document.getElementById('pos-cat-dropdown-wrap');
-        const dropBtn  = document.getElementById('pos-cat-dropdown-btn');
+        const dropBtn = document.getElementById('pos-cat-dropdown-btn');
         const dropLabel = document.getElementById('pos-cat-dropdown-label');
         const dropMenu = document.getElementById('pos-cat-dropdown-menu');
 
         // Reset chip states
-        [chipAll, chipFav].forEach(c => { if(c) c.classList.remove('active'); });
+        [chipAll, chipFav].forEach(c => { if (c) c.classList.remove('active'); });
 
         // Isi dropdown menu dengan kategori
         if (POS.categories.length > 0) {
             dropWrap.style.display = '';
             dropMenu.innerHTML = POS.categories.map(c => {
                 const catName = escapeHtml(c.nama_kategori || c.id);
-                const catVal  = c.nama_kategori || c.id;
+                const catVal = c.nama_kategori || c.id;
                 return `<button class="pos-cat-dropdown-item" data-cat="${catName}">${catName}</button>`;
             }).join('');
 
@@ -319,17 +328,17 @@
 
     /** Sinkronkan tampilan chip / dropdown label dengan POS.selectedCategory */
     function _syncCategoryUI() {
-        const chipAll   = document.querySelector('#pos-categories .pos-category-chip[data-cat="all"]');
-        const chipFav   = document.querySelector('#pos-categories .pos-category-chip[data-cat="fav"]');
-        const dropBtn   = document.getElementById('pos-cat-dropdown-btn');
+        const chipAll = document.querySelector('#pos-categories .pos-category-chip[data-cat="all"]');
+        const chipFav = document.querySelector('#pos-categories .pos-category-chip[data-cat="fav"]');
+        const dropBtn = document.getElementById('pos-cat-dropdown-btn');
         const dropLabel = document.getElementById('pos-cat-dropdown-label');
-        const dropMenu  = document.getElementById('pos-cat-dropdown-menu');
+        const dropMenu = document.getElementById('pos-cat-dropdown-menu');
         const cat = POS.selectedCategory;
 
         // Reset semua
-        if (chipAll)  chipAll.classList.toggle('active', cat === 'all');
-        if (chipFav)  chipFav.classList.toggle('active', cat === 'fav');
-        if (dropBtn)  dropBtn.classList.remove('active');
+        if (chipAll) chipAll.classList.toggle('active', cat === 'all');
+        if (chipFav) chipFav.classList.toggle('active', cat === 'fav');
+        if (dropBtn) dropBtn.classList.remove('active');
         if (dropLabel) dropLabel.textContent = 'Kategori';
 
         // Highlight item dropdown
@@ -531,18 +540,18 @@
         document.getElementById('cart-subtotal').textContent = formatCurrency(subtotal);
         document.getElementById('cart-discount').textContent = '- ' + formatCurrency(discountAmount);
         document.getElementById('cart-total').textContent = formatCurrency(total);
-        
+
         // Update cart badge summary
         const totalItems = POS.cart.reduce((sum, i) => sum + i.qty, 0);
         const countBadge = document.getElementById('cart-count');
         if (countBadge) countBadge.textContent = totalItems;
-        
+
         // Update mobile cart handle summary
         const mobTotal = document.getElementById('mobile-cart-total');
         if (mobTotal) mobTotal.textContent = formatCurrency(total);
         const mobCount = document.getElementById('mobile-cart-count');
         if (mobCount) mobCount.textContent = totalItems + ' Item';
-        
+
         // Update checkout button status
         document.getElementById('btn-checkout').disabled = POS.cart.length === 0;
     }
@@ -629,11 +638,11 @@
 
         if (metode === 'TUNAI') {
             let pecahan = [];
-            try { pecahan = JSON.parse(POS.tokoSettings.pecahan_uang_json || '[]'); } catch(e){}
+            try { pecahan = JSON.parse(POS.tokoSettings.pecahan_uang_json || '[]'); } catch (e) { }
             if (pecahan.length === 0) {
-                pecahan = [ {label: 'Uang Pas', val: 'auto'}, {label: '10 Ribu', val: 10000}, {label: '20 Ribu', val: 20000}, {label: '50 Ribu', val: 50000}, {label: '100 Ribu', val: 100000} ];
+                pecahan = [{ label: 'Uang Pas', val: 'auto' }, { label: '10 Ribu', val: 10000 }, { label: '20 Ribu', val: 20000 }, { label: '50 Ribu', val: 50000 }, { label: '100 Ribu', val: 100000 }];
             }
-            
+
             let btnHtml = pecahan.map(p => {
                 const isAuto = p.val === 'auto';
                 const style = isAuto ? 'background:var(--bg-surface-alt); border:1px solid var(--border-color); color:var(--text-color);' : 'background:var(--primary-light); color:var(--primary); font-weight:600; border:none;';
@@ -710,7 +719,7 @@
             // Autocreate new customer if they do not exist
             const customerName = POS.selectedCustomer.trim();
             const customerExists = POS.customers && POS.customers.find(c => (c.nama || '').toLowerCase() === customerName.toLowerCase());
-            
+
             if (!customerExists) {
                 try {
                     const nid = await db.request('getNextId', { prefix: 'CST_' });
@@ -726,7 +735,7 @@
                     });
                     if (!POS.customers) POS.customers = [];
                     POS.customers.push(newData);
-                } catch(e) {
+                } catch (e) {
                     console.warn('[POS] Gagal membuat pelanggan otomatis:', e);
                 }
             }
@@ -944,7 +953,7 @@ ${summary.kembalian > 0 ? `<tr class="total-row"><td>Kembalian</td><td style="te
                     stopScanner();
                     document.getElementById('scanner-modal').classList.remove('active');
                 },
-                () => {} // Error callback (per frame; diabaikan)
+                () => { } // Error callback (per frame; diabaikan)
             ).catch(err => {
                 document.getElementById('scanner-view').innerHTML =
                     '<p class="text-center text-danger" style="padding:2rem;">Gagal mengakses kamera: ' + err + '</p>';
@@ -957,7 +966,7 @@ ${summary.kembalian > 0 ? `<tr class="total-row"><td>Kembalian</td><td style="te
 
     function stopScanner() {
         if (POS.scannerInstance) {
-            POS.scannerInstance.stop().catch(() => {});
+            POS.scannerInstance.stop().catch(() => { });
             POS.scannerInstance.clear();
             POS.scannerInstance = null;
         }
@@ -966,7 +975,7 @@ ${summary.kembalian > 0 ? `<tr class="total-row"><td>Kembalian</td><td style="te
     // ========================================================================
     // CLEANUP
     // ========================================================================
-    window._viewCleanup = function() {
+    window._viewCleanup = function () {
         stopScanner();
         POS.cart = [];
         POS.products = [];
