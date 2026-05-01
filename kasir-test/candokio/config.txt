@@ -1,0 +1,2 @@
+GAS_API_URL="https://script.google.com/macros/s/AKfycbzOwoYjR4Mi00hsmS8t4yD3yydSXdl1yt54XdiDtpGqrTnbcZFLpZBCI87zB0iWTGVt/exec"
+API_KEY="Kunci5up3r_1717!@#"
