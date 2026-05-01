@@ -1,0 +1,137 @@
+<!-- ============================================================================
+     VIEW: PROFIL — Edit Data Akun & Foto Profil
+     ============================================================================ -->
+<div class="page-header"><h2>Profil Saya</h2></div>
+
+<div class="card" style="max-width:520px; margin:0 auto;">
+    <div style="text-align:center; padding:1.5rem 0;">
+        <div style="position:relative; display:inline-block;">
+            <img id="prof-avatar" src="" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--primary);" alt="Avatar">
+            <label for="prof-photo-input" style="position:absolute;bottom:0;right:0;width:32px;height:32px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg-surface);">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="#fff" fill="none" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </label>
+            <input type="file" id="prof-photo-input" accept="image/*" style="display:none;">
+        </div>
+        <h3 id="prof-name-display" style="margin-top:0.75rem;"></h3>
+        <p class="text-muted" id="prof-role-display"></p>
+    </div>
+    <hr>
+    <form id="prof-form" style="padding:0.5rem 0;">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="prof-username" disabled style="background:var(--bg-surface-alt);">
+        </div>
+        <div class="form-group">
+            <label>Nama Lengkap</label>
+            <input type="text" id="prof-nama" required>
+        </div>
+        <div class="form-group">
+            <label>Nomor HP</label>
+            <input type="tel" id="prof-hp" placeholder="08xxxxxxxxxx">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="prof-email" placeholder="contoh@email.com">
+        </div>
+        <div class="form-group">
+            <label>Alamat</label>
+            <textarea id="prof-alamat" rows="2" placeholder="Alamat lengkap"></textarea>
+        </div>
+        <hr>
+        <h4 style="margin-bottom:0.75rem;">Ganti Password</h4>
+        <div class="form-group">
+            <label>Password Baru</label>
+            <input type="password" id="prof-newpw" placeholder="Kosongkan jika tidak ingin mengubah">
+        </div>
+        <div class="form-group">
+            <label>Konfirmasi Password Baru</label>
+            <input type="password" id="prof-confirmpw" placeholder="Ulangi password baru">
+        </div>
+        <button type="submit" class="btn btn-primary w-full" style="margin-top:0.5rem;">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Simpan Perubahan
+        </button>
+    </form>
+    <hr>
+    <div style="text-align:center; padding:0.75rem 0;">
+        <button class="btn btn-danger btn-sm" onclick="handleLogout()">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Keluar dari Akun
+        </button>
+    </div>
+</div>
+
+<script>
+(function(){
+    const user = App.currentUser;
+    if(!user) return;
+
+    document.getElementById('prof-username').value = user.username||'';
+    document.getElementById('prof-nama').value = user.nama_lengkap||'';
+    document.getElementById('prof-hp').value = user.hp||'';
+    document.getElementById('prof-email').value = user.email||'';
+    document.getElementById('prof-alamat').value = user.alamat||'';
+    document.getElementById('prof-name-display').textContent = user.nama_lengkap||user.username;
+    document.getElementById('prof-role-display').textContent = (user.role||'').toUpperCase();
+
+    const avatarEl = document.getElementById('prof-avatar');
+    avatarEl.src = user.photo_base64 || 'https://api.dicebear.com/7.x/initials/svg?seed='+encodeURIComponent(user.nama_lengkap||user.username)+'&backgroundColor=6366F1&textColor=ffffff';
+
+    // Photo upload with Cropper
+    document.getElementById('prof-photo-input').addEventListener('change', async function(){
+        if(!this.files[0]) return;
+        try{
+            const base64 = await openImageCropper(this.files[0], { aspectRatio: 1 });
+            avatarEl.src = base64;
+            showLoading('Menyimpan foto...');
+            // Simpan ke server
+            await db.request('updateRow',{tableName:'Pengguna',id:user.username,newData:{photo_base64:base64}});
+            // Update local session
+            user.photo_base64 = base64;
+            localStorage.setItem('candokio_user', JSON.stringify(user));
+            document.getElementById('header-avatar-img').src = base64;
+            showToast('Foto profil berhasil diubah!','success');
+            hideLoading();
+        }catch(e){
+            if(e.message !== 'Dibatalkan') showToast('Gagal: '+e.message,'error');
+            hideLoading();
+        }
+        this.value = '';
+    });
+
+    // Save form
+    document.getElementById('prof-form').addEventListener('submit', async function(e){
+        e.preventDefault();
+        const nama = document.getElementById('prof-nama').value.trim();
+        const newPw = document.getElementById('prof-newpw').value;
+        const confirmPw = document.getElementById('prof-confirmpw').value;
+
+        if(!nama){showToast('Nama wajib diisi!','warning');return;}
+        if(newPw && newPw !== confirmPw){showToast('Password tidak cocok!','error');return;}
+        if(newPw && newPw.length < 4){showToast('Password minimal 4 karakter!','warning');return;}
+
+        const updateData = {
+            nama_lengkap: nama,
+            hp: document.getElementById('prof-hp').value.trim(),
+            email: document.getElementById('prof-email').value.trim(),
+            alamat: document.getElementById('prof-alamat').value.trim()
+        };
+        if(newPw) updateData.password_hash = newPw; // will be hashed by backend
+
+        showLoading('Menyimpan...');
+        try{
+            await db.request('updateRow',{tableName:'Pengguna',id:user.username,newData:updateData});
+            user.nama_lengkap = nama;
+            user.hp = updateData.hp;
+            user.email = updateData.email;
+            user.alamat = updateData.alamat;
+            localStorage.setItem('candokio_user', JSON.stringify(user));
+            document.getElementById('prof-name-display').textContent = nama;
+            document.getElementById('prof-newpw').value='';
+            document.getElementById('prof-confirmpw').value='';
+            showToast('Profil berhasil diperbarui!','success');
+        }catch(e){showToast(e.message,'error');}
+        hideLoading();
+    });
+})();
+</script>

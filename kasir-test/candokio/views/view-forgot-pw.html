@@ -1,0 +1,47 @@
+<!-- ============================================================================
+     VIEW: LUPA PASSWORD — Request Reset
+     ============================================================================ -->
+<div class="login-wrapper" style="min-height:auto; padding:2rem;">
+    <div class="login-card" style="max-width:420px;">
+        <div class="login-logo" style="background:linear-gradient(135deg, #EF4444, #F59E0B);">🔒</div>
+        <h1 style="font-size:1.25rem;">Lupa Password</h1>
+        <p>Kirim permintaan reset ke Super Admin.</p>
+        <form id="forgot-form" autocomplete="off" style="text-align:left;">
+            <div class="form-group">
+                <label>Username *</label>
+                <input type="text" id="forgot-username" required placeholder="Masukkan username Anda">
+            </div>
+            <div class="form-group">
+                <label>Alasan</label>
+                <textarea id="forgot-reason" rows="2" placeholder="Opsional"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">📩 Kirim Permintaan</button>
+        </form>
+        <div class="login-footer mt-2">
+            <a href="#" onclick="backToLogin();return false;">← Kembali ke Login</a>
+        </div>
+    </div>
+</div>
+<script>
+(function(){
+    document.getElementById('forgot-form').addEventListener('submit', async function(e){
+        e.preventDefault();
+        const username = document.getElementById('forgot-username').value.trim();
+        const alasan = document.getElementById('forgot-reason').value;
+
+        showLoading('Mengirim permintaan...');
+        try{
+            await db.request('requestPasswordReset',{ username, alasan });
+            hideLoading();
+            await Swal.fire({
+                title: '📩 Permintaan Terkirim',
+                text: 'Super Admin akan menerima notifikasi. Hubungi admin Anda untuk proses lebih lanjut.',
+                icon: 'info',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#6366F1'
+            });
+            backToLogin();
+        }catch(e){ hideLoading(); showToast(e.message,'error'); }
+    });
+})();
+</script>

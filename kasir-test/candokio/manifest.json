@@ -1,0 +1,26 @@
+{
+  "name": "Candokio - Kasir POS",
+  "short_name": "Candokio",
+  "description": "Aplikasi Kasir Point of Sale Modern — Candokio POS",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F3F4F6",
+  "theme_color": "#6366F1",
+  "categories": ["business", "finance"],
+  "lang": "id",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    }
+  ]
+}

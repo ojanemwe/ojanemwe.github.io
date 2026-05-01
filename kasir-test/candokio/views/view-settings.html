@@ -1,0 +1,444 @@
+<!-- ============================================================================
+     VIEW: PENGATURAN — Info Toko, Manajemen User, RBAC, dll
+     ============================================================================ -->
+<div class="page-header"><h2>Pengaturan</h2></div>
+
+<!-- Tabs -->
+<div class="tab-nav">
+    <button class="tab-btn active" data-tab="set-toko">Info Toko</button>
+    <button class="tab-btn" data-tab="set-users">Manajemen User</button>
+    <button class="tab-btn" data-tab="set-upah">Upah User</button>
+    <button class="tab-btn" data-tab="set-app">Aplikasi</button>
+</div>
+
+<!-- Tab: Info Toko -->
+<div id="set-toko">
+    <div class="card" style="max-width:560px;">
+        <h4 style="margin-bottom:1rem;">Identitas Toko</h4>
+        <div class="form-group"><label>Nama Toko</label><input type="text" id="st-nama"></div>
+        <div class="grid grid-2">
+            <div class="form-group"><label>No. HP / Telepon</label><input type="tel" id="st-hp"></div>
+            <div class="form-group"><label>Mata Uang</label><select id="st-currency"><option value="Rp">Rp (Rupiah)</option><option value="$">$ (Dollar)</option></select></div>
+        </div>
+        <div class="form-group"><label>Alamat</label><textarea id="st-alamat" rows="2"></textarea></div>
+        <div class="form-group"><label>Footer Struk</label><input type="text" id="st-footer" placeholder="Contoh: Terima kasih atas kunjungan Anda!"></div>
+        <div class="grid grid-2">
+            <div class="form-group"><label>Pembulatan Harga</label><select id="st-pembulatan"><option value="0">Tanpa Pembulatan</option><option value="100">Ke 100 Terdekat</option><option value="500">Ke 500 Terdekat</option><option value="1000">Ke 1.000 Terdekat</option></select></div>
+            <div class="form-group"><label>Format Tanggal</label><select id="st-dateformat"><option value="DD/MM/YYYY">DD/MM/YYYY</option><option value="MM/DD/YYYY">MM/DD/YYYY</option><option value="YYYY-MM-DD">YYYY-MM-DD</option></select></div>
+        </div>
+        <div class="form-group">
+            <label>Logo Toko</label>
+            <input type="file" id="st-logo-file" accept="image/*" style="font-size:0.8125rem;">
+            <img id="st-logo-preview" src="" style="display:none;width:64px;height:64px;object-fit:contain;margin-top:0.5rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);">
+        </div>
+        <button class="btn btn-primary w-full" id="st-save">💾 Simpan Info Toko</button>
+    </div>
+</div>
+
+<!-- Tab: Manajemen User -->
+<div id="set-users" class="hidden">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">Daftar User</h4>
+            <button class="btn btn-primary btn-sm" id="su-btn-add">+ Tambah User</button>
+        </div>
+        <div class="table-container">
+            <table><thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Akses</th><th style="width:100px;">Aksi</th></tr></thead>
+            <tbody id="su-table"></tbody></table>
+        </div>
+    </div>
+
+    <!-- Pendaftaran Pending -->
+    <div class="card mt-2">
+        <div class="card-header"><h4 class="card-title">⏳ Pendaftaran Menunggu Approval</h4></div>
+        <div class="table-container">
+            <table><thead><tr><th>Nama</th><th>Username</th><th>Tanggal</th><th style="width:120px;">Aksi</th></tr></thead>
+            <tbody id="su-pending"></tbody></table>
+        </div>
+    </div>
+
+    <!-- Reset Password Requests -->
+    <div class="card mt-2">
+        <div class="card-header"><h4 class="card-title">🔒 Request Reset Password</h4></div>
+        <div class="table-container">
+            <table><thead><tr><th>Username</th><th>Alasan</th><th>Tanggal</th><th>Status</th><th style="width:100px;">Aksi</th></tr></thead>
+            <tbody id="su-resets"></tbody></table>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Upah User -->
+<div id="set-upah" class="hidden">
+    <div class="card">
+        <div class="card-header"><h4 class="card-title">Manajemen Upah</h4><button class="btn btn-primary btn-sm" id="upah-btn-add">+ Tambah</button></div>
+        <div class="table-container">
+            <table><thead><tr><th>Username</th><th>Jenis</th><th style="text-align:right;">Nominal</th><th>Catatan</th><th style="width:80px;">Aksi</th></tr></thead>
+            <tbody id="upah-table"></tbody></table>
+        </div>
+    </div>
+</div>
+
+<!-- Tab: Pengaturan Aplikasi -->
+<div id="set-app" class="hidden">
+    <div class="card" style="max-width:480px; margin-bottom:1rem;">
+        <div class="card-header"><h4 class="card-title">Tombol Pecahan Tunai (POS)</h4></div>
+        <p class="text-sm text-muted mb-2">Konfigurasi tombol nilai pecahan uang untuk input cepat pembayaran di Kasir. Gunakan nilai <code>auto</code> untuk meniru sisa tagihan.</p>
+        <div class="table-container">
+            <table>
+                <thead><tr><th style="width:30px;"></th><th>Nama Tombol</th><th>Nilai (Rp / auto)</th><th style="width:50px;">Aksi</th></tr></thead>
+                <tbody id="app-pecahan-list"></tbody>
+            </table>
+            <button class="btn btn-outline btn-sm w-full" id="app-btn-add-pecahan" style="margin-top:0.5rem; justify-content:center;">+ Tambah Pecahan Baru</button>
+        </div>
+        <div style="margin-top:1rem;"><button class="btn btn-primary" id="app-btn-save-pecahan">Simpan Konfigurasi</button></div>
+    </div>
+
+    <div class="card" style="max-width:480px; margin-bottom:1rem;">
+        <div class="card-header"><h4 class="card-title">Tampilan Tabel Data</h4></div>
+        <p class="text-sm text-muted mb-2">Jumlah baris data yang ditampilkan per halaman pada semua tabel (KAS, Transaksi, Produk, dll).</p>
+        <div class="form-group" style="display:flex; align-items:center; gap:0.75rem;">
+            <input type="number" id="app-per-page" min="10" max="200" value="50" style="width:100px;">
+            <span class="text-sm text-muted">baris / halaman</span>
+        </div>
+        <div style="margin-top:0.5rem;"><button class="btn btn-primary btn-sm" id="app-btn-save-perpage">Simpan</button></div>
+    </div>
+    
+    <div class="card" style="max-width:480px;">
+        <h4>Stok Minimum Global</h4>
+        <p class="text-sm text-muted">Batas default stok minimum untuk notifikasi. Produk individual bisa diatur berbeda.</p>
+        <div class="form-group"><input type="number" id="sa-stok-min" min="1" value="5"></div>
+        <hr>
+        <h4>Export Data (CSV)</h4>
+        <p class="text-sm text-muted mb-1">Download data tabel ke file CSV.</p>
+        <div class="btn-group" style="flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="window._exportTable('Produk')">📦 Produk</button>
+            <button class="btn btn-outline btn-sm" onclick="window._exportTable('Pelanggan')">👥 Pelanggan</button>
+            <button class="btn btn-outline btn-sm" onclick="window._exportTable('Transaksi')">📄 Transaksi</button>
+            <button class="btn btn-outline btn-sm" onclick="window._exportTable('Hutang')">📋 Hutang</button>
+            <button class="btn btn-outline btn-sm" onclick="window._exportTable('BukuKas')">💰 KAS</button>
+            <button class="btn btn-outline btn-sm" onclick="window._exportTable('Shift')">⏰ Shift</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit User Access -->
+<div class="modal-overlay" id="su-access-modal">
+    <div class="modal-content" style="max-width:440px;">
+        <div class="modal-header">
+            <h3>Atur Akses User</h3>
+            <button class="modal-close" onclick="document.getElementById('su-access-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="sua-username">
+            <div class="form-group"><label>Role</label><select id="sua-role"><option value="kasir">Kasir</option><option value="admin">Admin/Manajer</option><option value="superadmin">Super Admin</option></select></div>
+            <div class="form-group"><label>Akses Menu (centang yang diizinkan)</label>
+                <div id="sua-checkboxes" style="display:grid;grid-template-columns:1fr 1fr;gap:0.3rem;margin-top:0.25rem;"></div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('su-access-modal').classList.remove('active')">Batal</button>
+            <button class="btn btn-primary" id="sua-save">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    let users=[],pending=[],resets=[],upahList=[],tokoInfo={};
+
+    // --- Tabs ---
+    document.querySelectorAll('.tab-btn[data-tab]').forEach(btn=>{
+        btn.addEventListener('click',function(){
+            document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+            this.classList.add('active');
+            const tabId=this.getAttribute('data-tab');
+            ['set-toko','set-users','set-upah','set-app'].forEach(id=>document.getElementById(id).classList.toggle('hidden',id!==tabId));
+        });
+    });
+
+    // --- Load All ---
+    async function loadAll(){
+        try{
+            const data=await OfflineService.cachedBulkRead(['Pengguna','PendaftaranBaru','ResetPassword','UpahUser','Toko']);
+            users=data.Pengguna||[]; pending=(data.PendaftaranBaru||[]).filter(r=>r.status==='pending');
+            resets=(data.ResetPassword||[]).filter(r=>r.status==='pending'); upahList=data.UpahUser||[];
+            if(data.Toko&&data.Toko.length>0) tokoInfo=data.Toko[0];
+            renderUsers(); renderPending(); renderResets(); renderUpah(); populateTokoForm();
+        }catch(e){showToast('Gagal load data: '+e.message,'error');}
+    }
+
+    // --- Toko ---
+    function populateTokoForm(){
+        document.getElementById('st-nama').value=tokoInfo.nama||'';
+        document.getElementById('st-hp').value=tokoInfo.hp||'';
+        document.getElementById('st-alamat').value=tokoInfo.alamat||'';
+        document.getElementById('st-footer').value=tokoInfo.footer||'';
+        document.getElementById('st-currency').value=tokoInfo.mata_uang||'Rp';
+        document.getElementById('st-pembulatan').value=tokoInfo.pembulatan||'0';
+        document.getElementById('st-dateformat').value=tokoInfo.format_tanggal||'DD/MM/YYYY';
+        if(tokoInfo.logo){document.getElementById('st-logo-preview').src=tokoInfo.logo;document.getElementById('st-logo-preview').style.display='block';}
+        
+        // Data per halaman
+        document.getElementById('app-per-page').value = tokoInfo.data_per_halaman || 50;
+        
+        // Render pecahan uang
+        renderPecahan();
+    }
+
+    function renderPecahan() {
+        let pecahan = [];
+        try { pecahan = JSON.parse(tokoInfo.pecahan_uang_json || '[]'); } catch(e) {}
+        if (pecahan.length === 0) {
+            pecahan = [ {label: 'Uang Pas', val: 'auto'}, {label: '10 Ribu', val: 10000}, {label: '20 Ribu', val: 20000}, {label: '50 Ribu', val: 50000}, {label: '100 Ribu', val: 100000} ];
+        }
+        
+        document.getElementById('app-pecahan-list').innerHTML = pecahan.map(p => `
+            <tr draggable="true" class="draggable-row">
+                <td style="cursor:grab; width:30px; text-align:center; color:var(--text-muted); font-size:1.2rem;">☰</td>
+                <td><input type="text" class="swal2-input p-label" style="height:32px; font-size:0.875rem; margin:0;" value="${escapeHtml(p.label)}" placeholder="Cth: 50 Ribu"></td>
+                <td><input type="text" class="swal2-input p-val" style="height:32px; font-size:0.875rem; margin:0;" value="${p.val}" placeholder="Cth: 50000"></td>
+                <td><button class="btn btn-danger btn-sm p-del" onclick="this.closest('tr').remove()">🗑️</button></td>
+            </tr>
+        `).join('');
+        
+        setupDragAndDrop();
+    }
+
+    let draggedRow = null;
+    function setupDragAndDrop() {
+        const rows = document.querySelectorAll('.draggable-row');
+        rows.forEach(row => {
+            row.addEventListener('dragstart', function(e) {
+                draggedRow = this;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.outerHTML);
+                this.style.opacity = '0.4';
+            });
+            row.addEventListener('dragend', function() {
+                this.style.opacity = '1';
+                draggedRow = null;
+                document.querySelectorAll('.draggable-row').forEach(r => r.style.borderTop = '');
+            });
+            row.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const bounding = this.getBoundingClientRect();
+                const offset = bounding.y + (bounding.height / 2);
+                if (e.clientY - offset > 0) {
+                    this.style.borderTop = '';
+                    this.style.borderBottom = '2px solid var(--primary)';
+                } else {
+                    this.style.borderBottom = '';
+                    this.style.borderTop = '2px solid var(--primary)';
+                }
+            });
+            row.addEventListener('dragleave', function() {
+                this.style.borderTop = '';
+                this.style.borderBottom = '';
+            });
+            row.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.style.borderTop = '';
+                this.style.borderBottom = '';
+                if (draggedRow !== this) {
+                    const bounding = this.getBoundingClientRect();
+                    const offset = bounding.y + (bounding.height / 2);
+                    if (e.clientY - offset > 0) {
+                        this.parentNode.insertBefore(draggedRow, this.nextSibling);
+                    } else {
+                        this.parentNode.insertBefore(draggedRow, this);
+                    }
+                }
+            });
+        });
+    }
+
+    document.getElementById('app-btn-add-pecahan').addEventListener('click', () => {
+        document.getElementById('app-pecahan-list').insertAdjacentHTML('beforeend', `
+            <tr draggable="true" class="draggable-row">
+                <td style="cursor:grab; width:30px; text-align:center; color:var(--text-muted); font-size:1.2rem;">☰</td>
+                <td><input type="text" class="swal2-input p-label" style="height:32px; font-size:0.875rem; margin:0;" placeholder="Cth: 5 Ribu"></td>
+                <td><input type="text" class="swal2-input p-val" style="height:32px; font-size:0.875rem; margin:0;" placeholder="Cth: 5000"></td>
+                <td><button class="btn btn-danger btn-sm p-del" onclick="this.closest('tr').remove()">🗑️</button></td>
+            </tr>
+        `);
+        setupDragAndDrop();
+    });
+
+    document.getElementById('app-btn-save-pecahan').addEventListener('click', async () => {
+        const rows = document.querySelectorAll('#app-pecahan-list tr');
+        let arr = [];
+        rows.forEach(tr => {
+            const label = tr.querySelector('.p-label').value.trim();
+            const val = tr.querySelector('.p-val').value.trim();
+            if (label && val) {
+                arr.push({ label: label, val: val === 'auto' ? 'auto' : parseFloat(val) });
+            }
+        });
+        
+        if (arr.length === 0) { showToast('Minimal buat 1 pecahan uang!', 'warning'); return; }
+
+        showLoading('Menyimpan Pengaturan...');
+        try {
+            const saveObj = { ...tokoInfo, pecahan_uang_json: JSON.stringify(arr) };
+            if (tokoInfo.nama !== undefined) {
+                await db.request('updateRow', { tableName: 'Toko', id: tokoInfo.nama, newData: saveObj });
+            } else {
+                saveObj.nama = 'Toko Default';
+                await db.request('insertRow', { tableName: 'Toko', data: saveObj });
+            }
+            tokoInfo = saveObj;
+            showToast('Konfigurasi pecahan disimpan!', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+        hideLoading();
+    });
+
+    document.getElementById('st-logo-file').addEventListener('change',async function(){
+        if(this.files[0]){try{const b=await processImageFile(this.files[0]);document.getElementById('st-logo-preview').src=b;document.getElementById('st-logo-preview').style.display='block';}catch(e){}}
+    });
+
+    document.getElementById('st-save').addEventListener('click',async()=>{
+        const data={nama:document.getElementById('st-nama').value,hp:document.getElementById('st-hp').value,alamat:document.getElementById('st-alamat').value,footer:document.getElementById('st-footer').value,mata_uang:document.getElementById('st-currency').value,pembulatan:document.getElementById('st-pembulatan').value,format_tanggal:document.getElementById('st-dateformat').value,logo:document.getElementById('st-logo-preview').src||''};
+        showLoading();try{
+            if(tokoInfo.nama!==undefined){await db.request('updateRow',{tableName:'Toko',id:tokoInfo.nama,newData:data});}
+            else{await db.request('insertRow',{tableName:'Toko',data});}
+            tokoInfo=data;showToast('Info toko disimpan!','success');
+        }catch(e){showToast(e.message,'error');}hideLoading();
+    });
+
+    // Save per-page setting
+    document.getElementById('app-btn-save-perpage').addEventListener('click', async () => {
+        const val = parseInt(document.getElementById('app-per-page').value) || 50;
+        showLoading();
+        try {
+            if (tokoInfo.nama !== undefined) {
+                await db.request('updateRow', { tableName: 'Toko', id: tokoInfo.nama, newData: { data_per_halaman: val } });
+            } else {
+                await db.request('insertRow', { tableName: 'Toko', data: { data_per_halaman: val } });
+            }
+            tokoInfo.data_per_halaman = val;
+            localStorage.setItem('candokio_per_page', val);
+            showToast('Pengaturan halaman disimpan! (' + val + ' baris/halaman)', 'success');
+        } catch(e) { showToast(e.message, 'error'); }
+        hideLoading();
+    });
+
+    // --- Users ---
+    function renderUsers(){
+        const menuLabels={
+            'view-dashboard':'Dashboard','view-pos':'Kasir','view-products':'Produk','view-customers':'Pelanggan',
+            'view-debt':'Hutang','view-kas':'KAS','view-shift':'Shift','view-transactions':'Transaksi','view-reports':'Laporan',
+            'view-profile':'Profil','view-settings':'Pengaturan'
+        };
+        document.getElementById('su-table').innerHTML=users.length===0?'<tr><td colspan="5" class="text-center text-muted">Tidak ada user</td></tr>'
+            :users.map(u=>{
+                let akses=[]; try{akses=JSON.parse(u.akses_halaman||'[]');}catch(e){}
+                const aksesText=akses.length>0?akses.map(a=>menuLabels[a]||a).join(', '):'<span class="text-muted">Default role</span>';
+                return `<tr>
+                    <td><strong>${escapeHtml(u.username)}</strong></td>
+                    <td>${escapeHtml(u.nama_lengkap)}</td>
+                    <td><span class="badge ${u.role==='superadmin'?'badge-primary':(u.role==='admin'?'badge-info':'badge-neutral')}">${escapeHtml(u.role)}</span></td>
+                    <td class="text-xs" style="max-width:200px;">${aksesText}</td>
+                    <td><div class="btn-group">
+                        <button class="btn btn-ghost btn-sm" onclick="window._editAccess('${u.username}')" title="Atur Akses">🔑</button>
+                        ${u.role!=='superadmin'?`<button class="btn btn-ghost btn-sm" onclick="window._delUser('${u.username}')" title="Hapus">🗑️</button>`:''}
+                    </div></td></tr>`;
+            }).join('');
+    }
+
+    window._editAccess=function(username){
+        const u=users.find(x=>x.username===username);if(!u)return;
+        document.getElementById('sua-username').value=username;
+        document.getElementById('sua-role').value=u.role||'kasir';
+        let akses=[];try{akses=JSON.parse(u.akses_halaman||'[]');}catch(e){}
+        if(!akses.length) akses=App.DEFAULT_ACCESS[u.role]||[];
+        const allMenus=['view-dashboard','view-pos','view-products','view-customers','view-debt','view-kas','view-shift','view-transactions','view-reports','view-profile','view-settings'];
+        const labels={'view-dashboard':'Dashboard','view-pos':'Kasir (POS)','view-products':'Produk','view-customers':'Pelanggan','view-debt':'Hutang','view-kas':'KAS Harian','view-shift':'Shift','view-transactions':'Transaksi','view-reports':'Laporan','view-profile':'Profil','view-settings':'Pengaturan'};
+        document.getElementById('sua-checkboxes').innerHTML=allMenus.map(m=>`<label style="font-weight:400;cursor:pointer;display:flex;align-items:center;gap:0.3rem;font-size:0.8125rem;"><input type="checkbox" value="${m}" ${akses.includes(m)?'checked':''}> ${labels[m]||m}</label>`).join('');
+        document.getElementById('su-access-modal').classList.add('active');
+    };
+
+    document.getElementById('sua-save').addEventListener('click',async()=>{
+        const username=document.getElementById('sua-username').value;
+        const role=document.getElementById('sua-role').value;
+        const checks=document.getElementById('sua-checkboxes').querySelectorAll('input:checked');
+        const akses=Array.from(checks).map(c=>c.value);
+        showLoading();try{
+            await db.request('updateUserAccess',{username,role,akses_halaman:JSON.stringify(akses)});
+            document.getElementById('su-access-modal').classList.remove('active');
+            showToast('Akses user diperbarui!','success');await loadAll();
+        }catch(e){showToast(e.message,'error');}hideLoading();
+    });
+
+    window._delUser=function(username){Swal.fire({title:'Hapus User?',text:username,icon:'warning',showCancelButton:true,confirmButtonText:'Hapus',confirmButtonColor:'#EF4444'}).then(async r=>{if(r.isConfirmed){showLoading();try{await db.request('deleteRow',{tableName:'Pengguna',id:username});showToast('User dihapus!','success');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();}});};
+
+    document.getElementById('su-btn-add').addEventListener('click',async()=>{
+        const{value:formValues}=await Swal.fire({title:'Tambah User',html:'<input id="swal-u-user" class="swal2-input" placeholder="Username" style="width:100%;"><input id="swal-u-name" class="swal2-input" placeholder="Nama Lengkap" style="width:100%;"><input id="swal-u-pw" class="swal2-input" type="password" placeholder="Password" style="width:100%;"><select id="swal-u-role" class="swal2-input" style="width:100%;"><option value="kasir">Kasir</option><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select>',showCancelButton:true,confirmButtonText:'Tambah',confirmButtonColor:'#6366F1',preConfirm:()=>({username:document.getElementById('swal-u-user').value.toLowerCase(),nama_lengkap:document.getElementById('swal-u-name').value,password:document.getElementById('swal-u-pw').value,role:document.getElementById('swal-u-role').value})});
+        if(formValues&&formValues.username&&formValues.password){showLoading();try{await db.request('insertRow',{tableName:'Pengguna',data:{username:formValues.username,password_hash:formValues.password,nama_lengkap:formValues.nama_lengkap,role:formValues.role,photo_base64:'',akses_halaman:'[]',created_at:toISOWIB()}});showToast('User ditambahkan!','success');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();}
+    });
+
+    // --- Pending Registration ---
+    function renderPending(){
+        document.getElementById('su-pending').innerHTML=pending.length===0?'<tr><td colspan="4" class="text-center text-muted">Tidak ada pendaftaran menunggu</td></tr>'
+            :pending.map(r=>`<tr><td>${escapeHtml(r.nama_lengkap)}</td><td>${escapeHtml(r.username)}</td><td>${formatDate(r.tanggal)}</td><td><div class="btn-group"><button class="btn btn-success btn-sm" onclick="window._approveReg('${r.id}')">✅</button><button class="btn btn-danger btn-sm" onclick="window._rejectReg('${r.id}')">❌</button></div></td></tr>`).join('');
+    }
+
+    window._approveReg=async function(id){showLoading();try{await db.request('approveRegistration',{regId:id,role:'kasir',akses_halaman:'[]'});showToast('Pendaftaran disetujui!','success');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();};
+    window._rejectReg=async function(id){showLoading();try{await db.request('rejectRegistration',{regId:id});showToast('Ditolak','info');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();};
+
+    // --- Reset Password ---
+    function renderResets(){
+        document.getElementById('su-resets').innerHTML=resets.length===0?'<tr><td colspan="5" class="text-center text-muted">Tidak ada request</td></tr>'
+            :resets.map(r=>`<tr><td>${escapeHtml(r.username)}</td><td>${escapeHtml(r.alasan||'-')}</td><td>${formatDate(r.tanggal)}</td><td><span class="badge badge-warning">Pending</span></td><td><button class="btn btn-primary btn-sm" onclick="window._resetPw('${r.id}','${r.username}')">🔑 Reset</button></td></tr>`).join('');
+    }
+
+    window._resetPw=async function(resetId,username){
+        const{value:newPw}=await Swal.fire({title:'Reset Password',text:'Set password baru untuk '+username,input:'password',inputPlaceholder:'Password baru',showCancelButton:true,confirmButtonText:'Reset',confirmButtonColor:'#6366F1',inputValidator:v=>{if(!v||v.length<4)return'Min 4 karakter!';}});
+        if(newPw){showLoading();try{await db.request('resetUserPassword',{username,newPassword:newPw,resetId});showToast('Password direset!','success');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();}
+    };
+
+    // --- Upah ---
+    function renderUpah(){
+        document.getElementById('upah-table').innerHTML=upahList.length===0?'<tr><td colspan="5" class="text-center text-muted">Belum ada data upah</td></tr>'
+            :upahList.map(u=>`<tr><td>${escapeHtml(u.username)}</td><td>${escapeHtml(u.jenis_upah)}</td><td style="text-align:right;">${formatCurrency(u.nominal)}</td><td>${escapeHtml(u.catatan||'-')}</td><td><button class="btn btn-ghost btn-sm" onclick="window._delUpah('${u.id}')">🗑️</button></td></tr>`).join('');
+    }
+
+    document.getElementById('upah-btn-add').addEventListener('click',async()=>{
+        const userOpts=users.map(u=>'<option value="'+u.username+'">'+escapeHtml(u.nama_lengkap||u.username)+'</option>').join('');
+        const html = `
+            <div style="text-align:left; font-size:0.875rem;">
+                <div class="form-group mb-2">
+                    <label>Pilih User</label>
+                    <select id="swal-upah-user" style="width:100%; padding:0.6rem; border:1px solid var(--input-border); border-radius:var(--radius-md); box-sizing:border-box;">${userOpts}</select>
+                </div>
+                <div class="form-group mb-2">
+                    <label>Jenis Upah</label>
+                    <select id="swal-upah-jenis" style="width:100%; padding:0.6rem; border:1px solid var(--input-border); border-radius:var(--radius-md); box-sizing:border-box;">
+                        <option value="harian">Harian</option><option value="bulanan">Bulanan</option>
+                    </select>
+                </div>
+                <div class="form-group mb-2">
+                    <label>Nominal (Rp)</label>
+                    <input id="swal-upah-nom" type="number" placeholder="Contoh: 50000" style="width:100%; padding:0.6rem; border:1px solid var(--input-border); border-radius:var(--radius-md); box-sizing:border-box;">
+                </div>
+                <div class="form-group mb-2">
+                    <label>Catatan</label>
+                    <input id="swal-upah-note" type="text" placeholder="Gaji harian pokok" style="width:100%; padding:0.6rem; border:1px solid var(--input-border); border-radius:var(--radius-md); box-sizing:border-box;">
+                </div>
+            </div>`;
+        const{value:fv}=await Swal.fire({title:'Tambah Upah',html:html,showCancelButton:true,confirmButtonText:'Simpan',confirmButtonColor:'#6366F1',preConfirm:()=>({username:document.getElementById('swal-upah-user').value,jenis_upah:document.getElementById('swal-upah-jenis').value,nominal:document.getElementById('swal-upah-nom').value,catatan:document.getElementById('swal-upah-note').value})});
+        if(fv&&fv.username&&fv.nominal){showLoading();try{const id=await db.request('getNextId',{prefix:'UPH_'});await db.request('insertRow',{tableName:'UpahUser',data:{id:id.id,...fv}});showToast('Berhasil!','success');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();}
+    });
+    window._delUpah=function(id){Swal.fire({title:'Hapus?',icon:'warning',showCancelButton:true,confirmButtonText:'Hapus',confirmButtonColor:'#EF4444'}).then(async r=>{if(r.isConfirmed){showLoading();try{await db.request('deleteRow',{tableName:'UpahUser',id});showToast('Dihapus!','success');await loadAll();}catch(e){showToast(e.message,'error');}hideLoading();}});};
+
+    // --- Export table ---
+    window._exportTable=async function(tableName){
+        showLoading('Mengambil data...');try{const data=await db.request('readRows',{tableName});exportCSV(data,tableName+'_Candokio');}catch(e){showToast(e.message,'error');}hideLoading();
+    };
+
+    // --- Cleanup ---
+    window._viewCleanup=()=>{window._editAccess=null;window._delUser=null;window._approveReg=null;window._rejectReg=null;window._resetPw=null;window._delUpah=null;window._exportTable=null;};
+
+    loadAll();
+})();
+</script>

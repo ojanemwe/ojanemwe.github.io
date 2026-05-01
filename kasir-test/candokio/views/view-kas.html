@@ -1,0 +1,421 @@
+<!-- ============================================================================
+     VIEW: KAS HARIAN — Arus Kas (Pemasukan & Pengeluaran)
+     ============================================================================ -->
+<div class="page-header">
+    <h2>KAS Harian</h2>
+    <div class="btn-group">
+        <button class="btn btn-outline btn-sm" id="kas-btn-export">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            CSV
+        </button>
+        <button class="btn btn-outline btn-sm no-print" id="kas-btn-print">🖨️ Cetak</button>
+        <button class="btn btn-primary btn-sm" id="kas-btn-add">
+            <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Tambah
+        </button>
+    </div>
+</div>
+
+<!-- Ringkasan -->
+<div class="grid grid-3" style="margin-bottom:1.25rem;">
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="stat-value" id="kas-total-in" style="color:var(--success);">Rp 0</div>
+        <p class="stat-label">Total Pemasukan</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon danger">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+        </div>
+        <div class="stat-value" id="kas-total-out" style="color:var(--danger);">Rp 0</div>
+        <p class="stat-label">Total Pengeluaran</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="stat-value" id="kas-saldo">Rp 0</div>
+        <p class="stat-label">Saldo</p>
+    </div>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar">
+    <input type="date" id="kas-date-start" style="min-width:140px;">
+    <span class="text-muted text-sm">s/d</span>
+    <input type="date" id="kas-date-end" style="min-width:140px;">
+    <select id="kas-filter-jenis" style="min-width:140px;">
+        <option value="">Semua Jenis</option>
+        <option value="Pemasukan">🟢 Pemasukan</option>
+        <option value="Pengeluaran">🔴 Pengeluaran</option>
+    </select>
+    <select id="kas-sort-order" style="min-width:130px;">
+        <option value="desc">Terbaru</option>
+        <option value="asc">Terlama</option>
+    </select>
+    <button class="btn btn-primary btn-sm" id="kas-filter-apply">Filter</button>
+</div>
+
+<div class="card">
+    <div class="table-container table-desktop">
+        <table>
+            <thead><tr><th>Tanggal</th><th>Jenis</th><th>Keterangan</th><th>Sumber/Tujuan</th><th style="text-align:right;">Jumlah</th></tr></thead>
+            <tbody id="kas-table"></tbody>
+        </table>
+    </div>
+    <div id="kas-mobile"></div>
+    <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border-top:1px solid var(--border-color); font-size:0.8125rem;">
+            <span id="kas-page-info" class="text-muted"><span class="desktop-only">Halaman </span>1 dari 1</span>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" id="kas-prev">« Prev</button>
+            <button class="btn btn-outline btn-sm" id="kas-next">Next »</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah/Edit KAS -->
+<div class="modal-overlay" id="kas-modal">
+    <div class="modal-content" style="max-width:480px;">
+        <div class="modal-header">
+            <h3 id="kas-modal-title">Tambah KAS</h3>
+            <button class="modal-close" onclick="document.getElementById('kas-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="kf-edit-id">
+            <div class="form-group">
+                <label>Jenis *</label>
+                <select id="kf-jenis"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select>
+            </div>
+            <div class="form-group" id="kf-sumber-wrap">
+                <label>Sumber Dana</label>
+                <input type="text" id="kf-sumber" placeholder="Contoh: Modal sendiri, Pinjaman">
+            </div>
+            <div class="form-group hidden" id="kf-tujuan-wrap">
+                <label>Tujuan Pengeluaran</label>
+                <input type="text" id="kf-tujuan" placeholder="Contoh: Beli bahan, Bayar listrik">
+            </div>
+            <div class="form-group">
+                <label>Jumlah (Rp) *</label>
+                <input type="number" id="kf-jumlah" min="1" required>
+            </div>
+            <div class="form-group">
+                <label>Keterangan</label>
+                <textarea id="kf-keterangan" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Foto Bukti</label>
+                <input type="file" id="kf-bukti" accept="image/*" style="font-size:0.8125rem;">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('kas-modal').classList.remove('active')">Batal</button>
+            <button class="btn btn-primary" id="kas-save">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail KAS (read-only) -->
+<div class="modal-overlay" id="kas-detail-modal">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="modal-header">
+            <h3>Detail KAS</h3>
+            <button class="modal-close" onclick="document.getElementById('kas-detail-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body" id="kas-detail-body" style="line-height:1.8;"></div>
+        <div class="modal-footer" id="kas-detail-footer"></div>
+    </div>
+</div>
+
+<!-- Lightbox Foto -->
+<div class="modal-overlay" id="kas-lightbox" style="z-index:1100; cursor:zoom-out;" onclick="this.classList.remove('active')">
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:1rem;">
+        <img id="kas-lightbox-img" src="" alt="Foto Bukti" style="max-width:95vw; max-height:85vh; object-fit:contain; border-radius:0.5rem; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+        <button class="btn btn-primary btn-sm" id="kas-lightbox-dl" style="margin-top:1rem;" onclick="event.stopPropagation()">⬇️ Download Foto</button>
+    </div>
+</div>
+
+<script>
+(function(){
+    let allKas = [];
+    let currentPage = 1;
+    let perPage = parseInt(localStorage.getItem('candokio_per_page')) || 50;
+
+    // Default date filter: hari ini
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('kas-date-start').value = today;
+    document.getElementById('kas-date-end').value = today;
+
+    // Jenis toggle
+    document.getElementById('kf-jenis').addEventListener('change', function(){
+        document.getElementById('kf-sumber-wrap').classList.toggle('hidden', this.value==='Pengeluaran');
+        document.getElementById('kf-tujuan-wrap').classList.toggle('hidden', this.value==='Pemasukan');
+    });
+
+    async function load(){
+        try{ allKas = await OfflineService.cachedRead('BukuKas'); } catch(e){ allKas=[]; }
+        // Load perPage from Toko settings if available
+        try {
+            const tokoData = await OfflineService.cachedRead('Toko');
+            if (tokoData && tokoData.length > 0 && tokoData[0].data_per_halaman) {
+                perPage = parseInt(tokoData[0].data_per_halaman) || 50;
+                localStorage.setItem('candokio_per_page', perPage);
+            }
+        } catch(e){}
+        currentPage = 1;
+        render();
+    }
+
+    function render(){
+        let filtered = [...allKas];
+        const start = document.getElementById('kas-date-start').value;
+        const end = document.getElementById('kas-date-end').value;
+        const jenis = document.getElementById('kas-filter-jenis').value;
+        const sortOrder = document.getElementById('kas-sort-order').value;
+
+        if(start) filtered = filtered.filter(k => (k.tanggal||'').toString().substring(0,10) >= start);
+        if(end) filtered = filtered.filter(k => (k.tanggal||'').toString().substring(0,10) <= end);
+        if(jenis) filtered = filtered.filter(k => k.jenis === jenis);
+
+        // Sort by tanggal
+        filtered.sort((a, b) => {
+            const tA = (a.tanggal||'').toString();
+            const tB = (b.tanggal||'').toString();
+            return sortOrder === 'desc' ? tB.localeCompare(tA) : tA.localeCompare(tB);
+        });
+
+        // Hitung ringkasan (dari seluruh filtered, bukan hanya page)
+        let totalIn=0, totalOut=0;
+        filtered.forEach(k => {
+            const amt = parseFloat(k.jumlah)||0;
+            if(k.jenis==='Pemasukan') totalIn+=amt; else totalOut+=amt;
+        });
+        document.getElementById('kas-total-in').textContent = formatCurrency(totalIn);
+        document.getElementById('kas-total-out').textContent = formatCurrency(totalOut);
+        document.getElementById('kas-saldo').textContent = formatCurrency(totalIn - totalOut);
+
+        // Pagination
+        const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * perPage;
+        const paged = filtered.slice(startIdx, startIdx + perPage);
+
+        document.getElementById('kas-page-info').innerHTML = `<span class="desktop-only">Halaman </span>${currentPage} dari ${totalPages} (${filtered.length} data)`;
+        document.getElementById('kas-prev').disabled = currentPage <= 1;
+        document.getElementById('kas-next').disabled = currentPage >= totalPages;
+
+        // Tabel desktop
+        document.getElementById('kas-table').innerHTML = paged.length===0
+            ? '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">Tidak ada data</td></tr>'
+            : paged.map(k => {
+                const badge = k.jenis==='Pemasukan' ? '<span class="badge badge-success">Masuk</span>' : '<span class="badge badge-danger">Keluar</span>';
+                const sumberTujuan = k.jenis==='Pemasukan' ? escapeHtml(k.sumber_dana||'-') : escapeHtml(k.tujuan_pengeluaran||'-');
+                return `<tr style="cursor:pointer;" onclick="window._kasDetail('${k.id}')">
+                    <td>${formatDate(k.tanggal)}</td>
+                    <td>${badge}</td>
+                    <td class="truncate" style="max-width:200px;">${escapeHtml(k.keterangan||'-')}</td>
+                    <td>${sumberTujuan}</td>
+                    <td style="text-align:right;font-weight:600;color:${k.jenis==='Pemasukan'?'var(--success)':'var(--danger)'};">${k.jenis==='Pemasukan'?'+':'-'} ${formatCurrency(k.jumlah)}</td>
+                </tr>`;
+            }).join('');
+
+        // Mobile list
+        document.getElementById('kas-mobile').innerHTML = paged.map(k => {
+            const badge = k.jenis==='Pemasukan' ? '<span class="badge badge-success">Masuk</span>' : '<span class="badge badge-danger">Keluar</span>';
+            const amtColor = k.jenis==='Pemasukan' ? 'var(--success)' : 'var(--danger)';
+            const amtSign = k.jenis==='Pemasukan' ? '+' : '-';
+            return `<div class="table-mobile-row" style="cursor:pointer;" onclick="window._kasDetail('${k.id}')">
+                <div style="flex:1;min-width:0;">
+                    <div class="mobile-row-main">${formatDate(k.tanggal)}</div>
+                    <div class="mobile-row-sub"><span style="font-weight:600;color:${amtColor};">${amtSign} ${formatCurrency(k.jumlah)}</span></div>
+                </div>
+                <div class="mobile-row-badge">${badge}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // Pagination controls
+    document.getElementById('kas-prev').addEventListener('click', () => { if(currentPage>1){currentPage--;render();} });
+    document.getElementById('kas-next').addEventListener('click', () => { currentPage++;render(); });
+
+    document.getElementById('kas-filter-apply').addEventListener('click', () => { currentPage=1; render(); });
+    document.getElementById('kas-filter-jenis').addEventListener('change', () => { currentPage=1; render(); });
+    document.getElementById('kas-sort-order').addEventListener('change', () => { currentPage=1; render(); });
+
+    // === Detail Modal ===
+    window._kasDetail = function(id) {
+        const k = allKas.find(x => x.id === id);
+        if (!k) return;
+        const isAdmin = App.currentUser && (App.currentUser.role === 'superadmin' || App.currentUser.role === 'admin');
+        const badge = k.jenis==='Pemasukan' ? '<span class="badge badge-success">Pemasukan</span>' : '<span class="badge badge-danger">Pengeluaran</span>';
+
+        let fotoHtml = '';
+        if (k.foto_bukti_base64) {
+            fotoHtml = `
+                <div style="margin-top:0.75rem;">
+                    <label style="font-weight:600; font-size:0.8125rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Foto Bukti</label>
+                    <img src="${k.foto_bukti_base64}" alt="Bukti" style="max-width:100%; border-radius:0.5rem; cursor:zoom-in; border:1px solid var(--border-color);"
+                         onclick="window._kasLightbox('${k.id}')">
+                    <div style="margin-top:0.5rem;">
+                        <button class="btn btn-outline btn-sm" onclick="window._kasDownload('${k.id}')">⬇️ Download Foto</button>
+                    </div>
+                </div>`;
+        }
+
+        document.getElementById('kas-detail-body').innerHTML = `
+            <div style="display:grid; grid-template-columns:140px 1fr; gap:0.3rem 1rem; font-size:0.875rem;">
+                <strong>ID</strong><span>${escapeHtml(k.id)}</span>
+                <strong>Tanggal</strong><span>${formatDateTime ? formatDateTime(k.tanggal) : formatDate(k.tanggal)}</span>
+                <strong>Jenis</strong><span>${badge}</span>
+                <strong>Jumlah</strong><span style="font-weight:700; color:${k.jenis==='Pemasukan'?'var(--success)':'var(--danger)'};">${k.jenis==='Pemasukan'?'+':'-'} ${formatCurrency(k.jumlah)}</span>
+                <strong>Sumber Dana</strong><span>${escapeHtml(k.sumber_dana||'-')}</span>
+                <strong>Tujuan</strong><span>${escapeHtml(k.tujuan_pengeluaran||'-')}</span>
+                <strong>Keterangan</strong><span>${escapeHtml(k.keterangan||'-')}</span>
+                <strong>Shift ID</strong><span>${escapeHtml(k.shift_id||'-')}</span>
+            </div>
+            ${fotoHtml}
+        `;
+
+        let footerHtml = '';
+        if (isAdmin) {
+            footerHtml = `
+                <button class="btn btn-outline btn-sm" onclick="window._kasEdit('${k.id}')">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="window._kasDel('${k.id}')">🗑️ Hapus</button>
+            `;
+        }
+        document.getElementById('kas-detail-footer').innerHTML = footerHtml;
+        document.getElementById('kas-detail-modal').classList.add('active');
+    };
+
+    // === Lightbox ===
+    window._kasLightbox = function(id) {
+        const k = allKas.find(x => x.id === id);
+        if (!k || !k.foto_bukti_base64) return;
+        document.getElementById('kas-lightbox-img').src = k.foto_bukti_base64;
+        document.getElementById('kas-lightbox-dl').onclick = function(e) { e.stopPropagation(); _kasDownload(id); };
+        document.getElementById('kas-lightbox').classList.add('active');
+    };
+
+    // === Download Foto ===
+    window._kasDownload = function(id) {
+        const k = allKas.find(x => x.id === id);
+        if (!k || !k.foto_bukti_base64) return;
+        const a = document.createElement('a');
+        a.href = k.foto_bukti_base64;
+        // Determine extension from base64 header
+        let ext = 'jpg';
+        if (k.foto_bukti_base64.includes('image/png')) ext = 'png';
+        else if (k.foto_bukti_base64.includes('image/webp')) ext = 'webp';
+        a.download = 'bukti_kas_' + k.id + '.' + ext;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    };
+
+    // === Edit KAS ===
+    window._kasEdit = function(id) {
+        const k = allKas.find(x => x.id === id);
+        if (!k) return;
+        document.getElementById('kas-detail-modal').classList.remove('active');
+        document.getElementById('kas-modal-title').textContent = 'Edit KAS — ' + k.id;
+        document.getElementById('kf-edit-id').value = k.id;
+        document.getElementById('kf-jenis').value = k.jenis || 'Pemasukan';
+        document.getElementById('kf-jenis').dispatchEvent(new Event('change'));
+        document.getElementById('kf-sumber').value = k.sumber_dana || '';
+        document.getElementById('kf-tujuan').value = k.tujuan_pengeluaran || '';
+        document.getElementById('kf-jumlah').value = k.jumlah || '';
+        document.getElementById('kf-keterangan').value = k.keterangan || '';
+        document.getElementById('kf-bukti').value = '';
+        document.getElementById('kas-modal').classList.add('active');
+    };
+
+    // === Tambah KAS ===
+    document.getElementById('kas-btn-add').addEventListener('click', () => {
+        document.getElementById('kas-modal-title').textContent = 'Tambah KAS';
+        document.getElementById('kf-edit-id').value = '';
+        document.getElementById('kf-jenis').value='Pemasukan';
+        document.getElementById('kf-sumber').value=''; document.getElementById('kf-tujuan').value='';
+        document.getElementById('kf-jumlah').value=''; document.getElementById('kf-keterangan').value='';
+        document.getElementById('kf-bukti').value='';
+        document.getElementById('kf-sumber-wrap').classList.remove('hidden');
+        document.getElementById('kf-tujuan-wrap').classList.add('hidden');
+        document.getElementById('kas-modal').classList.add('active');
+    });
+
+    // === Simpan (Tambah / Edit) ===
+    document.getElementById('kas-save').addEventListener('click', async () => {
+        const editId = document.getElementById('kf-edit-id').value;
+        const jenis = document.getElementById('kf-jenis').value;
+        const jumlah = parseFloat(document.getElementById('kf-jumlah').value);
+        if(!jumlah || jumlah<=0){ showToast('Jumlah harus lebih dari 0!','warning'); return; }
+
+        // Foto: baca langsung tanpa resize/compress
+        let buktiBase64 = '';
+        const buktiFile = document.getElementById('kf-bukti').files[0];
+        if(buktiFile){
+            buktiBase64 = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = () => reject(new Error('Gagal membaca file'));
+                reader.readAsDataURL(buktiFile);
+            });
+        }
+
+        const data = {
+            tanggal: editId ? undefined : toISOWIB(),
+            jenis: jenis,
+            sumber_dana: jenis==='Pemasukan' ? document.getElementById('kf-sumber').value : '',
+            tujuan_pengeluaran: jenis==='Pengeluaran' ? document.getElementById('kf-tujuan').value : '',
+            jumlah: jumlah,
+            keterangan: document.getElementById('kf-keterangan').value,
+            shift_id: ''
+        };
+        // Attach foto only if new file selected
+        if (buktiBase64) data.foto_bukti_base64 = buktiBase64;
+
+        showLoading('Menyimpan...');
+        try {
+            if (editId) {
+                // Edit mode
+                delete data.tanggal; // Don't overwrite original date
+                data.id = editId;
+                await db.optimisticWrite('updateRow',{tableName:'BukuKas', id: editId, newData: data});
+                showToast('KAS berhasil diperbarui!','success');
+            } else {
+                // Add mode
+                const newId = db.generateId('KAS_');
+                data.id = newId;
+                data.tanggal = toISOWIB();
+                if (!data.foto_bukti_base64) data.foto_bukti_base64 = '';
+                await db.optimisticWrite('insertRow',{tableName:'BukuKas', data: data});
+                showToast('KAS berhasil ditambahkan!','success');
+            }
+            document.getElementById('kas-modal').classList.remove('active');
+            await load();
+        } catch(e){ showToast(e.message,'error'); }
+        hideLoading();
+    });
+
+    // === Hapus ===
+    window._kasDel = function(id){
+        Swal.fire({title:'Hapus KAS?',icon:'warning',showCancelButton:true,confirmButtonText:'Hapus',confirmButtonColor:'#EF4444'}).then(async r=>{
+            if(r.isConfirmed){
+                showLoading();
+                try{
+                    await db.optimisticWrite('deleteRow',{tableName:'BukuKas',id});
+                    showToast('Dihapus!','success');
+                    document.getElementById('kas-detail-modal').classList.remove('active');
+                    await load();
+                }catch(e){showToast(e.message,'error');}
+                hideLoading();
+            }
+        });
+    };
+
+    document.getElementById('kas-btn-export').addEventListener('click', () => exportCSV(allKas,'KAS_Candokio',['id','tanggal','jenis','sumber_dana','tujuan_pengeluaran','jumlah','keterangan']));
+    document.getElementById('kas-btn-print').addEventListener('click', () => window.print());
+
+    window._viewCleanup = () => { window._kasDel = null; window._kasDetail = null; window._kasEdit = null; window._kasLightbox = null; window._kasDownload = null; };
+    load();
+})();
+</script>

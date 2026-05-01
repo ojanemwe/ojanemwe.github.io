@@ -1,0 +1,60 @@
+<!-- ============================================================================
+     VIEW: DAFTAR AKUN BARU
+     ============================================================================ -->
+<div class="login-wrapper" style="min-height:auto; padding:2rem;">
+    <div class="login-card" style="max-width:440px;">
+        <div class="login-logo">C</div>
+        <h1 style="font-size:1.25rem;">Daftar Akun Baru</h1>
+        <p>Pendaftaran memerlukan persetujuan Super Admin.</p>
+        <form id="register-form" autocomplete="off" style="text-align:left;">
+            <div class="form-group">
+                <label>Username *</label>
+                <input type="text" id="reg-username" required placeholder="Huruf kecil, tanpa spasi" pattern="[a-z0-9_]+" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Nama Lengkap *</label>
+                <input type="text" id="reg-nama" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" id="reg-password" required minlength="4" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label>Konfirmasi Password *</label>
+                <input type="password" id="reg-confirm" required autocomplete="new-password">
+            </div>
+            <button type="submit" class="btn btn-primary w-full" style="margin-top:0.5rem;">📝 Daftar</button>
+        </form>
+        <div class="login-footer mt-2">
+            <a href="#" onclick="backToLogin();return false;">← Kembali ke Login</a>
+        </div>
+    </div>
+</div>
+<script>
+(function(){
+    document.getElementById('register-form').addEventListener('submit', async function(e){
+        e.preventDefault();
+        const username = document.getElementById('reg-username').value.trim().toLowerCase();
+        const nama = document.getElementById('reg-nama').value.trim();
+        const pw = document.getElementById('reg-password').value;
+        const confirm = document.getElementById('reg-confirm').value;
+
+        if(pw !== confirm){ showToast('Password tidak cocok!','error'); return; }
+        if(pw.length < 4){ showToast('Password minimal 4 karakter!','warning'); return; }
+
+        showLoading('Mendaftarkan...');
+        try{
+            await db.request('registerUser',{ username, nama_lengkap: nama, password: pw });
+            hideLoading();
+            await Swal.fire({
+                title: '✅ Pendaftaran Berhasil',
+                text: 'Akun Anda akan aktif setelah disetujui oleh Super Admin.',
+                icon: 'success',
+                confirmButtonText: 'Kembali ke Login',
+                confirmButtonColor: '#6366F1'
+            });
+            backToLogin();
+        }catch(e){ hideLoading(); showToast(e.message,'error'); }
+    });
+})();
+</script>

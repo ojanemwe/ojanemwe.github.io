@@ -1,0 +1,132 @@
+<!-- ============================================================================
+     VIEW: PELANGGAN — CRM Database
+     ============================================================================ -->
+<div class="page-header">
+    <h2>Data Pelanggan</h2>
+    <button class="btn btn-primary btn-sm" id="cust-btn-add">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah
+    </button>
+</div>
+
+<div class="card">
+    <div class="filter-bar" style="padding:0 0 1rem;">
+        <input type="search" id="cust-search" placeholder="Cari nama atau telepon..." style="flex:1;">
+    </div>
+    <div class="table-container table-desktop">
+        <table>
+            <thead><tr><th>ID</th><th>Nama</th><th>Telepon</th><th>Alamat</th><th style="width:90px;">Aksi</th></tr></thead>
+            <tbody id="cust-table"></tbody>
+        </table>
+    </div>
+    <div id="cust-mobile"></div>
+    <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border-top:1px solid var(--border-color); font-size:0.8125rem;">
+        <span id="cust-page-info" class="text-muted"><span class="desktop-only">Halaman </span>1 dari 1</span>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" id="cust-prev">« Prev</button>
+            <button class="btn btn-outline btn-sm" id="cust-next">Next »</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="cust-modal">
+    <div class="modal-content" style="max-width:440px;">
+        <div class="modal-header">
+            <h3 id="cust-modal-title">Tambah Pelanggan</h3>
+            <button class="modal-close" onclick="document.getElementById('cust-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="cf-id">
+            <div class="form-group"><label>Nama *</label><input type="text" id="cf-nama" required></div>
+            <div class="form-group"><label>Telepon</label><input type="tel" id="cf-telepon"></div>
+            <div class="form-group"><label>Alamat</label><textarea id="cf-alamat" rows="2"></textarea></div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('cust-modal').classList.remove('active')">Batal</button>
+            <button class="btn btn-primary" id="cust-save">Simpan</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    let customers = [];
+    let currentPage = 1;
+    let perPage = parseInt(localStorage.getItem('candokio_per_page')) || 50;
+
+    async function load() {
+        try { customers = await OfflineService.cachedRead('Pelanggan'); } catch(e){ customers=[]; }
+        currentPage = 1;
+        render();
+    }
+
+    function render() {
+        let filtered = [...customers];
+        const q = (document.getElementById('cust-search').value||'').toLowerCase();
+        if(q) filtered = filtered.filter(c=>(c.nama||'').toLowerCase().includes(q)||(c.telepon||'').includes(q));
+
+        // Pagination
+        const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * perPage;
+        const paged = filtered.slice(startIdx, startIdx + perPage);
+        document.getElementById('cust-page-info').innerHTML = `<span class="desktop-only">Halaman </span>${currentPage} dari ${totalPages} (${filtered.length} data)`;
+        document.getElementById('cust-prev').disabled = currentPage <= 1;
+        document.getElementById('cust-next').disabled = currentPage >= totalPages;
+
+        document.getElementById('cust-table').innerHTML = paged.length===0
+            ? '<tr><td colspan="5" class="text-center text-muted" style="padding:2rem;">Tidak ada pelanggan</td></tr>'
+            : paged.map(c=>`<tr>
+                <td><code class="text-xs">${escapeHtml(c.id)}</code></td>
+                <td><strong>${escapeHtml(c.nama)}</strong></td>
+                <td>${escapeHtml(c.telepon||'-')}</td>
+                <td class="truncate" style="max-width:200px;">${escapeHtml(c.alamat||'-')}</td>
+                <td><div class="btn-group">
+                    <button class="btn btn-ghost btn-sm" onclick="window._custEdit('${c.id}')">✏️</button>
+                    <button class="btn btn-ghost btn-sm" onclick="window._custDel('${c.id}')">🗑️</button>
+                </div></td></tr>`).join('');
+
+        document.getElementById('cust-mobile').innerHTML = paged.map(c=>
+            `<div class="table-mobile-row" onclick="window._custEdit('${c.id}')">
+                <div style="flex:1;"><div class="mobile-row-main">${escapeHtml(c.nama)}</div><div class="mobile-row-sub">${escapeHtml(c.telepon||'Tanpa telepon')}</div></div>
+            </div>`).join('');
+    }
+
+    document.getElementById('cust-prev').addEventListener('click', () => { if(currentPage>1){currentPage--;render();} });
+    document.getElementById('cust-next').addEventListener('click', () => { currentPage++;render(); });
+    document.getElementById('cust-search').addEventListener('input', () => { currentPage=1; render(); });
+
+    document.getElementById('cust-btn-add').addEventListener('click', ()=>{
+        document.getElementById('cust-modal-title').textContent='Tambah Pelanggan';
+        document.getElementById('cf-id').value=''; document.getElementById('cf-nama').value='';
+        document.getElementById('cf-telepon').value=''; document.getElementById('cf-alamat').value='';
+        document.getElementById('cust-modal').classList.add('active');
+    });
+
+    window._custEdit = function(id){
+        const c = customers.find(x=>x.id===id); if(!c) return;
+        document.getElementById('cust-modal-title').textContent='Edit Pelanggan';
+        document.getElementById('cf-id').value=c.id; document.getElementById('cf-nama').value=c.nama;
+        document.getElementById('cf-telepon').value=c.telepon||''; document.getElementById('cf-alamat').value=c.alamat||'';
+        document.getElementById('cust-modal').classList.add('active');
+    };
+
+    window._custDel = function(id){ Swal.fire({title:'Hapus Pelanggan?',icon:'warning',showCancelButton:true,confirmButtonText:'Hapus',confirmButtonColor:'#EF4444'}).then(async r=>{if(r.isConfirmed){showLoading();try{await db.optimisticWrite('deleteRow',{tableName:'Pelanggan',id});showToast('Dihapus!','success');await load();}catch(e){showToast(e.message,'error');}hideLoading();}}); };
+
+    document.getElementById('cust-save').addEventListener('click', async ()=>{
+        const id=document.getElementById('cf-id').value;
+        const nama=document.getElementById('cf-nama').value.trim();
+        if(!nama){showToast('Nama wajib diisi!','warning');return;}
+        const data={nama,telepon:document.getElementById('cf-telepon').value,alamat:document.getElementById('cf-alamat').value};
+        showLoading(); try{
+            if(id){data.id=id; await db.optimisticWrite('updateRow',{tableName:'Pelanggan',id,newData:data});}
+            else{const nid=db.generateId('CST_');data.id=nid;await db.optimisticWrite('insertRow',{tableName:'Pelanggan',data});}
+            document.getElementById('cust-modal').classList.remove('active'); showToast('Berhasil!','success'); await load();
+        }catch(e){showToast(e.message,'error');} hideLoading();
+    });
+
+    window._viewCleanup=()=>{window._custEdit=null;window._custDel=null;};
+    load();
+})();
+</script>

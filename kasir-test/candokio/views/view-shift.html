@@ -1,0 +1,258 @@
+<!-- ============================================================================
+     VIEW: SHIFT — Riwayat & Detail Shift
+     ============================================================================ -->
+<div class="page-header">
+    <h2>Riwayat Shift</h2>
+    <button class="btn btn-outline btn-sm" id="shift-btn-export">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+    </button>
+</div>
+
+<!-- Filter -->
+<div class="filter-bar">
+    <input type="search" id="shift-search" placeholder="Cari kasir atau ID shift..." style="flex:1; min-width:160px;">
+    <input type="date" id="shift-date-start" style="min-width:130px;">
+    <span class="text-muted text-sm">s/d</span>
+    <input type="date" id="shift-date-end" style="min-width:130px;">
+    <select id="shift-filter-status" style="min-width:130px;">
+        <option value="">Semua Status</option>
+        <option value="open">🟢 Aktif</option>
+        <option value="closed">🔵 Ditutup</option>
+        <option value="auto-closed">🟡 Auto-close</option>
+    </select>
+    <select id="shift-sort-order" style="min-width:130px;">
+        <option value="desc">Terbaru</option>
+        <option value="asc">Terlama</option>
+    </select>
+    <button class="btn btn-primary btn-sm" id="shift-filter-apply">Filter</button>
+</div>
+
+<div class="card">
+    <div class="table-container table-desktop">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Shift</th>
+                    <th>Kasir</th>
+                    <th>Waktu Buka</th>
+                    <th>Waktu Tutup</th>
+                    <th style="text-align:right;">Modal</th>
+                    <th style="text-align:right;">Penjualan</th>
+                    <th style="text-align:right;">Selisih</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="shift-table"></tbody>
+        </table>
+    </div>
+    <div id="shift-mobile"></div>
+    <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border-top:1px solid var(--border-color); font-size:0.8125rem;">
+            <span id="shift-page-info" class="text-muted"><span class="desktop-only">Halaman </span>1 dari 1</span>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" id="shift-prev">« Prev</button>
+            <button class="btn btn-outline btn-sm" id="shift-next">Next »</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail Shift -->
+<div class="modal-overlay" id="shift-detail-modal">
+    <div class="modal-content" style="max-width:540px;">
+        <div class="modal-header">
+            <h3 id="shift-detail-title">Detail Shift</h3>
+            <button class="modal-close" onclick="document.getElementById('shift-detail-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body" id="shift-detail-body"></div>
+        <div class="modal-footer" id="shift-detail-footer"></div>
+    </div>
+</div>
+
+<script>
+(function(){
+    let allShifts = [];
+    let currentPage = 1;
+    let perPage = parseInt(localStorage.getItem('candokio_per_page')) || 50;
+
+    async function load(){
+        try { allShifts = await OfflineService.cachedRead('Shift'); } catch(e){ allShifts = []; }
+        currentPage = 1;
+        render();
+    }
+
+    function render(){
+        let filtered = [...allShifts];
+        const q = (document.getElementById('shift-search').value||'').toLowerCase();
+        const start = document.getElementById('shift-date-start').value;
+        const end = document.getElementById('shift-date-end').value;
+        const status = document.getElementById('shift-filter-status').value;
+        const sortOrder = document.getElementById('shift-sort-order').value;
+
+        if(q) filtered = filtered.filter(s => (s.id||'').toLowerCase().includes(q) || (s.kasir||'').toLowerCase().includes(q));
+        if(start) filtered = filtered.filter(s => (s.waktu_buka||'').toString().substring(0,10) >= start);
+        if(end) filtered = filtered.filter(s => (s.waktu_buka||'').toString().substring(0,10) <= end);
+        if(status) filtered = filtered.filter(s => s.status === status);
+
+        // Sort
+        filtered.sort((a, b) => {
+            const tA = (a.waktu_buka||'').toString();
+            const tB = (b.waktu_buka||'').toString();
+            return sortOrder === 'desc' ? tB.localeCompare(tA) : tA.localeCompare(tB);
+        });
+
+        // Pagination
+        const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * perPage;
+        const paged = filtered.slice(startIdx, startIdx + perPage);
+        document.getElementById('shift-page-info').innerHTML = `<span class="desktop-only">Halaman </span>${currentPage} dari ${totalPages} (${filtered.length} data)`;
+        document.getElementById('shift-prev').disabled = currentPage <= 1;
+        document.getElementById('shift-next').disabled = currentPage >= totalPages;
+
+        // Status badge helper
+        function statusBadge(st) {
+            if(st === 'open') return '<span class="badge badge-success">Aktif</span>';
+            if(st === 'auto-closed') return '<span class="badge badge-warning">Auto</span>';
+            return '<span class="badge badge-info">Ditutup</span>';
+        }
+
+        // Desktop table
+        document.getElementById('shift-table').innerHTML = paged.length === 0
+            ? '<tr><td colspan="8" class="text-center text-muted" style="padding:2rem;">Tidak ada data shift</td></tr>'
+            : paged.map(s => {
+                const selisih = parseFloat(s.selisih) || 0;
+                const selisihColor = selisih >= 0 ? 'var(--success)' : 'var(--danger)';
+                return `<tr style="cursor:pointer;" onclick="window._shiftDetail('${s.id}')">
+                    <td><code class="text-xs">${escapeHtml(s.id)}</code></td>
+                    <td><strong>${escapeHtml(s.kasir||'-')}</strong></td>
+                    <td>${formatDateTime(s.waktu_buka)}</td>
+                    <td>${s.waktu_tutup ? formatDateTime(s.waktu_tutup) : '<span class="text-muted">—</span>'}</td>
+                    <td style="text-align:right;">${formatCurrency(s.modal_awal)}</td>
+                    <td style="text-align:right; color:var(--success);">${formatCurrency(s.total_penjualan_tunai)}</td>
+                    <td style="text-align:right; font-weight:600; color:${selisihColor};">${formatCurrency(selisih)}</td>
+                    <td>${statusBadge(s.status)}</td>
+                </tr>`;
+            }).join('');
+
+        // Mobile list
+        document.getElementById('shift-mobile').innerHTML = paged.map(s => {
+            return `<div class="table-mobile-row" style="cursor:pointer;" onclick="window._shiftDetail('${s.id}')">
+                <div style="flex:1;min-width:0;">
+                    <div class="mobile-row-main truncate">${escapeHtml(s.kasir||'-')}</div>
+                    <div class="mobile-row-sub">${formatDateTime(s.waktu_buka)}</div>
+                </div>
+                <div class="mobile-row-badge">${statusBadge(s.status)}</div>
+            </div>`;
+        }).join('');
+
+        function statusBadge(st) {
+            if(st === 'open') return '<span class="badge badge-success">Aktif</span>';
+            if(st === 'auto-closed') return '<span class="badge badge-warning">Auto</span>';
+            return '<span class="badge badge-info">Ditutup</span>';
+        }
+    }
+
+    // Pagination controls
+    document.getElementById('shift-prev').addEventListener('click', () => { if(currentPage>1){currentPage--;render();} });
+    document.getElementById('shift-next').addEventListener('click', () => { currentPage++;render(); });
+    document.getElementById('shift-filter-apply').addEventListener('click', () => { currentPage=1; render(); });
+    document.getElementById('shift-search').addEventListener('input', () => { currentPage=1; render(); });
+    document.getElementById('shift-filter-status').addEventListener('change', () => { currentPage=1; render(); });
+    document.getElementById('shift-sort-order').addEventListener('change', () => { currentPage=1; render(); });
+
+    // === Detail Modal ===
+    window._shiftDetail = function(id) {
+        const s = allShifts.find(x => x.id === id);
+        if (!s) return;
+
+        const modalAwal = parseFloat(s.modal_awal) || 0;
+        const penjualanTunai = parseFloat(s.total_penjualan_tunai) || 0;
+        const penjualanNonTunai = parseFloat(s.total_penjualan_non_tunai) || 0;
+        const totalPengeluaran = parseFloat(s.total_pengeluaran) || 0;
+        const uangDiharapkan = parseFloat(s.uang_diharapkan) || 0;
+        const uangAktual = parseFloat(s.uang_aktual) || 0;
+        const selisih = parseFloat(s.selisih) || 0;
+        const selisihColor = selisih >= 0 ? 'var(--success)' : 'var(--danger)';
+
+        function statusBadge(st) {
+            if(st === 'open') return '<span class="badge badge-success">Aktif</span>';
+            if(st === 'auto-closed') return '<span class="badge badge-warning">Auto-closed</span>';
+            return '<span class="badge badge-info">Ditutup</span>';
+        }
+
+        document.getElementById('shift-detail-title').textContent = 'Detail Shift — ' + s.id;
+        document.getElementById('shift-detail-body').innerHTML = `
+            <div style="display:grid; grid-template-columns:160px 1fr; gap:0.4rem 1rem; font-size:0.875rem; line-height:1.8;">
+                <strong>ID Shift</strong><span><code>${escapeHtml(s.id)}</code></span>
+                <strong>Kasir</strong><span>${escapeHtml(s.kasir||'-')}</span>
+                <strong>Status</strong><span>${statusBadge(s.status)}</span>
+                <strong>Waktu Buka</strong><span>${formatDateTime(s.waktu_buka)}</span>
+                <strong>Waktu Tutup</strong><span>${s.waktu_tutup ? formatDateTime(s.waktu_tutup) : '<span class="text-muted">Belum ditutup</span>'}</span>
+            </div>
+            <hr style="margin:0.75rem 0;">
+            <div style="font-size:0.875rem; line-height:2;">
+                <div style="display:flex;justify-content:space-between;"><span>Modal Awal</span><b>${formatCurrency(modalAwal)}</b></div>
+                <div style="display:flex;justify-content:space-between;"><span>Penjualan Tunai</span><b style="color:var(--success);">+ ${formatCurrency(penjualanTunai)}</b></div>
+                <div style="display:flex;justify-content:space-between;"><span>Penjualan Non-Tunai</span><b style="color:var(--primary);">+ ${formatCurrency(penjualanNonTunai)}</b></div>
+                <div style="display:flex;justify-content:space-between;"><span>Pengeluaran</span><b style="color:var(--danger);">- ${formatCurrency(totalPengeluaran)}</b></div>
+                <hr style="margin:0.3rem 0;">
+                <div style="display:flex;justify-content:space-between;"><span>Uang Diharapkan</span><b>${formatCurrency(uangDiharapkan)}</b></div>
+                <div style="display:flex;justify-content:space-between;"><span>Uang Aktual</span><b>${formatCurrency(uangAktual)}</b></div>
+                <div style="display:flex;justify-content:space-between; font-size:1.05rem;"><span style="font-weight:600;">Selisih</span><b style="color:${selisihColor};">${formatCurrency(selisih)}</b></div>
+            </div>
+            ${s.catatan ? '<hr style="margin:0.75rem 0;"><div style="font-size:0.8125rem;"><strong>Catatan Shift:</strong> ' + escapeHtml(s.catatan) + '</div>' : ''}
+            <hr style="margin:0.75rem 0;">
+            <div>
+                <label style="font-weight:600; font-size:0.8125rem; display:block; margin-bottom:0.25rem;">💬 Komentar</label>
+                <textarea id="shift-comment-input" rows="3" style="width:100%; padding:0.5rem; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:0.8125rem; resize:vertical; box-sizing:border-box;">${escapeHtml(s.komentar||'')}</textarea>
+            </div>
+        `;
+
+        document.getElementById('shift-detail-footer').innerHTML = `
+            <button class="btn btn-primary btn-sm" onclick="window._shiftSaveComment('${s.id}')">💾 Simpan Komentar</button>
+        `;
+
+        document.getElementById('shift-detail-modal').classList.add('active');
+    };
+
+    window._shiftSaveComment = async function(id) {
+        const comment = document.getElementById('shift-comment-input').value;
+        showLoading('Menyimpan...');
+        try {
+            await db.optimisticWrite('updateRow', { tableName: 'Shift', id: id, newData: { komentar: comment } });
+            
+            const s = allShifts.find(x => x.id === id);
+            
+            // Berikan notifikasi jika bukan kasir sendiri yang mengisi komentar
+            if (s && s.kasir && s.kasir !== App.currentUser.username) {
+                const notifId = db.generateId('NTF_');
+                await db.optimisticWrite('insertRow', {
+                    tableName: 'Notifikasi',
+                    data: {
+                        id: notifId,
+                        tipe: 'shift',
+                        pesan: `Terdapat update komentar/pesan pada Shift Anda (${id}).`,
+                        target_role: '',
+                        target_user: s.kasir,
+                        tanggal: new Date().toISOString(),
+                        dibaca_oleh: '[]'
+                    }
+                });
+            }
+
+            // Update local data
+            if (s) s.komentar = comment;
+            showToast('Komentar disimpan!', 'success');
+        } catch(e) {
+            showToast(e.message, 'error');
+        }
+        hideLoading();
+    };
+
+    document.getElementById('shift-btn-export').addEventListener('click', () => exportCSV(allShifts, 'Shift_Candokio', ['id','kasir','waktu_buka','waktu_tutup','modal_awal','total_penjualan_tunai','total_penjualan_non_tunai','total_pengeluaran','uang_diharapkan','uang_aktual','selisih','status','catatan','komentar']));
+
+    window._viewCleanup = () => { window._shiftDetail = null; window._shiftSaveComment = null; };
+    load();
+})();
+</script>

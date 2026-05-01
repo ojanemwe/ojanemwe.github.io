@@ -1,0 +1,288 @@
+<!-- ============================================================================
+     VIEW: TRANSAKSI — Riwayat & Return
+     ============================================================================ -->
+<div class="page-header">
+    <h2>Riwayat Transaksi</h2>
+    <button class="btn btn-outline btn-sm" id="trx-btn-export">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
+    </button>
+</div>
+
+<div class="filter-bar">
+    <input type="search" id="trx-search" placeholder="Cari ID transaksi..." style="flex:1; min-width:160px;">
+    <input type="date" id="trx-date-start" style="min-width:130px;">
+    <span class="text-muted text-sm">s/d</span>
+    <input type="date" id="trx-date-end" style="min-width:130px;">
+    <select id="trx-filter-status" style="min-width:120px;">
+        <option value="">Semua</option>
+        <option value="normal">✅ Normal</option>
+        <option value="return">🔄 Return</option>
+    </select>
+    <select id="trx-sort-order" style="min-width:130px;">
+        <option value="desc">Terbaru</option>
+        <option value="asc">Terlama</option>
+    </select>
+    <button class="btn btn-primary btn-sm" id="trx-filter-apply">Filter</button>
+</div>
+
+<div class="card">
+    <div class="table-container table-desktop">
+        <table>
+            <thead><tr><th>ID</th><th>Tanggal</th><th>Kasir</th><th>Pelanggan</th><th>Metode</th><th style="text-align:right;">Total</th><th>Status</th><th style="width:100px;">Aksi</th></tr></thead>
+            <tbody id="trx-table"></tbody>
+        </table>
+    </div>
+    <div id="trx-mobile"></div>
+    <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border-top:1px solid var(--border-color); font-size:0.8125rem;">
+            <span id="trx-page-info" class="text-muted"><span class="desktop-only">Halaman </span>1 dari 1</span>
+        <div class="btn-group">
+            <button class="btn btn-outline btn-sm" id="trx-prev">« Prev</button>
+            <button class="btn btn-outline btn-sm" id="trx-next">Next »</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail Transaksi -->
+<div class="modal-overlay" id="trx-detail-modal">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="modal-header">
+            <h3 id="trx-detail-title">Detail Transaksi</h3>
+            <button class="modal-close" onclick="document.getElementById('trx-detail-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body" id="trx-detail-content"></div>
+        <div class="modal-footer" id="trx-detail-footer"></div>
+    </div>
+</div>
+
+<!-- Modal Return -->
+<div class="modal-overlay" id="trx-return-modal">
+    <div class="modal-content" style="max-width:500px;">
+        <div class="modal-header">
+            <h3>Proses Return</h3>
+            <button class="modal-close" onclick="document.getElementById('trx-return-modal').classList.remove('active')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div class="modal-body" id="trx-return-content"></div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="document.getElementById('trx-return-modal').classList.remove('active')">Batal</button>
+            <button class="btn btn-danger" id="trx-return-confirm">Proses Return</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function(){
+    let allTrx=[], allDetails=[], returnTargetId='';
+    let currentPage = 1;
+    let perPage = parseInt(localStorage.getItem('candokio_per_page')) || 50;
+
+    // Default: hari ini
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('trx-date-start').value = today;
+    document.getElementById('trx-date-end').value = today;
+
+    async function load(){
+        try{
+            const data = await OfflineService.cachedBulkRead(['Transaksi','DetailTransaksi']);
+            allTrx = data.Transaksi||[];
+            allDetails = data.DetailTransaksi||[];
+        }catch(e){ allTrx=[]; allDetails=[]; }
+        currentPage = 1;
+        render();
+    }
+
+    function render(){
+        let filtered = [...allTrx];
+        const q = (document.getElementById('trx-search').value||'').toLowerCase();
+        const start = document.getElementById('trx-date-start').value;
+        const end = document.getElementById('trx-date-end').value;
+        const status = document.getElementById('trx-filter-status').value;
+
+        if(q) filtered = filtered.filter(t=>(t.id||'').toLowerCase().includes(q));
+        if(start) filtered = filtered.filter(t=>(t.tanggal||'').toString().substring(0,10)>=start);
+        if(end) filtered = filtered.filter(t=>(t.tanggal||'').toString().substring(0,10)<=end);
+        if(status==='return') filtered = filtered.filter(t=>t.is_return==='true'||t.is_return===true);
+        if(status==='normal') filtered = filtered.filter(t=>t.is_return!=='true'&&t.is_return!==true);
+
+        // Sort
+        const sortOrder = document.getElementById('trx-sort-order').value;
+        filtered.sort((a,b) => {
+            const tA = (a.tanggal||'').toString();
+            const tB = (b.tanggal||'').toString();
+            return sortOrder === 'desc' ? tB.localeCompare(tA) : tA.localeCompare(tB);
+        });
+
+        // Pagination
+        const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+        if (currentPage > totalPages) currentPage = totalPages;
+        const startIdx = (currentPage - 1) * perPage;
+        const paged = filtered.slice(startIdx, startIdx + perPage);
+        document.getElementById('trx-page-info').innerHTML = `<span class="desktop-only">Halaman </span>${currentPage} dari ${totalPages} (${filtered.length} data)`;
+        document.getElementById('trx-prev').disabled = currentPage <= 1;
+        document.getElementById('trx-next').disabled = currentPage >= totalPages;
+
+        // Desktop table
+        document.getElementById('trx-table').innerHTML = paged.length===0
+            ? '<tr><td colspan="8" class="text-center text-muted" style="padding:2rem;">Tidak ada transaksi</td></tr>'
+            : paged.map(t=>{
+                const isRet = t.is_return==='true'||t.is_return===true;
+                const badge = isRet ? '<span class="badge badge-warning">Return</span>' : '<span class="badge badge-success">Normal</span>';
+                return `<tr onclick="window._trxDetail('${t.id}')" style="cursor:pointer;">
+                    <td><code class="text-xs">${escapeHtml(t.id)}</code></td>
+                    <td>${formatDateTime(t.tanggal)}</td>
+                    <td>${escapeHtml(t.kasir||'-')}</td>
+                    <td>${escapeHtml(t.pelanggan||'Umum')}</td>
+                    <td><span class="badge badge-neutral">${escapeHtml(t.metode||'-')}</span></td>
+                    <td style="text-align:right;font-weight:600;">${formatCurrency(t.total)}</td>
+                    <td>${badge}</td>
+                    <td>
+                        <div class="btn-group">
+                            <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();window._trxDetail('${t.id}')" title="Detail">👁️</button>
+                            ${!isRet ? `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();window._trxReturn('${t.id}')" title="Return">🔄</button>` : ''}
+                        </div>
+                    </td>
+                </tr>`;
+            }).join('');
+
+        // Mobile list
+        document.getElementById('trx-mobile').innerHTML = paged.map(t=>{
+            const isRet = t.is_return==='true'||t.is_return===true;
+            const badge = isRet ? '<span class="badge badge-warning">Return</span>' : '<span class="badge badge-success">OK</span>';
+            return `<div class="table-mobile-row" onclick="window._trxDetail('${t.id}')">
+                <div style="flex:1;min-width:0;">
+                    <div class="mobile-row-main truncate">${escapeHtml(t.id)}</div>
+                    <div class="mobile-row-sub">${formatCurrency(t.total)}</div>
+                </div>
+                <div class="mobile-row-badge">${badge}</div>
+            </div>`;
+        }).join('');
+    }
+
+    document.getElementById('trx-prev').addEventListener('click', () => { if(currentPage>1){currentPage--;render();} });
+    document.getElementById('trx-next').addEventListener('click', () => { currentPage++;render(); });
+    document.getElementById('trx-filter-apply').addEventListener('click', () => { currentPage=1; render(); });
+    document.getElementById('trx-search').addEventListener('input', () => { currentPage=1; render(); });
+    document.getElementById('trx-sort-order').addEventListener('change', () => { currentPage=1; render(); });
+
+    // --- Detail Transaksi ---
+    window._trxDetail = function(id){
+        const t = allTrx.find(x=>x.id===id); if(!t) return;
+        const items = allDetails.filter(d=>d.transaction_id===id);
+        const isRet = t.is_return==='true'||t.is_return===true;
+
+        let itemsHtml = items.length > 0
+            ? '<table style="width:100%;font-size:0.8rem;margin-top:0.5rem;"><thead><tr><th style="text-align:left;">Item</th><th style="text-align:center;">Qty</th><th style="text-align:right;">Harga</th><th style="text-align:right;">Subtotal</th></tr></thead><tbody>'
+              + items.map(d=>`<tr><td>${escapeHtml(d.nama_produk)}</td><td style="text-align:center;">${d.qty}</td><td style="text-align:right;">${formatCurrency(d.price)}</td><td style="text-align:right;">${formatCurrency(d.subtotal)}</td></tr>`).join('')
+              + '</tbody></table>'
+            : '<p class="text-muted text-sm">Detail item tidak tersedia</p>';
+
+        document.getElementById('trx-detail-title').textContent = (isRet ? '🔄 Return ' : '📄 Transaksi ') + id;
+        document.getElementById('trx-detail-content').innerHTML = `
+            <div style="line-height:2; font-size:0.875rem;">
+                <div class="flex justify-between"><span class="text-muted">Tanggal</span><span>${formatDateTime(t.tanggal)}</span></div>
+                <div class="flex justify-between"><span class="text-muted">Kasir</span><span>${escapeHtml(t.kasir)}</span></div>
+                <div class="flex justify-between"><span class="text-muted">Pelanggan</span><span>${escapeHtml(t.pelanggan||'Umum')}</span></div>
+                <div class="flex justify-between"><span class="text-muted">Metode</span><span class="badge badge-neutral">${escapeHtml(t.metode)}</span></div>
+                ${isRet ? '<div class="flex justify-between"><span class="text-muted">Return dari</span><code>'+escapeHtml(t.return_of)+'</code></div>' : ''}
+            </div>
+            <hr>${itemsHtml}<hr>
+            <div style="line-height:2; font-size:0.875rem;">
+                <div class="flex justify-between"><span class="text-muted">Subtotal</span><span>${formatCurrency(t.subtotal)}</span></div>
+                <div class="flex justify-between"><span class="text-muted">Diskon</span><span>- ${formatCurrency(t.diskon)}</span></div>
+                <div class="flex justify-between" style="font-size:1.1rem;font-weight:700;"><span>Total</span><span style="color:var(--primary);">${formatCurrency(t.total)}</span></div>
+                ${!isRet ? `<div class="flex justify-between"><span class="text-muted">Bayar</span><span>${formatCurrency(t.bayar)}</span></div>
+                <div class="flex justify-between"><span class="text-muted">Kembalian</span><span>${formatCurrency(t.kembalian)}</span></div>` : ''}
+            </div>`;
+
+        document.getElementById('trx-detail-footer').innerHTML = `
+            <button class="btn btn-outline btn-sm" onclick="window._trxPrint('${id}')">🖨️ Cetak Ulang</button>
+            ${!isRet ? `<button class="btn btn-danger btn-sm" onclick="document.getElementById('trx-detail-modal').classList.remove('active');window._trxReturn('${id}')">🔄 Return</button>` : ''}`;
+
+        document.getElementById('trx-detail-modal').classList.add('active');
+    };
+
+    // --- Return ---
+    window._trxReturn = function(id){
+        const t = allTrx.find(x=>x.id===id); if(!t) return;
+        returnTargetId = id;
+        const items = allDetails.filter(d=>d.transaction_id===id);
+
+        document.getElementById('trx-return-content').innerHTML = `
+            <p class="text-sm text-muted mb-2">Pilih item dan jumlah yang di-return dari transaksi <b>${id}</b>:</p>
+            <div id="return-items-list">${items.map((d,i)=>`
+                <div style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;border-bottom:1px solid var(--border-light);">
+                    <input type="checkbox" id="ret-chk-${i}" data-idx="${i}" checked>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:500;font-size:0.8125rem;">${escapeHtml(d.nama_produk)}</div>
+                        <div class="text-xs text-muted">${formatCurrency(d.price)} × max ${d.qty}</div>
+                    </div>
+                    <input type="number" id="ret-qty-${i}" value="${d.qty}" min="1" max="${d.qty}" style="width:60px;text-align:center;padding:0.3rem;font-size:0.8rem;">
+                </div>
+            `).join('')}</div>`;
+    
+        document.getElementById('trx-return-modal').classList.add('active');
+    };
+
+    document.getElementById('trx-return-confirm').addEventListener('click', async ()=>{
+        const t = allTrx.find(x=>x.id===returnTargetId); if(!t) return;
+        const items = allDetails.filter(d=>d.transaction_id===returnTargetId);
+        
+        let origItemsJSON = [];
+        try{ origItemsJSON = JSON.parse(t.detail_json||'[]'); }catch(e){}
+
+        const returnItems = [];
+
+        items.forEach((d,i)=>{
+            const chk = document.getElementById('ret-chk-'+i);
+            const qty = parseInt(document.getElementById('ret-qty-'+i).value)||0;
+            if(chk && chk.checked && qty > 0){
+                let origObj = origItemsJSON.find(o => o.product_id === d.product_id) || {};
+                returnItems.push({ 
+                    product_id: d.product_id, 
+                    nama_produk: d.nama_produk, 
+                    qty: qty, 
+                    price: parseFloat(d.price),
+                    deduct_id: origObj.deduct_id,
+                    deduct_qty_multiplier: origObj.deduct_qty_multiplier
+                });
+            }
+        });
+
+        if(returnItems.length===0){ showToast('Pilih minimal 1 item!','warning'); return; }
+
+        showLoading('Memproses return...');
+        try{
+            const result = await db.request('processReturn', {
+                originalTransactionId: returnTargetId,
+                items: returnItems,
+                kasir: App.currentUser.username,
+                pelanggan: t.pelanggan||'',
+                shiftId: ''
+            });
+            document.getElementById('trx-return-modal').classList.remove('active');
+            showToast('Return berhasil! Total: ' + formatCurrency(result.total_return), 'success');
+            await load();
+        }catch(e){ showToast(e.message,'error'); }
+        hideLoading();
+    });
+
+    // --- Re-print struk ---
+    window._trxPrint = function(id){
+        const t = allTrx.find(x=>x.id===id); if(!t) return;
+        let items = [];
+        try{ items = JSON.parse(t.detail_json||'[]'); }catch(e){ items = allDetails.filter(d=>d.transaction_id===id); }
+        
+        const printWindow = window.open('','_blank','width=350,height=600');
+        if(!printWindow){ showToast('Izinkan pop-up!','warning'); return; }
+        const itemsHtml = items.map(i=>`<tr><td>${escapeHtml(i.nama_produk||i.nama)}</td><td style="text-align:center;">${i.qty}</td><td style="text-align:right;">${formatCurrency((i.price||i.harga)*(i.qty||1))}</td></tr>`).join('');
+        printWindow.document.write(`<!DOCTYPE html><html><head><title>Struk ${id}</title><style>*{margin:0;padding:0;box-sizing:border-box;}body{font-family:'Courier New',monospace;font-size:12px;padding:8px;width:280px;color:#000;}.center{text-align:center;}.divider{border-top:1px dashed #000;margin:6px 0;}table{width:100%;border-collapse:collapse;}td{padding:2px 0;font-size:11px;}.total-row{font-weight:bold;font-size:13px;}.footer{margin-top:10px;text-align:center;font-size:10px;color:#666;}</style></head><body><div class="center"><strong style="font-size:16px;">CANDOKIO</strong></div><div class="divider"></div><div style="font-size:11px;">No: ${id}<br>Tgl: ${formatDateTime(t.tanggal)}<br>Kasir: ${escapeHtml(t.kasir)}<br>Pelanggan: ${escapeHtml(t.pelanggan||'Umum')}</div><div class="divider"></div><table><thead><tr><td><b>Item</b></td><td style="text-align:center;"><b>Qty</b></td><td style="text-align:right;"><b>Total</b></td></tr></thead><tbody>${itemsHtml}</tbody></table><div class="divider"></div><table><tr><td>Subtotal</td><td style="text-align:right;">${formatCurrency(t.subtotal)}</td></tr><tr><td>Diskon</td><td style="text-align:right;">-${formatCurrency(t.diskon)}</td></tr><tr class="total-row"><td>TOTAL</td><td style="text-align:right;">${formatCurrency(t.total)}</td></tr><tr><td>Bayar (${t.metode})</td><td style="text-align:right;">${formatCurrency(t.bayar)}</td></tr>${parseFloat(t.kembalian)>0?'<tr class="total-row"><td>Kembalian</td><td style="text-align:right;">'+formatCurrency(t.kembalian)+'</td></tr>':''}</table><div class="divider"></div><div class="footer">Terima kasih! — CANDOKIO POS —</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+        printWindow.document.close();
+    };
+
+    document.getElementById('trx-btn-export').addEventListener('click',()=>exportCSV(allTrx,'Transaksi_Candokio',['id','tanggal','kasir','pelanggan','metode','subtotal','diskon','total','bayar','kembalian','is_return','return_of']));
+
+    window._viewCleanup=()=>{window._trxDetail=null;window._trxReturn=null;window._trxPrint=null;};
+    load();
+})();
+</script>

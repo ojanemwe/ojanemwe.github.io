@@ -1,0 +1,333 @@
+<!-- ============================================================================
+     VIEW: DASHBOARD — Statistik & Ringkasan Harian
+     ============================================================================ -->
+
+<div class="page-header">
+    <h2>Dashboard</h2>
+    <div class="btn-group">
+        <button class="btn btn-outline btn-sm" id="dash-refresh" title="Refresh Data">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Refresh
+        </button>
+    </div>
+</div>
+
+<!-- Kartu Statistik Hari Ini -->
+<div class="grid grid-auto" id="dash-stats" style="margin-bottom:1.5rem;">
+    <div class="stat-card">
+        <div class="stat-icon primary">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/><path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/><path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4h-4z"/></svg>
+        </div>
+        <div class="stat-value" id="stat-penjualan">Rp 0</div>
+        <p class="stat-label">Penjualan Hari Ini</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon danger">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="stat-value" id="stat-return">Rp 0</div>
+        <p class="stat-label">Return Hari Ini</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon warning">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/><path d="M12 2L2 7l10 5 10-5L12 2z"/></svg>
+        </div>
+        <div class="stat-value" id="stat-hutang">Rp 0</div>
+        <p class="stat-label">Total Hutang Belum Lunas</p>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon success">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="stat-value" id="stat-laba">Rp 0</div>
+        <p class="stat-label">Laba Kotor Hari Ini</p>
+    </div>
+</div>
+
+<!-- Grafik Penjualan 7 Hari -->
+<div class="grid" style="grid-template-columns: 1fr 1fr; margin-bottom:1.5rem;">
+    <div class="card" style="grid-column: 1 / -1;">
+        <div class="card-header">
+            <h4 class="card-title">Grafik Penjualan & Laba (7 Hari)</h4>
+            <select id="dash-chart-range" class="btn btn-outline btn-sm" style="padding:0.3rem 0.6rem; border-radius:var(--radius-md); width:auto;">
+                <option value="7">7 Hari</option>
+                <option value="14">14 Hari</option>
+                <option value="30">30 Hari</option>
+            </select>
+        </div>
+        <div style="position:relative; height:300px; width:100%;">
+            <canvas id="dash-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Top 10 Produk Terpopuler -->
+<style>
+@media (max-width: 768px) {
+    #dash-top-card > .card-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    #dash-top-card > .card-header > .card-title {
+        width: 100%;
+    }
+    #dash-top-card > .card-header > .dash-top-datepicker {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+    #dash-top-card > .card-header > .dash-top-datepicker > #dash-top-apply {
+        width: 100%;
+    }
+}
+</style>
+<div class="card" id="dash-top-card">
+    <div class="card-header">
+        <h4 class="card-title">Top 10 Produk Terpopuler</h4>
+        <div class="flex items-center gap-sm dash-top-datepicker">
+            <input type="date" id="dash-top-start" class="btn-outline" style="padding:0.3rem 0.5rem; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:0.75rem; width:auto; margin:0;">
+            <span class="text-muted text-xs">s/d</span>
+            <input type="date" id="dash-top-end" class="btn-outline" style="padding:0.3rem 0.5rem; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:0.75rem; width:auto; margin:0;">
+            <button class="btn btn-primary btn-sm" id="dash-top-apply">Terapkan</button>
+        </div>
+    </div>
+    <!-- Desktop Table -->
+    <div class="table-container table-desktop">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th>Nama Produk</th>
+                    <th style="text-align:right;">Qty Terjual</th>
+                    <th style="text-align:right;">Total Pendapatan</th>
+                </tr>
+            </thead>
+            <tbody id="dash-top-table">
+                <tr><td colspan="4" class="text-center text-muted" style="padding:2rem;">Memuat data...</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Mobile List -->
+    <div id="dash-top-mobile"></div>
+</div>
+
+<!-- ============================================================================
+     SCRIPT DASHBOARD
+     ============================================================================ -->
+<script>
+(function() {
+    'use strict';
+
+    let dashChart = null;
+
+    // --- Inisialisasi default date range (7 hari terakhir) ---
+    const today = new Date();
+    const weekAgo = new Date();
+    weekAgo.setDate(today.getDate() - 7);
+
+    const fmtISO = (d) => d.toISOString().split('T')[0];
+    document.getElementById('dash-top-start').value = fmtISO(weekAgo);
+    document.getElementById('dash-top-end').value = fmtISO(today);
+
+    // --- Load Dashboard Data ---
+    async function loadDashboard() {
+        try {
+            // Baca stats dari cache dulu (instan)
+            const cachedStats = await OfflineService.getCacheItem('_dashboardStats');
+            if (cachedStats) renderStats(cachedStats);
+
+            // Background: fetch fresh stats dari server
+            if (navigator.onLine) {
+                db.request('getDashboardStats', {}).then(async (freshStats) => {
+                    await OfflineService.setCacheItem('_dashboardStats', freshStats);
+                    renderStats(freshStats);
+                }).catch(e => console.warn('[Dashboard] Gagal refresh stats:', e.message));
+            }
+        } catch (e) {
+            console.warn('[Dashboard] Gagal load stats:', e.message);
+        }
+
+        // Load chart & top produk
+        loadChart(7);
+        loadTopProducts();
+    }
+
+    function renderStats(stats) {
+        document.getElementById('stat-penjualan').textContent = formatCurrency(stats.penjualan_hari_ini);
+        document.getElementById('stat-return').textContent = formatCurrency(stats.return_hari_ini);
+        document.getElementById('stat-hutang').textContent = formatCurrency(stats.total_hutang_belum_lunas);
+        document.getElementById('stat-laba').textContent = formatCurrency(stats.laba_kotor_hari_ini);
+    }
+
+    // --- Chart Penjualan ---
+    async function loadChart(days) {
+        try {
+            const end = new Date();
+            const start = new Date();
+            start.setDate(end.getDate() - days);
+
+            const report = await db.request('getReportSummary', {
+                startDate: fmtISO(start),
+                endDate: fmtISO(end)
+            });
+
+            const labels = [];
+            const salesData = [];
+            const profitData = [];
+
+            // Generate labels untuk setiap hari
+            for (let i = 0; i < days; i++) {
+                const d = new Date(start);
+                d.setDate(start.getDate() + i);
+                const key = fmtISO(d);
+                const dd = String(d.getDate()).padStart(2, '0');
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                labels.push(dd + '/' + mm);
+
+                const dayData = report.daily_breakdown && report.daily_breakdown[key];
+                salesData.push(dayData ? dayData.penjualan : 0);
+                profitData.push(dayData ? (dayData.penjualan - dayData.refund - dayData.diskon) : 0);
+            }
+
+            renderChart(labels, salesData, profitData);
+        } catch (e) {
+            console.warn('[Dashboard] Gagal load chart:', e.message);
+            renderChart([], [], []);
+        }
+    }
+
+    function renderChart(labels, salesData, profitData) {
+        const ctx = document.getElementById('dash-chart');
+        if (!ctx) return;
+
+        // Destroy chart lama jika ada
+        if (dashChart) { dashChart.destroy(); dashChart = null; }
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#9CA3AF' : '#6B7280';
+        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+
+        dashChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Penjualan',
+                        data: salesData,
+                        borderColor: '#6366F1',
+                        backgroundColor: 'rgba(99,102,241,0.08)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Laba Bersih',
+                        data: profitData,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16,185,129,0.08)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { intersect: false, mode: 'index' },
+                plugins: {
+                    legend: { position: 'top', labels: { color: textColor, usePointStyle: true, padding: 20 } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) { return ctx.dataset.label + ': ' + formatCurrency(ctx.parsed.y); }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: gridColor } },
+                    y: {
+                        ticks: {
+                            color: textColor,
+                            callback: function(v) { return formatCurrency(v).replace('Rp ', 'Rp'); }
+                        },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+
+        // Simpan referensi global untuk theme toggle
+        window._dashChart = dashChart;
+    }
+
+    // --- Top 10 Produk ---
+    async function loadTopProducts() {
+        const startDate = document.getElementById('dash-top-start').value;
+        const endDate = document.getElementById('dash-top-end').value;
+
+        try {
+            const topProducts = await db.request('getTopProducts', {
+                startDate: startDate,
+                endDate: endDate,
+                limit: 10
+            });
+
+            const tbody = document.getElementById('dash-top-table');
+            const mobileDiv = document.getElementById('dash-top-mobile');
+
+            if (!topProducts || topProducts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted" style="padding:2rem;">Belum ada data penjualan</td></tr>';
+                mobileDiv.innerHTML = '<div class="empty-state"><p>Belum ada data penjualan</p></div>';
+                return;
+            }
+
+            // Desktop table
+            tbody.innerHTML = topProducts.map((p, i) =>
+                '<tr>' +
+                '<td><span class="badge badge-primary">' + (i + 1) + '</span></td>' +
+                '<td><strong>' + escapeHtml(p.nama) + '</strong></td>' +
+                '<td style="text-align:right;">' + p.total_qty + '</td>' +
+                '<td style="text-align:right;">' + formatCurrency(p.total_revenue) + '</td>' +
+                '</tr>'
+            ).join('');
+
+            // Mobile list
+            mobileDiv.innerHTML = topProducts.map((p, i) =>
+                '<div class="table-mobile-row">' +
+                '<span class="badge badge-primary" style="width:24px;text-align:center;">' + (i + 1) + '</span>' +
+                '<div style="flex:1;min-width:0;">' +
+                '<div class="mobile-row-main truncate">' + escapeHtml(p.nama) + '</div>' +
+                '<div class="mobile-row-sub">' + p.total_qty + ' terjual • ' + formatCurrency(p.total_revenue) + '</div>' +
+                '</div></div>'
+            ).join('');
+
+        } catch (e) {
+            console.warn('[Dashboard] Gagal load top products:', e.message);
+        }
+    }
+
+    // --- Event Listeners ---
+    document.getElementById('dash-refresh').addEventListener('click', loadDashboard);
+
+    document.getElementById('dash-chart-range').addEventListener('change', function() {
+        loadChart(parseInt(this.value));
+    });
+
+    document.getElementById('dash-top-apply').addEventListener('click', loadTopProducts);
+
+    // --- Cleanup saat navigasi keluar dari view ini ---
+    window._viewCleanup = function() {
+        if (dashChart) { dashChart.destroy(); dashChart = null; }
+        window._dashChart = null;
+    };
+
+    // --- Inisialisasi ---
+    loadDashboard();
+
+})();
+</script>

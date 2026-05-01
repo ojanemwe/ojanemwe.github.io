@@ -1,0 +1,172 @@
+<!-- ============================================================================
+     VIEW: LAPORAN — Rekapitulasi Keuangan (P&L)
+     ============================================================================ -->
+<div class="page-header">
+    <h2>Laporan Keuangan</h2>
+    <div class="btn-group">
+        <button class="btn btn-outline btn-sm" id="rpt-btn-export">📥 CSV</button>
+        <button class="btn btn-outline btn-sm no-print" id="rpt-btn-print">🖨️ Cetak</button>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <input type="date" id="rpt-start" style="min-width:140px;">
+    <span class="text-muted text-sm">s/d</span>
+    <input type="date" id="rpt-end" style="min-width:140px;">
+    <button class="btn btn-primary btn-sm" id="rpt-apply">Tampilkan</button>
+</div>
+
+<!-- Summary Cards -->
+<div class="grid grid-3" style="margin-bottom:1.25rem;" id="rpt-summary">
+    <div class="stat-card"><div class="stat-icon primary"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="stat-value" id="rpt-gross">Rp 0</div><p class="stat-label">Gross Sales</p></div>
+    <div class="stat-card"><div class="stat-icon danger"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/></svg></div><div class="stat-value" id="rpt-net">Rp 0</div><p class="stat-label">Net Sales</p></div>
+    <div class="stat-card"><div class="stat-icon success"><svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg></div><div class="stat-value" id="rpt-profit" style="color:var(--success);">Rp 0</div><p class="stat-label">Gross Profit</p></div>
+</div>
+
+<!-- Profit & Loss Detail -->
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header"><h4 class="card-title">Profit & Loss Statement</h4></div>
+    <div style="font-size:0.875rem; line-height:2.2;" id="rpt-pnl">
+        <div class="flex justify-between"><span>Gross Sales (Penjualan Kotor)</span><b id="rpt-v-gross">Rp 0</b></div>
+        <div class="flex justify-between" style="padding-left:1rem; color:var(--danger);"><span>(-) Refunds / Return</span><span id="rpt-v-refund">Rp 0</span></div>
+        <div class="flex justify-between" style="padding-left:1rem; color:var(--warning);"><span>(-) Discounts</span><span id="rpt-v-disc">Rp 0</span></div>
+        <hr>
+        <div class="flex justify-between" style="font-weight:600;"><span>Net Sales (Penjualan Bersih)</span><b id="rpt-v-net">Rp 0</b></div>
+        <div class="flex justify-between" style="padding-left:1rem; color:var(--text-muted);"><span>(-) COGS (Harga Pokok)</span><span id="rpt-v-cogs">Rp 0</span></div>
+        <hr>
+        <div class="flex justify-between" style="font-size:1.1rem; font-weight:700;"><span>Gross Profit (Laba Kotor)</span><b id="rpt-v-profit" style="color:var(--success);">Rp 0</b></div>
+    </div>
+</div>
+
+<!-- Daily Breakdown Chart -->
+<div class="card" style="margin-bottom:1.25rem;">
+    <div class="card-header"><h4 class="card-title">Breakdown Harian</h4></div>
+    <div style="position:relative; height:280px;"><canvas id="rpt-chart"></canvas></div>
+</div>
+
+<!-- Daily Breakdown Table -->
+<div class="card">
+    <div class="card-header"><h4 class="card-title">Tabel Harian</h4></div>
+    <div class="table-container table-desktop">
+        <table>
+            <thead><tr><th>Tanggal</th><th style="text-align:right;">Penjualan</th><th style="text-align:right;">Refund</th><th style="text-align:right;">Diskon</th><th style="text-align:right;">Nett</th></tr></thead>
+            <tbody id="rpt-daily-table"></tbody>
+        </table>
+    </div>
+    <!-- Mobile: Tanggal saja -->
+    <div id="rpt-daily-mobile"></div>
+</div>
+
+<script>
+(function(){
+    let rptChart = null;
+
+    // Default: 7 hari terakhir
+    const today = new Date(); const weekAgo = new Date(); weekAgo.setDate(today.getDate()-7);
+    document.getElementById('rpt-start').value = weekAgo.toISOString().split('T')[0];
+    document.getElementById('rpt-end').value = today.toISOString().split('T')[0];
+
+    async function loadReport(){
+        const startDate = document.getElementById('rpt-start').value;
+        const endDate = document.getElementById('rpt-end').value;
+        if(!startDate||!endDate){showToast('Pilih tanggal!','warning');return;}
+
+        showLoading('Menghitung laporan...');
+        try{
+            const rpt = await db.request('getReportSummary',{startDate,endDate});
+            const r = rpt;
+
+            // Summary cards
+            document.getElementById('rpt-gross').textContent = formatCurrency(r.gross_sales);
+            document.getElementById('rpt-net').textContent = formatCurrency(r.net_sales);
+            document.getElementById('rpt-profit').textContent = formatCurrency(r.gross_profit);
+
+            // P&L Statement
+            document.getElementById('rpt-v-gross').textContent = formatCurrency(r.gross_sales);
+            document.getElementById('rpt-v-refund').textContent = formatCurrency(r.refunds);
+            document.getElementById('rpt-v-disc').textContent = formatCurrency(r.discounts);
+            document.getElementById('rpt-v-net').textContent = formatCurrency(r.net_sales);
+            document.getElementById('rpt-v-cogs').textContent = formatCurrency(r.cogs);
+            document.getElementById('rpt-v-profit').textContent = formatCurrency(r.gross_profit);
+            document.getElementById('rpt-v-profit').style.color = r.gross_profit >= 0 ? 'var(--success)' : 'var(--danger)';
+
+            // Chart + table
+            renderDailyBreakdown(r.daily_breakdown||{}, startDate, endDate);
+        }catch(e){showToast('Gagal: '+e.message,'error');}
+        hideLoading();
+    }
+
+    function renderDailyBreakdown(breakdown, startDate, endDate){
+        const labels=[], salesData=[], refundData=[];
+        const rows=[];
+        const s=new Date(startDate), e=new Date(endDate);
+        for(let d=new Date(s); d<=e; d.setDate(d.getDate()+1)){
+            const key = d.toISOString().split('T')[0];
+            const dd = String(d.getDate()).padStart(2,'0');
+            const mm = String(d.getMonth()+1).padStart(2,'0');
+            labels.push(dd+'/'+mm);
+            const day = breakdown[key]||{penjualan:0,refund:0,diskon:0};
+            salesData.push(day.penjualan);
+            refundData.push(day.refund);
+            rows.push({tanggal:dd+'/'+mm+'/'+d.getFullYear(), penjualan:day.penjualan, refund:day.refund, diskon:day.diskon, nett:day.penjualan-day.refund-day.diskon});
+        }
+
+        // Chart
+        const ctx = document.getElementById('rpt-chart');
+        if(rptChart){rptChart.destroy();rptChart=null;}
+        const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+        rptChart = new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Penjualan',data:salesData,backgroundColor:'rgba(99,102,241,0.7)',borderRadius:4},{label:'Refund',data:refundData,backgroundColor:'rgba(239,68,68,0.7)',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:isDark?'#9CA3AF':'#6B7280'}}},scales:{x:{ticks:{color:isDark?'#9CA3AF':'#6B7280'},grid:{display:false}},y:{ticks:{color:isDark?'#9CA3AF':'#6B7280',callback:v=>formatCurrency(v).replace('Rp ','')}}}}} );
+
+        // Table
+        document.getElementById('rpt-daily-table').innerHTML = rows.length===0
+            ? '<tr><td colspan="5" class="text-center text-muted">Tidak ada data</td></tr>'
+            : rows.map(r=>`<tr><td>${r.tanggal}</td><td style="text-align:right;">${formatCurrency(r.penjualan)}</td><td style="text-align:right;color:var(--danger);">${formatCurrency(r.refund)}</td><td style="text-align:right;color:var(--warning);">${formatCurrency(r.diskon)}</td><td style="text-align:right;font-weight:600;">${formatCurrency(r.nett)}</td></tr>`).join('');
+
+        // Mobile
+        document.getElementById('rpt-daily-mobile').innerHTML = rows.map(r=>{
+            const nettColor = r.nett >= 0 ? 'var(--success)' : 'var(--danger)';
+            return `<div class="table-mobile-row" style="cursor:pointer;" onclick="window._rptDailyDetail('${r.tanggal}',${r.penjualan},${r.refund},${r.diskon},${r.nett})">
+                <div style="flex:1;min-width:0;">
+                    <div class="mobile-row-main">${r.tanggal}</div>
+                    <div class="mobile-row-sub">Nett: <span style="font-weight:600;color:${nettColor}">${formatCurrency(r.nett)}</span></div>
+                </div>
+                <div class="mobile-row-badge"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" fill="none" stroke-width="2" style="opacity:0.4;"><polyline points="9 18 15 12 9 6"/></svg></div>
+            </div>`;
+        }).join('');
+    }
+
+    document.getElementById('rpt-apply').addEventListener('click',loadReport);
+    document.getElementById('rpt-btn-print').addEventListener('click',()=>window.print());
+    document.getElementById('rpt-btn-export').addEventListener('click',()=>{
+        // Build export data from daily breakdown
+        const trs = document.getElementById('rpt-daily-table').querySelectorAll('tr');
+        const data = [];
+        trs.forEach(tr=>{
+            const tds = tr.querySelectorAll('td');
+            if(tds.length>=5) data.push({Tanggal:tds[0].textContent,Penjualan:tds[1].textContent,Refund:tds[2].textContent,Diskon:tds[3].textContent,Nett:tds[4].textContent});
+        });
+        exportCSV(data,'Laporan_Candokio');
+    });
+
+    // Detail daily breakdown on mobile tap
+    window._rptDailyDetail = function(tanggal, penjualan, refund, diskon, nett) {
+        const nettColor = nett >= 0 ? 'var(--success)' : 'var(--danger)';
+        Swal.fire({
+            title: '📅 ' + tanggal,
+            html: `<div style="text-align:left; font-size:0.875rem; line-height:2.2;">
+                <div style="display:flex;justify-content:space-between;"><span>Penjualan</span><b>${formatCurrency(penjualan)}</b></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--danger);">(-) Refund</span><span style="color:var(--danger);">${formatCurrency(refund)}</span></div>
+                <div style="display:flex;justify-content:space-between;"><span style="color:var(--warning);">(-) Diskon</span><span style="color:var(--warning);">${formatCurrency(diskon)}</span></div>
+                <hr style="margin:0.3rem 0;">
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:1rem;"><span>Nett</span><b style="color:${nettColor};">${formatCurrency(nett)}</b></div>
+            </div>`,
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#6366F1',
+            width: 360
+        });
+    };
+
+    window._viewCleanup=()=>{if(rptChart){rptChart.destroy();rptChart=null;} window._rptDailyDetail=null;};
+    loadReport();
+})();
+</script>
