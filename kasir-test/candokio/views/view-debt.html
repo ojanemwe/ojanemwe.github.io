@@ -153,6 +153,21 @@
         document.getElementById('debt-detail-modal').classList.add('active');
     };
 
+    // Helper: ambil ID shift aktif dari cache (konsisten dengan view-kas.html)
+    async function getActiveShiftId() {
+        try {
+            const shifts = await OfflineService.cachedRead('Shift');
+            const active = (shifts || []).find(s =>
+                s.status && s.status.toLowerCase() === 'open' &&
+                s.kasir === App.currentUser.username
+            );
+            return active ? active.id : '';
+        } catch(e) {
+            console.warn('[DEBT] Gagal baca shift aktif:', e);
+            return '';
+        }
+    }
+
     window._debtPay = async function(id){
         currentDebtId=id;
         const d=debts.find(x=>x.id===id); if(!d||d.status==='Lunas') return;
@@ -168,7 +183,18 @@
         if(formValues&&formValues.jumlah>0){
             showLoading('Memproses pembayaran...');
             try{
-                await db.optimisticWrite('payDebt',{hutangId:id,jumlah:formValues.jumlah,metode:formValues.metode,keterangan:formValues.keterangan,bukti_base64:'',shiftId:''});
+                // Ambil shift aktif agar pembayaran bisa dikaitkan ke shift
+                // dan muncul di catatan otomatis saat shift ditutup
+                const activeShiftId = await getActiveShiftId();
+                await db.optimisticWrite('payDebt',{
+                    hutangId: id,
+                    nama_pelanggan: d.nama_pelanggan,
+                    jumlah: formValues.jumlah,
+                    metode: formValues.metode,
+                    keterangan: formValues.keterangan,
+                    bukti_base64: '',
+                    shiftId: activeShiftId
+                });
                 showToast('Pembayaran berhasil!','success');
                 document.getElementById('debt-detail-modal').classList.remove('active');
                 await load();
