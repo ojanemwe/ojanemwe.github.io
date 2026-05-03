@@ -162,38 +162,135 @@
         const totalPengeluaran = parseFloat(POS.activeShift.total_pengeluaran) || 0;
         const uangDiharapkan = modalAwal + penjualanTunai - totalPengeluaran;
 
-        const { value: uangAktual } = await Swal.fire({
+        // ====================================================================
+        // BUILD AUTO-NOTES
+        // Kumpulkan transaksi tunai di shift ini yang TIDAK dicatat oleh sistem
+        // penjualan otomatis, sehingga user tahu mengapa ada selisih di laci:
+        //   1. Pembayaran hutang tunai (PembayaranHutang, metode Tunai, shiftId ini)
+        //   2. Pemasukan manual KAS (BukuKas, jenis Pemasukan, shift_id ini)
+        //   3. Pengeluaran manual KAS (BukuKas, jenis Pengeluaran, shift_id ini)
+        // ====================================================================
+        let autoNoteLines = [];
+        try {
+            const [bukuKas, pembayaranHutang] = await Promise.all([
+                OfflineService.cachedRead('BukuKas'),
+                OfflineService.cachedRead('PembayaranHutang')
+            ]);
+
+            // 1. Pembayaran hutang tunai pada shift ini
+            const bayarHutangTunai = (pembayaranHutang || []).filter(p =>
+                p.shiftId === POS.activeShift.id &&
+                (p.metode || '').toLowerCase() === 'tunai'
+            );
+            if (bayarHutangTunai.length > 0) {
+                const totalBH = bayarHutangTunai.reduce((s, p) => s + (parseFloat(p.jumlah) || 0), 0);
+                autoNoteLines.push(
+                    `Pembayaran hutang tunai (${bayarHutangTunai.length} transaksi): +${formatCurrency(totalBH)}`
+                );
+                bayarHutangTunai.forEach(p => {
+                    const ket = p.keterangan ? ` — ${p.keterangan}` : '';
+                    autoNoteLines.push(`  • ${escapeHtml(p.nama_pelanggan || p.id_hutang || '-')}: ${formatCurrency(p.jumlah)}${ket}`);
+                });
+            }
+
+            // 2. Pemasukan manual KAS pada shift ini
+            const kasmasuk = (bukuKas || []).filter(k =>
+                k.shift_id === POS.activeShift.id && k.jenis === 'Pemasukan'
+            );
+            if (kasmasuk.length > 0) {
+                const totalKM = kasmasuk.reduce((s, k) => s + (parseFloat(k.jumlah) || 0), 0);
+                autoNoteLines.push(
+                    `Pemasukan manual KAS (${kasmasuk.length} entri): +${formatCurrency(totalKM)}`
+                );
+                kasmasuk.forEach(k => {
+                    const label = k.sumber_dana || k.keterangan || '-';
+                    autoNoteLines.push(`  • ${escapeHtml(label)}: ${formatCurrency(k.jumlah)}`);
+                });
+            }
+
+            // 3. Pengeluaran manual KAS pada shift ini
+            const kaskeluar = (bukuKas || []).filter(k =>
+                k.shift_id === POS.activeShift.id && k.jenis === 'Pengeluaran'
+            );
+            if (kaskeluar.length > 0) {
+                const totalKK = kaskeluar.reduce((s, k) => s + (parseFloat(k.jumlah) || 0), 0);
+                autoNoteLines.push(
+                    `Pengeluaran manual KAS (${kaskeluar.length} entri): -${formatCurrency(totalKK)}`
+                );
+                kaskeluar.forEach(k => {
+                    const label = k.tujuan_pengeluaran || k.keterangan || '-';
+                    autoNoteLines.push(`  • ${escapeHtml(label)}: ${formatCurrency(k.jumlah)}`);
+                });
+            }
+        } catch(e) {
+            console.warn('[POS] Gagal membangun auto-notes shift:', e);
+        }
+
+        const autoNoteText = autoNoteLines.length > 0
+            ? autoNoteLines.join('\n')
+            : '';
+
+        // Blok info catatan otomatis untuk ditampilkan di dialog
+        const catatanInfoHtml = autoNoteLines.length > 0 ? `
+            <div style="background:var(--bg-surface-alt); border:1px solid var(--border-color); border-radius:var(--radius-md); padding:0.6rem 0.75rem; margin-bottom:0.6rem; text-align:left;">
+                <div style="font-size:0.75rem; font-weight:600; color:var(--text-muted); margin-bottom:0.3rem;">⚠️ Transaksi tunai di luar penjualan terdeteksi:</div>
+                <pre style="font-size:0.75rem; margin:0; white-space:pre-wrap; color:var(--text-color); font-family:inherit; line-height:1.6;">${autoNoteText}</pre>
+            </div>` : '';
+
+        // ====================================================================
+        // DIALOG TUTUP SHIFT — satu dialog, semua info + textarea catatan
+        // ====================================================================
+        const { value: formResult } = await Swal.fire({
             title: 'Tutup Shift',
-            html: `<p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:0.5rem;">Hitung uang tunai fisik di laci Anda.</p>
-                   <div style="font-size:0.8125rem; line-height:1.8; text-align:left; margin-bottom:0.5rem;">
-                       <div style="display:flex;justify-content:space-between;"><span>Modal Awal:</span><b>${formatCurrency(modalAwal)}</b></div>
-                       <div style="display:flex;justify-content:space-between;"><span>Penjualan Tunai:</span><b style="color:var(--success);">+ ${formatCurrency(penjualanTunai)}</b></div>
-                       <div style="display:flex;justify-content:space-between;"><span>Pengeluaran:</span><b style="color:var(--danger);">- ${formatCurrency(totalPengeluaran)}</b></div>
-                       <hr style="margin:0.3rem 0;">
-                       <div style="display:flex;justify-content:space-between; font-weight:700;"><span>Seharusnya:</span><b style="color:var(--primary);">${formatCurrency(uangDiharapkan)}</b></div>
-                   </div>`,
-            input: 'number',
-            inputLabel: 'Uang Aktual di Laci (Rp)',
-            inputPlaceholder: formatCurrency(uangDiharapkan).replace('Rp ', ''),
-            inputValue: uangDiharapkan,
-            inputAttributes: { min: 0 },
+            html: `
+                <p style="color:var(--text-muted); font-size:0.875rem; margin-bottom:0.6rem;">Hitung uang tunai fisik di laci Anda.</p>
+                <div style="font-size:0.8125rem; line-height:1.8; text-align:left; margin-bottom:0.6rem;">
+                    <div style="display:flex;justify-content:space-between;"><span>Modal Awal:</span><b>${formatCurrency(modalAwal)}</b></div>
+                    <div style="display:flex;justify-content:space-between;"><span>Penjualan Tunai:</span><b style="color:var(--success);">+ ${formatCurrency(penjualanTunai)}</b></div>
+                    <div style="display:flex;justify-content:space-between;"><span>Pengeluaran:</span><b style="color:var(--danger);">- ${formatCurrency(totalPengeluaran)}</b></div>
+                    <hr style="margin:0.3rem 0;">
+                    <div style="display:flex;justify-content:space-between; font-weight:700;"><span>Seharusnya:</span><b style="color:var(--primary);">${formatCurrency(uangDiharapkan)}</b></div>
+                </div>
+                ${catatanInfoHtml}
+                <div style="text-align:left; margin-bottom:0.4rem;">
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Uang Aktual di Laci (Rp) *</label>
+                    <input id="swal-aktual-input" type="number" min="0"
+                        value="${uangDiharapkan}"
+                        style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:1rem; font-weight:700; box-sizing:border-box; margin-top:0.25rem; background:var(--bg-surface); color:var(--text-color);">
+                </div>
+                <div style="text-align:left;">
+                    <label style="font-size:0.8rem; font-weight:600; color:var(--text-muted);">Catatan Shift (opsional — bisa diedit)</label>
+                    <textarea id="swal-catatan-input" rows="4"
+                        style="width:100%; padding:0.5rem 0.75rem; border:1px solid var(--border-color); border-radius:var(--radius-md); font-size:0.8rem; line-height:1.6; resize:vertical; box-sizing:border-box; margin-top:0.25rem; background:var(--bg-surface); color:var(--text-color); font-family:inherit;"
+                        placeholder="Catatan tambahan (opsional)..."
+                    >${autoNoteText}</textarea>
+                </div>`,
             showCancelButton: true,
             confirmButtonText: 'Tutup Shift',
             cancelButtonText: 'Batal',
             confirmButtonColor: '#EF4444',
-            inputValidator: (val) => {
-                if (val === '' || isNaN(val)) return 'Masukkan jumlah yang valid!';
+            preConfirm: () => {
+                const aktual = parseFloat(document.getElementById('swal-aktual-input').value);
+                if (isNaN(aktual) || aktual < 0) {
+                    Swal.showValidationMessage('Masukkan jumlah uang aktual yang valid!');
+                    return false;
+                }
+                return {
+                    uangAktual: aktual,
+                    catatan: document.getElementById('swal-catatan-input').value.trim()
+                };
             }
         });
 
-        if (uangAktual !== undefined) {
+        if (formResult) {
+            const { uangAktual, catatan } = formResult;
             showLoading('Menutup shift...');
             try {
-                const result = await db.optimisticWrite('closeShift', {
+                await db.optimisticWrite('closeShift', {
                     shiftId: POS.activeShift.id,
-                    uang_aktual: parseFloat(uangAktual),
+                    uang_aktual: uangAktual,
                     isAuto: false,
-                    catatan: '',
+                    catatan: catatan,
                     kasir: App.currentUser.nama_lengkap || App.currentUser.username
                 });
 
@@ -202,11 +299,11 @@
                 showToast('Shift berhasil ditutup (Offline Syncing)!', 'success');
                 hideLoading();
 
-                // Tampilkan rekapitulasi secara optimistik (karena data di-sync ke background)
-                const selisih = parseFloat(uangAktual) - uangDiharapkan;
+                // Tampilkan rekapitulasi
+                const selisih = uangAktual - uangDiharapkan;
                 const selisihClass = selisih >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
                 await Swal.fire({
-                    title: 'Shift Ditutup (Offline Sync)',
+                    title: 'Shift Ditutup',
                     html: `
                         <div style="text-align:left; font-size:0.875rem; line-height:1.8;">
                             <div style="display:flex;justify-content:space-between;"><span>Modal Awal:</span><b>${formatCurrency(modalAwal)}</b></div>
@@ -216,8 +313,8 @@
                             <div style="display:flex;justify-content:space-between;"><span>Uang Diharapkan:</span><b>${formatCurrency(uangDiharapkan)}</b></div>
                             <div style="display:flex;justify-content:space-between;"><span>Uang Aktual:</span><b>${formatCurrency(uangAktual)}</b></div>
                             <div style="display:flex;justify-content:space-between;"><span>Selisih:</span><b style="${selisihClass}">${formatCurrency(selisih)}</b></div>
-                        </div>
-                    `,
+                            ${catatan ? `<hr style="margin:0.5rem 0;"><div style="font-size:0.8rem; color:var(--text-muted);"><b>Catatan:</b><br><span style="white-space:pre-wrap;">${escapeHtml(catatan)}</span></div>` : ''}
+                        </div>`,
                     icon: selisih === 0 ? 'success' : 'warning',
                     confirmButtonColor: '#6366F1'
                 });
