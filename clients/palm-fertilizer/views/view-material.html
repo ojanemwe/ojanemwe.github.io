@@ -1,0 +1,445 @@
+<div class="spa-view active">
+  <h1 class="page-title">Material</h1>
+  <div class="tabs" id="mat-tabs">
+    <button class="tab-btn active" onclick="switchMatTab('stok')">Stok</button>
+    <button class="tab-btn" onclick="switchMatTab('Suplier')">Suplier</button>
+    <button class="tab-btn" onclick="switchMatTab('site')">Site</button>
+    <button class="tab-btn" onclick="switchMatTab('opsi')">Opsi Material</button>
+  </div>
+
+  <!-- Stok -->
+  <div class="tab-content active" id="tab-stok">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Stok Material</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-stok')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th>Material</th><th class="hide-mobile">Asal</th><th class="hide-mobile">Total (T)</th><th class="hide-mobile">Terpakai (T)</th><th>Sisa (T)</th></tr></thead><tbody id="tbl-stok"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Suplier -->
+  <div class="tab-content" id="tab-Suplier">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Suplier Material</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-Suplier')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th class="hide-mobile">Kode</th><th>Nama PT</th><th class="hide-mobile">Alamat</th><th class="hide-mobile">Telp</th></tr></thead><tbody id="tbl-Suplier"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Site -->
+  <div class="tab-content" id="tab-site">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Site PT</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-site')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th class="hide-mobile">Kode</th><th>Nama Site</th><th class="hide-mobile">Alamat</th><th class="hide-mobile">Telp</th></tr></thead><tbody id="tbl-site"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Opsi -->
+  <div class="tab-content" id="tab-opsi">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Opsi Material</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-opsi')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Jenis</th></tr></thead><tbody id="tbl-opsi"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-stok" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-stok')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Stok</h3><button class="modal-close" onclick="UI.closeModal('modal-stok')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Material</label><select id="add-stok-material"><option value="">Pilih...</option></select>
+      <label>Asal</label><select id="add-stok-asal"><option value="">Pilih...</option></select>
+      <label>Total Stok (Ton)</label><input type="number" id="add-stok-total" placeholder="0">
+      <button class="btn btn-primary btn-block" onclick="addStok()">Simpan</button>
+    </div>
+  </div>
+  <div id="modal-Suplier" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-Suplier')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Suplier</h3><button class="modal-close" onclick="UI.closeModal('modal-Suplier')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Kode PT</label><input type="text" id="add-spl-kode" placeholder="Kode">
+      <label>Nama PT</label><input type="text" id="add-spl-nama" placeholder="Nama">
+      <label>Alamat</label><input type="text" id="add-spl-alamat" placeholder="Alamat">
+      <label>No Telp</label><input type="tel" id="add-spl-telp" placeholder="08xxx">
+      <button class="btn btn-primary btn-block" onclick="addSuplier()">Simpan</button>
+    </div>
+  </div>
+  <div id="modal-site" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-site')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Site</h3><button class="modal-close" onclick="UI.closeModal('modal-site')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Kode Site</label><input type="text" id="add-site-kode" placeholder="Kode">
+      <label>Nama Site</label><input type="text" id="add-site-nama" placeholder="Nama">
+      <label>Alamat</label><input type="text" id="add-site-alamat" placeholder="Alamat">
+      <label>No Telp</label><input type="tel" id="add-site-telp" placeholder="08xxx">
+      <button class="btn btn-primary btn-block" onclick="addSite()">Simpan</button>
+    </div>
+  </div>
+  <div id="modal-opsi" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-opsi')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Opsi</h3><button class="modal-close" onclick="UI.closeModal('modal-opsi')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Nama Material</label><input type="text" id="add-opsi-nama" placeholder="Nama">
+      <label>Jenis</label><select id="add-opsi-jenis"><option value="Organik">Organik</option><option value="Anorganik">Anorganik</option></select>
+      <button class="btn btn-primary btn-block" onclick="addOpsi()">Simpan</button>
+    </div>
+  </div>
+
+  <!-- Detail Modals -->
+  <div id="modal-detail-stok" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-stok')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Stok</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-stok')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-stok-view">
+        <div class="grid grid-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Material:</span> <strong id="det-stok-nama"></strong></div>
+          <div><span class="text-muted">Asal:</span> <strong id="det-stok-asal"></strong></div>
+          <div><span class="text-muted">Total:</span> <strong id="det-stok-total"></strong></div>
+          <div><span class="text-muted">Terpakai:</span> <strong id="det-stok-terpakai"></strong></div>
+          <div><span class="text-muted">Sisa:</span> <strong id="det-stok-sisa"></strong></div>
+        </div>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditStok(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteStok()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-stok-view" style="display:none">
+        <label>Material</label><select id="edit-stok-material"></select>
+        <label>Asal</label><select id="edit-stok-asal-sel"></select>
+        <label>Total Stok (Ton)</label><input type="number" id="edit-stok-total">
+        <label>Stok Terpakai (Ton)</label><input type="number" id="edit-stok-terpakai">
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditStok()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditStok(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-Suplier" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-Suplier')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Suplier</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-Suplier')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-spl-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Kode:</span> <strong id="det-spl-kode"></strong></div>
+          <div><span class="text-muted">Nama PT:</span> <strong id="det-spl-nama"></strong></div>
+          <div><span class="text-muted">Alamat:</span> <strong id="det-spl-alamat"></strong></div>
+          <div><span class="text-muted">Telp:</span> <strong id="det-spl-telp"></strong></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditSpl(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteSpl()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-spl-view" style="display:none">
+        <label>Kode PT</label><input type="text" id="edit-spl-kode">
+        <label>Nama PT</label><input type="text" id="edit-spl-nama">
+        <label>Alamat</label><input type="text" id="edit-spl-alamat">
+        <label>No Telp</label><input type="tel" id="edit-spl-telp">
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditSpl()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditSpl(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-site" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-site')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Site</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-site')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-site-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Kode:</span> <strong id="det-site-kode"></strong></div>
+          <div><span class="text-muted">Nama Site:</span> <strong id="det-site-nama"></strong></div>
+          <div><span class="text-muted">Alamat:</span> <strong id="det-site-alamat"></strong></div>
+          <div><span class="text-muted">Telp:</span> <strong id="det-site-telp"></strong></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditSite(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteSite()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-site-view" style="display:none">
+        <label>Kode Site</label><input type="text" id="edit-site-kode">
+        <label>Nama Site</label><input type="text" id="edit-site-nama">
+        <label>Alamat</label><input type="text" id="edit-site-alamat">
+        <label>No Telp</label><input type="tel" id="edit-site-telp">
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditSite()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditSite(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-opsi" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-opsi')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Opsi Material</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-opsi')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-opsi-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Nama:</span> <strong id="det-opsi-nama"></strong></div>
+          <div><span class="text-muted">Jenis:</span> <strong id="det-opsi-jenis"></strong></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditOpsi(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteOpsi()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-opsi-view" style="display:none">
+        <label>Nama Material</label><input type="text" id="edit-opsi-nama">
+        <label>Jenis</label><select id="edit-opsi-jenis"><option value="Organik">Organik</option><option value="Anorganik">Anorganik</option></select>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditOpsi()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditOpsi(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  function render() {
+    // Stok
+    const stok = App.getData('stok_material');
+    document.getElementById('tbl-stok').innerHTML = stok.map(s =>
+      `<tr onclick="openDetStok('${s.id_stok}')" style="cursor:pointer" class="hover-bg"><td><strong>${s.nama_material}</strong></td><td class="hide-mobile">${s.asal_material}</td><td class="hide-mobile">${s.total_stok}</td><td class="hide-mobile">${s.stok_terpakai}</td><td><span class="badge badge-success">${s.total_stok - s.stok_terpakai}</span></td></tr>`
+    ).join('') || '<tr><td colspan="5" class="text-center text-muted">Tidak ada data</td></tr>';
+
+    // Suplier
+    const spl = App.getData('suplier_material');
+    document.getElementById('tbl-Suplier').innerHTML = spl.map(s =>
+      `<tr onclick="openDetSuplier('${s.id_pt}')" style="cursor:pointer" class="hover-bg"><td class="hide-mobile">${s.kode_pt}</td><td><strong>${s.nama_pt}</strong></td><td class="hide-mobile">${s.alamat_pt}</td><td class="hide-mobile">${s.no_telp_pt}</td></tr>`
+    ).join('') || '<tr><td colspan="4" class="text-center text-muted">Tidak ada data</td></tr>';
+
+    // Site
+    const sites = App.getData('site_pt');
+    document.getElementById('tbl-site').innerHTML = sites.map(s =>
+      `<tr onclick="openDetSite('${s.id_site}')" style="cursor:pointer" class="hover-bg"><td class="hide-mobile">${s.kode_site}</td><td><strong>${s.nama_site}</strong></td><td class="hide-mobile">${s.alamat_site}</td><td class="hide-mobile">${s.no_telp_site}</td></tr>`
+    ).join('') || '<tr><td colspan="4" class="text-center text-muted">Tidak ada data</td></tr>';
+
+    // Opsi
+    const opsi = App.getData('opsi_material');
+    document.getElementById('tbl-opsi').innerHTML = opsi.map(o =>
+      `<tr onclick="openDetOpsi('${o.id_opsi}')" style="cursor:pointer" class="hover-bg"><td><strong>${o.nama_opsi_material}</strong></td><td><span class="badge badge-info">${o.jenis_material}</span></td></tr>`
+    ).join('') || '<tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>';
+
+    // Populate modal selects
+    const matSel = document.getElementById('add-stok-material');
+    matSel.innerHTML = '<option value="">Pilih...</option>';
+    opsi.forEach(o => { matSel.innerHTML += `<option value="${o.nama_opsi_material}">${o.nama_opsi_material}</option>`; });
+    const asalSel = document.getElementById('add-stok-asal');
+    asalSel.innerHTML = '<option value="">Pilih...</option>';
+    spl.forEach(s => { asalSel.innerHTML += `<option value="${s.nama_pt}">${s.nama_pt}</option>`; });
+  }
+  render();
+
+  window.switchMatTab = function(tab) {
+    document.querySelectorAll('#mat-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+  };
+
+  window.addStok = function() {
+    const nama = document.getElementById('add-stok-material').value;
+    const asal = document.getElementById('add-stok-asal').value;
+    const total = parseFloat(document.getElementById('add-stok-total').value) || 0;
+    if (!nama) { UI.toast('Pilih material!', 'error'); return; }
+    App.addRecord('stok_material', { id_stok:`STK-${Date.now()}`, nama_material:nama, asal_material:asal, total_stok:total, stok_terpakai:0 });
+    UI.closeModal('modal-stok'); render(); UI.toast('Stok ditambahkan!');
+  };
+
+  window.addSuplier = function() {
+    const kode = document.getElementById('add-spl-kode').value;
+    const nama = document.getElementById('add-spl-nama').value;
+    if (!nama) { UI.toast('Nama wajib diisi!', 'error'); return; }
+    App.addRecord('suplier_material', { id_pt:`SPL-${Date.now()}`, kode_pt:kode, nama_pt:nama, alamat_pt:document.getElementById('add-spl-alamat').value, no_telp_pt:App.formatPhone(document.getElementById('add-spl-telp').value), modified_by:'' });
+    UI.closeModal('modal-Suplier'); render(); UI.toast('Suplier ditambahkan!');
+  };
+
+  window.addSite = function() {
+    const kode = document.getElementById('add-site-kode').value;
+    const nama = document.getElementById('add-site-nama').value;
+    if (!nama) { UI.toast('Nama wajib diisi!', 'error'); return; }
+    App.addRecord('site_pt', { id_site:`SIT-${Date.now()}`, kode_site:kode, nama_site:nama, alamat_site:document.getElementById('add-site-alamat').value, no_telp_site:App.formatPhone(document.getElementById('add-site-telp').value), modified_by:'' });
+    UI.closeModal('modal-site'); render(); UI.toast('Site ditambahkan!');
+  };
+
+  window.addOpsi = function() {
+    const nama = document.getElementById('add-opsi-nama').value;
+    if (!nama) { UI.toast('Nama wajib diisi!', 'error'); return; }
+    App.addRecord('opsi_material', { id_opsi:`OPS-${Date.now()}`, nama_opsi_material:nama, jenis_material:document.getElementById('add-opsi-jenis').value });
+    UI.closeModal('modal-opsi'); render(); UI.toast('Opsi material ditambahkan!');
+  };
+
+  let activeStokId = null, activeSplId = null, activeSiteId = null, activeOpsiId = null;
+
+  window.openDetStok = function(id) {
+    const d = App.getData('stok_material').find(x => x.id_stok === id); if(!d) return;
+    activeStokId = id;
+    document.getElementById('det-stok-nama').textContent = d.nama_material;
+    document.getElementById('det-stok-asal').textContent = d.asal_material;
+    document.getElementById('det-stok-total').textContent = d.total_stok;
+    document.getElementById('det-stok-terpakai').textContent = d.stok_terpakai;
+    document.getElementById('det-stok-sisa').textContent = (d.total_stok - d.stok_terpakai);
+    toggleEditStok(false);
+    UI.openModal('modal-detail-stok');
+  };
+  window.toggleEditStok = function(show) {
+    document.getElementById('det-stok-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-stok-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('stok_material').find(x => x.id_stok === activeStokId); if(!d) return;
+      const opsi = App.getData('opsi_material'), spl = App.getData('suplier_material');
+      const mSel = document.getElementById('edit-stok-material');
+      mSel.innerHTML = '<option value="">Pilih...</option>';
+      opsi.forEach(o => { mSel.innerHTML += `<option value="${o.nama_opsi_material}">${o.nama_opsi_material}</option>`; });
+      mSel.value = d.nama_material;
+      const aSel = document.getElementById('edit-stok-asal-sel');
+      aSel.innerHTML = '<option value="">Pilih...</option>';
+      spl.forEach(s => { aSel.innerHTML += `<option value="${s.nama_pt}">${s.nama_pt}</option>`; });
+      aSel.value = d.asal_material;
+      document.getElementById('edit-stok-total').value = d.total_stok;
+      document.getElementById('edit-stok-terpakai').value = d.stok_terpakai;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditStok = function() {
+    const nama = document.getElementById('edit-stok-material').value;
+    if (!nama) { UI.toast('Pilih material!', 'error'); return; }
+    App.updateRecord('stok_material', 'id_stok', activeStokId, {
+      nama_material: nama,
+      asal_material: document.getElementById('edit-stok-asal-sel').value,
+      total_stok: parseFloat(document.getElementById('edit-stok-total').value) || 0,
+      stok_terpakai: parseFloat(document.getElementById('edit-stok-terpakai').value) || 0
+    });
+    UI.closeModal('modal-detail-stok'); render(); UI.toast('Stok diperbarui!');
+  };
+  window.deleteStok = function() {
+    if (!confirm('Hapus data stok ini?')) return;
+    App.deleteRecord('stok_material', 'id_stok', activeStokId);
+    UI.closeModal('modal-detail-stok'); render(); UI.toast('Stok dihapus');
+  };
+
+  window.openDetSuplier = function(id) {
+    const d = App.getData('suplier_material').find(x => x.id_pt === id); if(!d) return;
+    activeSplId = id;
+    document.getElementById('det-spl-kode').textContent = d.kode_pt;
+    document.getElementById('det-spl-nama').textContent = d.nama_pt;
+    document.getElementById('det-spl-alamat').textContent = d.alamat_pt;
+    document.getElementById('det-spl-telp').textContent = d.no_telp_pt;
+    toggleEditSpl(false);
+    UI.openModal('modal-detail-Suplier');
+  };
+  window.toggleEditSpl = function(show) {
+    document.getElementById('det-spl-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-spl-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('suplier_material').find(x => x.id_pt === activeSplId); if(!d) return;
+      document.getElementById('edit-spl-kode').value = d.kode_pt;
+      document.getElementById('edit-spl-nama').value = d.nama_pt;
+      document.getElementById('edit-spl-alamat').value = d.alamat_pt;
+      document.getElementById('edit-spl-telp').value = d.no_telp_pt;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditSpl = function() {
+    const nama = document.getElementById('edit-spl-nama').value;
+    if (!nama) { UI.toast('Nama wajib diisi!', 'error'); return; }
+    App.updateRecord('suplier_material', 'id_pt', activeSplId, {
+      kode_pt: document.getElementById('edit-spl-kode').value,
+      nama_pt: nama,
+      alamat_pt: document.getElementById('edit-spl-alamat').value,
+      no_telp_pt: App.formatPhone(document.getElementById('edit-spl-telp').value),
+      modified_by: App.getSession()?.user?.nama_lengkap || ''
+    });
+    UI.closeModal('modal-detail-Suplier'); render(); UI.toast('Suplier diperbarui!');
+  };
+  window.deleteSpl = function() {
+    if (!confirm('Hapus data suplier ini?')) return;
+    App.deleteRecord('suplier_material', 'id_pt', activeSplId);
+    UI.closeModal('modal-detail-Suplier'); render(); UI.toast('Suplier dihapus');
+  };
+
+  window.openDetSite = function(id) {
+    const d = App.getData('site_pt').find(x => x.id_site === id); if(!d) return;
+    activeSiteId = id;
+    document.getElementById('det-site-kode').textContent = d.kode_site;
+    document.getElementById('det-site-nama').textContent = d.nama_site;
+    document.getElementById('det-site-alamat').textContent = d.alamat_site;
+    document.getElementById('det-site-telp').textContent = d.no_telp_site;
+    toggleEditSite(false);
+    UI.openModal('modal-detail-site');
+  };
+  window.toggleEditSite = function(show) {
+    document.getElementById('det-site-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-site-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('site_pt').find(x => x.id_site === activeSiteId); if(!d) return;
+      document.getElementById('edit-site-kode').value = d.kode_site;
+      document.getElementById('edit-site-nama').value = d.nama_site;
+      document.getElementById('edit-site-alamat').value = d.alamat_site;
+      document.getElementById('edit-site-telp').value = d.no_telp_site;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditSite = function() {
+    const nama = document.getElementById('edit-site-nama').value;
+    if (!nama) { UI.toast('Nama wajib diisi!', 'error'); return; }
+    App.updateRecord('site_pt', 'id_site', activeSiteId, {
+      kode_site: document.getElementById('edit-site-kode').value,
+      nama_site: nama,
+      alamat_site: document.getElementById('edit-site-alamat').value,
+      no_telp_site: App.formatPhone(document.getElementById('edit-site-telp').value),
+      modified_by: App.getSession()?.user?.nama_lengkap || ''
+    });
+    UI.closeModal('modal-detail-site'); render(); UI.toast('Site diperbarui!');
+  };
+  window.deleteSite = function() {
+    if (!confirm('Hapus data site ini?')) return;
+    App.deleteRecord('site_pt', 'id_site', activeSiteId);
+    UI.closeModal('modal-detail-site'); render(); UI.toast('Site dihapus');
+  };
+
+  window.openDetOpsi = function(id) {
+    const d = App.getData('opsi_material').find(x => x.id_opsi === id); if(!d) return;
+    activeOpsiId = id;
+    document.getElementById('det-opsi-nama').textContent = d.nama_opsi_material;
+    document.getElementById('det-opsi-jenis').textContent = d.jenis_material;
+    toggleEditOpsi(false);
+    UI.openModal('modal-detail-opsi');
+  };
+  window.toggleEditOpsi = function(show) {
+    document.getElementById('det-opsi-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-opsi-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('opsi_material').find(x => x.id_opsi === activeOpsiId); if(!d) return;
+      document.getElementById('edit-opsi-nama').value = d.nama_opsi_material;
+      document.getElementById('edit-opsi-jenis').value = d.jenis_material;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditOpsi = function() {
+    const nama = document.getElementById('edit-opsi-nama').value;
+    if (!nama) { UI.toast('Nama wajib diisi!', 'error'); return; }
+    App.updateRecord('opsi_material', 'id_opsi', activeOpsiId, {
+      nama_opsi_material: nama,
+      jenis_material: document.getElementById('edit-opsi-jenis').value
+    });
+    UI.closeModal('modal-detail-opsi'); render(); UI.toast('Opsi material diperbarui!');
+  };
+  window.deleteOpsi = function() {
+    if (!confirm('Hapus opsi material ini?')) return;
+    App.deleteRecord('opsi_material', 'id_opsi', activeOpsiId);
+    UI.closeModal('modal-detail-opsi'); render(); UI.toast('Opsi material dihapus');
+  };
+
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+

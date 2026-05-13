@@ -1,0 +1,366 @@
+<div class="spa-view active">
+  <h1 class="page-title">Laporan</h1>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs mb-3" style="display:flex;gap:1rem;border-bottom:1px solid var(--border-color);overflow-x:auto;padding-bottom:0.5rem">
+    <button class="btn btn-ghost active" id="tab-ritase" onclick="switchTab('ritase')" style="border-bottom:2px solid var(--primary);border-radius:0">Ritase</button>
+    <button class="btn btn-ghost" id="tab-pemupukan" onclick="switchTab('pemupukan')">Pemupukan</button>
+    <button class="btn btn-ghost" id="tab-driver" onclick="switchTab('driver')">Harian Driver</button>
+  </div>
+
+  <div class="card card-flat mb-3">
+    <div class="grid grid-2">
+      <div>
+        <label>Dari Tanggal</label>
+        <input type="date" id="lap-date-start" onchange="renderLaporan()">
+      </div>
+      <div>
+        <label>Sampai Tanggal</label>
+        <input type="date" id="lap-date-end" onchange="renderLaporan()">
+      </div>
+    </div>
+    <div id="lap-filter-driver-container" style="display:none; margin-top:1rem;">
+      <label>Filter Driver</label>
+      <select id="lap-filter-driver" onchange="renderLaporan()">
+        <option value="">Semua Driver</option>
+      </select>
+    </div>
+    <div class="flex mt-2">
+      <button class="btn btn-primary btn-block" onclick="UI.openModal('modal-export-csv')">
+        <i data-lucide="file-spreadsheet" class="icon-sm"></i> Export CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Ritase Tab Content -->
+  <div id="content-ritase" class="tab-content">
+    <div class="card card-flat">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Tanggal</th><th class="hide-mobile">Jam</th><th>Unit</th><th class="hide-mobile">Driver</th><th class="hide-mobile">Asal</th><th class="hide-mobile">Tujuan</th><th>TDM</th><th class="hide-mobile">Jarak</th><th class="hide-mobile">Status</th></tr>
+          </thead>
+          <tbody id="tbl-laporan-ritase"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pemupukan Tab Content -->
+  <div id="content-pemupukan" class="tab-content" style="display:none">
+    <div class="card card-flat">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Tanggal</th><th class="hide-mobile">Lahan</th><th>Kebun</th><th class="hide-mobile">Mulai</th><th class="hide-mobile">Selesai</th></tr>
+          </thead>
+          <tbody id="tbl-laporan-pemupukan"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Driver Tab Content -->
+  <div id="content-driver" class="tab-content" style="display:none">
+    <div class="card card-flat">
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr><th>Tanggal</th><th class="hide-mobile">Unit</th><th>Driver</th><th class="hide-mobile">Total Rit</th><th class="hide-mobile">Akumulasi Jarak (Km)</th></tr>
+          </thead>
+          <tbody id="tbl-laporan-driver"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modals Laporan -->
+  <div id="modal-lap-ritase" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-lap-ritase')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Laporan Ritase</h3><button class="modal-close" onclick="UI.closeModal('modal-lap-ritase')"><i data-lucide="x" class="icon"></i></button></div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Tanggal:</span> <strong id="lap-det-rit-tgl"></strong></div>
+        <div><span class="text-muted">Jam:</span> <strong id="lap-det-rit-jam"></strong></div>
+        <div><span class="text-muted">Unit:</span> <strong id="lap-det-rit-unit"></strong></div>
+        <div><span class="text-muted">Driver:</span> <strong id="lap-det-rit-driver"></strong></div>
+        <div><span class="text-muted">Asal:</span> <strong id="lap-det-rit-asal"></strong></div>
+        <div><span class="text-muted">Tujuan:</span> <strong id="lap-det-rit-tujuan"></strong></div>
+        <div><span class="text-muted">TDM:</span> <strong id="lap-det-rit-tdm"></strong></div>
+        <div><span class="text-muted">Jarak:</span> <strong id="lap-det-rit-jarak"></strong> Km</div>
+        <div><span class="text-muted">Status:</span> <strong id="lap-det-rit-status"></strong></div>
+        <div style="grid-column: span 2;"><span class="text-muted">Input Oleh:</span> <strong id="lap-det-rit-input-by"></strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-lap-pemupukan" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-lap-pemupukan')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Laporan Pemupukan</h3><button class="modal-close" onclick="UI.closeModal('modal-lap-pemupukan')"><i data-lucide="x" class="icon"></i></button></div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Tanggal:</span> <strong id="lap-det-pupuk-tgl"></strong></div>
+        <div><span class="text-muted">Lahan:</span> <strong id="lap-det-pupuk-lahan"></strong></div>
+        <div><span class="text-muted">Kebun:</span> <strong id="lap-det-pupuk-kebun"></strong></div>
+        <div><span class="text-muted">Mulai:</span> <strong id="lap-det-pupuk-mulai"></strong></div>
+        <div><span class="text-muted">Selesai:</span> <strong id="lap-det-pupuk-selesai"></strong></div>
+        <div style="grid-column: span 2;"><span class="text-muted">Input Oleh:</span> <strong id="lap-det-pupuk-input-by"></strong></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-lap-driver" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-lap-driver')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Laporan Driver</h3><button class="modal-close" onclick="UI.closeModal('modal-lap-driver')"><i data-lucide="x" class="icon"></i></button></div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Tanggal:</span> <strong id="lap-det-drv-tgl"></strong></div>
+        <div><span class="text-muted">Unit:</span> <strong id="lap-det-drv-unit"></strong></div>
+        <div><span class="text-muted">Driver:</span> <strong id="lap-det-drv-driver"></strong></div>
+        <div><span class="text-muted">Total Rit:</span> <strong id="lap-det-drv-rit"></strong></div>
+        <div><span class="text-muted">Akumulasi Jarak:</span> <strong id="lap-det-drv-jarak"></strong> Km</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Pilih Delimiter -->
+  <div id="modal-export-csv" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-export-csv')">
+    <div class="modal-content" style="max-width:360px">
+      <div class="modal-header">
+        <h3>Export CSV</h3>
+        <button class="modal-close" onclick="UI.closeModal('modal-export-csv')"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <label>Pemisah Data (Delimiter)</label>
+      <select id="csv-delimiter">
+        <option value=";" selected>Titik-koma ( ; ) — Default</option>
+        <option value=",">Koma ( , )</option>
+      </select>
+      <button class="btn btn-primary btn-block mt-2" onclick="exportActiveTabToCSV()">
+        <i data-lucide="download" class="icon-sm"></i> Unduh CSV
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  let activeTab = 'ritase';
+
+  document.getElementById('lap-date-start').value = App.today();
+  document.getElementById('lap-date-end').value = App.today();
+
+  window.switchTab = function(tab) {
+    activeTab = tab;
+    
+    // Update tab styling
+    document.getElementById('tab-ritase').style.borderBottom = tab === 'ritase' ? '2px solid var(--primary)' : 'none';
+    document.getElementById('tab-pemupukan').style.borderBottom = tab === 'pemupukan' ? '2px solid var(--primary)' : 'none';
+    document.getElementById('tab-driver').style.borderBottom = tab === 'driver' ? '2px solid var(--primary)' : 'none';
+    
+    // Toggle content
+    document.getElementById('content-ritase').style.display = tab === 'ritase' ? 'block' : 'none';
+    document.getElementById('content-pemupukan').style.display = tab === 'pemupukan' ? 'block' : 'none';
+    document.getElementById('content-driver').style.display = tab === 'driver' ? 'block' : 'none';
+    document.getElementById('lap-filter-driver-container').style.display = tab === 'driver' ? 'block' : 'none';
+  };
+
+  window.renderLaporan = function() {
+    const dStart = document.getElementById('lap-date-start').value || '1970-01-01';
+    const dEnd = document.getElementById('lap-date-end').value || '2099-12-31';
+    
+    // Helper to check if date is within range
+    const inRange = (d) => d >= dStart && d <= dEnd;
+
+    // 1. Ritase
+    const ritase = App.getData('ritase_drop').filter(r => inRange(r.tanggal_drop_tdm));
+    const units = App.getData('unit_truk');
+    const getDriver = (kode) => {
+      const u = units.find(x => x.kode_unit === kode);
+      return u ? u.driver_unit : '-';
+    };
+
+    document.getElementById('tbl-laporan-ritase').innerHTML = ritase.length === 0 
+      ? '<tr><td colspan="9" class="text-center text-muted">Belum ada data</td></tr>' 
+      : ritase.map(r => `
+      <tr onclick="openLapRitase('${r.id_input_rit}')" style="cursor:pointer" class="hover-bg">
+        <td>${r.tanggal_drop_tdm}</td>
+        <td class="hide-mobile">${r.jam_drop_tdm}</td>
+        <td><strong>${r.kode_unit_rit}</strong></td>
+        <td class="hide-mobile">${getDriver(r.kode_unit_rit)}</td>
+        <td class="hide-mobile">${r.asal_drop_suplier}</td>
+        <td class="hide-mobile">${r.tujuan_drop_material}</td>
+        <td>${r.tdm_tujuan}</td>
+        <td class="hide-mobile">${r.jarak_drop_tdm}</td>
+        <td class="hide-mobile"><span class="badge ${r.status_rit === 'Selesai' ? 'badge-success' : 'badge-warning'}">${r.status_rit}</span></td>
+      </tr>
+    `).join('');
+
+    // 2. Pemupukan
+    const pemupukan = App.getData('pemupukan').filter(p => inRange(p.tanggal_apply));
+    document.getElementById('tbl-laporan-pemupukan').innerHTML = pemupukan.length === 0
+      ? '<tr><td colspan="5" class="text-center text-muted">Belum ada data</td></tr>'
+      : pemupukan.map(p => `
+      <tr onclick="openLapPemupukan('${p.id_apply}')" style="cursor:pointer" class="hover-bg">
+        <td>${p.tanggal_apply}</td>
+        <td class="hide-mobile">${p.kode_lahan}</td>
+        <td>${p.kode_kebun}</td>
+        <td class="hide-mobile">${p.jam_start_apply}</td>
+        <td class="hide-mobile">${p.jam_end_apply || '-'}</td>
+      </tr>
+      `).join('');
+
+    // 3. Driver
+    const drvSelect = document.getElementById('lap-filter-driver');
+    if (drvSelect.options.length <= 1) {
+      const drivers = [...new Set(App.getData('laporan_harian_driver').map(d => d.driver))].filter(Boolean);
+      drivers.forEach(d => { drvSelect.innerHTML += `<option value="${d}">${d}</option>`; });
+    }
+    
+    const selDrv = drvSelect.value;
+    const driverReports = App.getData('laporan_harian_driver').filter(d => 
+      inRange(d.tanggal_laporan) && (selDrv === '' || d.driver === selDrv)
+    );
+    
+    document.getElementById('tbl-laporan-driver').innerHTML = driverReports.length === 0
+      ? '<tr><td colspan="5" class="text-center text-muted">Belum ada data</td></tr>'
+      : driverReports.map(d => `
+      <tr onclick="openLapDriver('${d.id_laporan}')" style="cursor:pointer" class="hover-bg">
+        <td>${d.tanggal_laporan}</td>
+        <td class="hide-mobile"><strong>${d.kode_unit}</strong></td>
+        <td>${d.driver}</td>
+        <td class="hide-mobile">${d.jumlah_rit}</td>
+        <td class="hide-mobile">${d.total_jarak_km}</td>
+      </tr>
+      `).join('');
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  window.openLapRitase = function(id) {
+    const r = App.getData('ritase_drop').find(x => x.id_input_rit === id); if(!r) return;
+    const units = App.getData('unit_truk');
+    const u = units.find(x => x.kode_unit === r.kode_unit_rit);
+    document.getElementById('lap-det-rit-tgl').textContent = r.tanggal_drop_tdm;
+    document.getElementById('lap-det-rit-jam').textContent = r.jam_drop_tdm;
+    document.getElementById('lap-det-rit-unit').textContent = r.kode_unit_rit;
+    document.getElementById('lap-det-rit-driver').textContent = u ? u.driver_unit : '-';
+    document.getElementById('lap-det-rit-asal').textContent = r.asal_drop_suplier;
+    document.getElementById('lap-det-rit-tujuan').textContent = r.tujuan_drop_material;
+    document.getElementById('lap-det-rit-tdm').textContent = r.tdm_tujuan;
+    document.getElementById('lap-det-rit-jarak').textContent = r.jarak_drop_tdm;
+    document.getElementById('lap-det-rit-status').textContent = r.status_rit;
+    document.getElementById('lap-det-rit-input-by').textContent = r.input_by || '-';
+    UI.openModal('modal-lap-ritase');
+  };
+
+  window.openLapPemupukan = function(id) {
+    const p = App.getData('pemupukan').find(x => x.id_apply === id); if(!p) return;
+    document.getElementById('lap-det-pupuk-tgl').textContent = p.tanggal_apply;
+    document.getElementById('lap-det-pupuk-lahan').textContent = p.kode_lahan;
+    document.getElementById('lap-det-pupuk-kebun').textContent = p.kode_kebun;
+    document.getElementById('lap-det-pupuk-mulai').textContent = p.jam_start_apply;
+    document.getElementById('lap-det-pupuk-selesai').textContent = p.jam_end_apply || '-';
+    document.getElementById('lap-det-pupuk-input-by').textContent = p.input_by || '-';
+    UI.openModal('modal-lap-pemupukan');
+  };
+
+  window.openLapDriver = function(id) {
+    const d = App.getData('laporan_harian_driver').find(x => x.id_laporan === id); if(!d) return;
+    document.getElementById('lap-det-drv-tgl').textContent = d.tanggal_laporan;
+    document.getElementById('lap-det-drv-unit').textContent = d.kode_unit;
+    document.getElementById('lap-det-drv-driver').textContent = d.driver;
+    document.getElementById('lap-det-drv-rit').textContent = d.jumlah_rit;
+    document.getElementById('lap-det-drv-jarak').textContent = d.total_jarak_km;
+    UI.openModal('modal-lap-driver');
+  };
+
+  // Export to CSV Function
+  window.exportActiveTabToCSV = function() {
+    let dataToExport = [];
+    let filename = '';
+    const dStart = document.getElementById('lap-date-start').value || '1970-01-01';
+    const dEnd = document.getElementById('lap-date-end').value || '2099-12-31';
+    const inRange = (d) => d >= dStart && d <= dEnd;
+
+    if (activeTab === 'ritase') {
+      const ritase = App.getData('ritase_drop').filter(r => inRange(r.tanggal_drop_tdm));
+      const units = App.getData('unit_truk');
+      dataToExport = ritase.map(r => {
+        const u = units.find(x => x.kode_unit === r.kode_unit_rit);
+        return {
+          Tanggal: r.tanggal_drop_tdm,
+          Jam: r.jam_drop_tdm,
+          Unit: r.kode_unit_rit,
+          Driver: u ? u.driver_unit : '-',
+          Asal: r.asal_drop_suplier,
+          Tujuan: r.tujuan_drop_material,
+          TDM: r.tdm_tujuan,
+          Jarak: r.jarak_drop_tdm,
+          Status: r.status_rit,
+          'Input Oleh': r.input_by || '-'
+        };
+      });
+      filename = `Laporan_Ritase_${App.today()}.csv`;
+    } 
+    else if (activeTab === 'pemupukan') {
+      const pemupukan = App.getData('pemupukan').filter(p => inRange(p.tanggal_apply));
+      dataToExport = pemupukan.map(p => ({
+        Tanggal: p.tanggal_apply,
+        Lahan: p.kode_lahan,
+        Kebun: p.kode_kebun,
+        Mulai: p.jam_start_apply,
+        Selesai: p.jam_end_apply || '-',
+        'Input Oleh': p.input_by || '-'
+      }));
+      filename = `Laporan_Pemupukan_${App.today()}.csv`;
+    }
+    else if (activeTab === 'driver') {
+      const driverReports = App.getData('laporan_harian_driver').filter(d => inRange(d.tanggal_laporan));
+      dataToExport = driverReports.map(d => ({
+        Tanggal: d.tanggal_laporan,
+        Unit: d.kode_unit,
+        Driver: d.driver,
+        'Total Rit': d.jumlah_rit,
+        'Akumulasi Jarak (Km)': d.total_jarak_km
+      }));
+      filename = `Laporan_Harian_Driver_${App.today()}.csv`;
+    }
+
+    if (dataToExport.length === 0) {
+      UI.toast('Tidak ada data untuk di-export!', 'warning');
+      return;
+    }
+
+    // Convert to CSV string
+    const delimiter = document.getElementById('csv-delimiter').value || ';';
+    const headers = Object.keys(dataToExport[0]);
+    let csvContent = headers.join(delimiter) + '\n';
+    
+    dataToExport.forEach(row => {
+      const values = headers.map(h => {
+        let val = row[h];
+        if (typeof val === 'string' && (val.includes(delimiter) || val.includes('"') || val.includes('\n'))) {
+          val = '"' + val.replace(/"/g, '""') + '"';
+        }
+        return val;
+      });
+      csvContent += values.join(delimiter) + '\n';
+    });
+
+    // Download Blob
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      UI.closeModal('modal-export-csv');
+      UI.toast('Laporan berhasil diunduh!', 'success');
+    }
+  };
+
+  window.renderLaporan();
+  switchTab(activeTab);
+})();
+</script>

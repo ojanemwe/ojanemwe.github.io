@@ -1,0 +1,91 @@
+/* === PWA Install Button === */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9998;
+  display: none;
+  animation: pwaSlideUp .4s cubic-bezier(.4,0,.2,1);
+}
+
+.pwa-install-banner.visible {
+  display: flex;
+}
+
+.pwa-install-btn {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .75rem 1.5rem;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-full, 9999px);
+  font-family: inherit;
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, .4), 0 2px 6px rgba(0,0,0,.15);
+  transition: all .2s;
+  white-space: nowrap;
+}
+
+.pwa-install-btn:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, .5), 0 3px 8px rgba(0,0,0,.2);
+  transform: scale(1.03);
+}
+
+.pwa-install-btn:active {
+  transform: scale(.97);
+}
+
+.pwa-install-btn .pwa-icon {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pwa-dismiss {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  background: var(--bg-surface, #fff);
+  border: 1px solid var(--border-color, #d1fae5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: .7rem;
+  color: var(--text-muted, #4b5563);
+  line-height: 1;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.15);
+  transition: background .2s;
+}
+
+.pwa-dismiss:hover {
+  background: var(--danger, #ef4444);
+  color: #fff;
+  border-color: var(--danger, #ef4444);
+}
+
+/* Mobile: position above bottom-nav */
+@media (max-width: 768px) {
+  .pwa-install-banner {
+    bottom: calc(var(--bottom-nav-h, 70px) + 1rem);
+  }
+}
+
+@keyframes pwaSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Palm Fertilizer — Aplikasi Manajemen Pemupukan Kebun Sawit">
+  <meta name="theme-color" content="#10B981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Palm Fertilizer</title>
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="PWA/pwa.css">
+  <link rel="manifest" href="manifest.json">
+
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js" defer></script>
+  <script src="lib/xlsx.full.min.js" defer></script>
+  <script src="dotenv.js" defer></script>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <!-- ==================== LOGIN SCREEN ==================== -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div style="width:64px;height:64px;background:var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem">
+          <i data-lucide="tree-palm" style="width:36px;height:36px;color:#fff"></i>
+        </div>
+        <h1>Palm Fertilizer</h1>
+        <p>Manajemen Pemupukan Kebun Sawit</p>
+      </div>
+      <form id="login-form">
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" placeholder="Masukkan username" autocomplete="username" required>
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="Masukkan password" autocomplete="current-password" required>
+        <p id="login-error" class="text-danger text-sm" style="min-height:1.25rem"></p>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:.5rem">
+          <i data-lucide="log-in" class="icon-sm"></i> Masuk
+        </button>
+      </form>
+      <div class="text-center mt-2">
+        <a href="#" onclick="event.preventDefault();Router.navigate('view-register');document.getElementById('login-screen').style.display='none';document.getElementById('app-shell').style.display='none'">Daftar Akun Baru</a>
+        <span class="text-muted"> | </span>
+        <a href="#" onclick="event.preventDefault();Router.navigate('view-forgot-pw');document.getElementById('login-screen').style.display='none';document.getElementById('app-shell').style.display='none'">Lupa Password</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PIN LOCK SCREEN ==================== -->
+  <div id="pin-screen" class="pin-screen">
+    <div style="text-align:center;color:#fff">
+      <div style="width:64px;height:64px;background:var(--primary);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem">
+        <i data-lucide="lock" style="width:32px;height:32px;color:#fff"></i>
+      </div>
+      <h2 style="color:#fff;margin-bottom:.25rem">Palm Fertilizer</h2>
+      <p style="color:rgba(255,255,255,.7);font-size:.875rem">Masukkan PIN 6 digit</p>
+    </div>
+    <div class="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <p id="pin-error" class="text-danger text-sm" style="min-height:1.25rem;color:#ef4444"></p>
+    <div class="pin-numpad">
+      <button class="pin-key" onclick="PinPad.press('1')">1</button>
+      <button class="pin-key" onclick="PinPad.press('2')">2</button>
+      <button class="pin-key" onclick="PinPad.press('3')">3</button>
+      <button class="pin-key" onclick="PinPad.press('4')">4</button>
+      <button class="pin-key" onclick="PinPad.press('5')">5</button>
+      <button class="pin-key" onclick="PinPad.press('6')">6</button>
+      <button class="pin-key" onclick="PinPad.press('7')">7</button>
+      <button class="pin-key" onclick="PinPad.press('8')">8</button>
+      <button class="pin-key" onclick="PinPad.press('9')">9</button>
+      <button class="pin-key danger" onclick="PinPad.clear()"><i data-lucide="x" style="width:24px;height:24px"></i></button>
+      <button class="pin-key" onclick="PinPad.press('0')">0</button>
+      <button class="pin-key accent" onclick="PinPad.del()"><i data-lucide="delete" style="width:24px;height:24px"></i></button>
+    </div>
+    <a href="#" onclick="event.preventDefault();App.logout();UI.showLogin()" style="color:rgba(255,255,255,.5);font-size:.8rem;margin-top:1rem">Ganti Akun</a>
+  </div>
+
+  <!-- ==================== APP SHELL ==================== -->
+  <div id="app-shell" class="app-layout" style="display:none">
+
+    <!-- Sidebar (Desktop) -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header">
+        <i data-lucide="tree-palm" style="width:28px;height:28px;flex-shrink:0;color:var(--primary)"></i>
+        <span class="sidebar-brand-text">Palm Fertilizer</span>
+      </div>
+      <ul id="sidebar-nav" class="sidebar-nav">
+        <!-- Dynamically built by main.js -->
+      </ul>
+      <div class="sidebar-footer">
+        <a href="#" class="nav-link" data-view="view-profile" onclick="event.preventDefault();Router.navigate('view-profile')">
+          <i data-lucide="user-circle" class="icon"></i><span>Profil</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <button class="header-btn hide-mobile" id="sidebar-toggle" onclick="UI.toggleSidebar()" title="Toggle Sidebar">
+            <i data-lucide="panel-left" class="icon"></i>
+          </button>
+          <div class="header-brand">
+            <i data-lucide="tree-palm" class="icon hide-desktop" style="color:var(--primary)"></i>
+            <span class="hide-desktop">Palm Fertilizer</span>
+          </div>
+        </div>
+        <div class="header-right">
+          <!-- Notification Bell -->
+          <div class="profile-dropdown">
+            <button class="header-btn" id="notif-bell" title="Status Sinkronisasi" onclick="UI.toggleSyncDropdown()">
+              <i data-lucide="bell" class="icon"></i>
+              <span id="sync-badge" class="notif-badge" style="display:none"></span>
+            </button>
+            <div id="sync-dropdown-menu" class="dropdown-menu" style="width:280px;right:-10px">
+              <div style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border-color)">
+                <div class="font-bold text-sm">Antrean Sinkronisasi</div>
+                <div class="text-xs text-muted">Data offline yang belum terkirim</div>
+              </div>
+              <div style="padding:.75rem 1.25rem;max-height:200px;overflow-y:auto;font-size:0.875rem" id="sync-queue-list">
+                <div class="text-center text-muted text-sm">Tidak ada antrean</div>
+              </div>
+              <div style="padding:.75rem 1.25rem;border-top:1px solid var(--border-color)">
+                <button class="btn btn-primary btn-block btn-sm" onclick="forceSyncNow()"><i data-lucide="refresh-cw" class="icon-sm"></i> Sinkronisasi Sekarang</button>
+              </div>
+            </div>
+          </div>
+          <!-- Theme Toggle -->
+          <button class="header-btn" id="theme-toggle" onclick="UI.toggleTheme()" title="Ganti Tema">
+            <i data-lucide="moon" class="icon"></i>
+          </button>
+          <!-- Profile -->
+          <div class="profile-dropdown">
+            <button class="header-btn" id="profile-btn" onclick="UI.toggleProfileDropdown()">
+              <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ccircle cx='20' cy='20' r='20' fill='%2310B981'/%3E%3Ctext x='20' y='25' text-anchor='middle' fill='white' font-size='16' font-family='Inter'%3E👤%3C/text%3E%3C/svg%3E" alt="Avatar" class="avatar-img">
+            </button>
+            <div id="profile-dropdown-menu" class="dropdown-menu">
+              <div style="padding:.75rem 1.25rem;border-bottom:1px solid var(--border-color)">
+                <div class="font-bold text-sm" id="header-user-name">User</div>
+                <div class="text-xs text-muted" id="header-user-role"></div>
+              </div>
+              <ul>
+                <li><a href="#" onclick="event.preventDefault();Router.navigate('view-profile')"><i data-lucide="user" class="icon-sm"></i> Profil</a></li>
+                <li><a href="#" onclick="event.preventDefault();Router.navigate('view-settings')"><i data-lucide="settings" class="icon-sm"></i> Settings</a></li>
+                <li><a href="#" onclick="event.preventDefault();App.logout();UI.showLogin()" style="color:var(--danger)"><i data-lucide="log-out" class="icon-sm"></i> Logout</a></li>
+              </ul>
+            </div>
+          </div>
+          <!-- Online/Offline Dot -->
+          <div id="status-dot" class="status-dot online" title="Online"></div>
+        </div>
+      </header>
+
+      <!-- SPA Content -->
+      <main id="app-content" class="content">
+        <div class="skeleton skeleton-card"></div>
+      </main>
+    </div>
+
+    <!-- Bottom Nav (Mobile) -->
+    <nav class="bottom-nav">
+      <ul id="bottom-nav-list" class="bottom-nav-list">
+        <!-- Dynamically built by main.js -->
+      </ul>
+    </nav>
+
+    <!-- More Modal (Mobile) -->
+    <div id="more-modal" class="modal-overlay" onclick="if(event.target===this)UI.toggleMoreModal()">
+      <div class="modal-content" style="max-width:320px">
+        <div class="modal-header">
+          <h3>Menu Lainnya</h3>
+          <button class="modal-close" onclick="UI.toggleMoreModal()"><i data-lucide="x" class="icon"></i></button>
+        </div>
+        <div class="flex flex-col gap-1" id="more-modal-links-container">
+          <div id="more-modal-dynamic-links" class="flex flex-col gap-1"></div>
+          <div style="height:1px;background:var(--border-color);margin:0.5rem 0"></div>
+          <a href="#" class="nav-link" onclick="event.preventDefault();UI.toggleMoreModal();Router.navigate('view-profile')">
+            <i data-lucide="user-circle" class="icon"></i><span>Profil</span>
+          </a>
+          <a href="#" class="nav-link" id="more-modal-settings" onclick="event.preventDefault();UI.toggleMoreModal();Router.navigate('view-settings')">
+            <i data-lucide="settings" class="icon"></i><span>Settings</span>
+          </a>
+          <a href="#" class="nav-link" onclick="event.preventDefault();App.logout();UI.showLogin()" style="color:var(--danger)">
+            <i data-lucide="log-out" class="icon"></i><span>Logout</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Install Banner -->
+  <div id="pwa-install-banner" class="pwa-install-banner">
+    <button id="pwa-dismiss-btn" class="pwa-dismiss" title="Tutup">✕</button>
+    <button id="pwa-install-btn" class="pwa-install-btn">
+      <svg class="pwa-icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Install Aplikasi
+    </button>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script>
+    // Init Lucide after load
+    window.addEventListener('load', () => { if (window.lucide) lucide.createIcons(); });
+  </script>
+  <script src="PWA/pwa.js" defer></script>
+</body>
+</html>

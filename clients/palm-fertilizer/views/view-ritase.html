@@ -1,0 +1,526 @@
+<div class="spa-view active">
+  <h1 class="page-title">Cek Ritase Driver</h1>
+
+  <div class="flex justify-between items-center mb-3">
+    <button class="btn btn-primary" onclick="UI.openModal('modal-autofill')">
+      <i data-lucide="settings-2" class="icon-sm"></i> Atur Titik Drop
+    </button>
+  </div>
+
+  <!-- Scan QR -->
+  <div class="card card-flat mb-3">
+    <div class="card-header">
+      <span class="card-title"><i data-lucide="scan-line" class="icon-sm"></i> Scan QR Code Unit Truk</span>
+    </div>
+    <div id="qr-reader" style="width:100%;max-width:400px;margin:0 auto;border-radius:var(--radius-md);overflow:hidden;background:#000;min-height:250px"></div>
+    <div id="qr-result" class="mt-2 text-center" style="min-height:2rem"></div>
+    <div class="text-center mt-1">
+      <button class="btn btn-secondary btn-sm" onclick="toggleManualInput()" id="btn-manual-qr"><i data-lucide="keyboard" class="icon-sm"></i> Input Manual</button>
+    </div>
+    <div id="manual-qr-input" style="display:none;padding:.75rem">
+      <div class="flex gap-1">
+        <input type="text" id="manual-unit-id" placeholder="Masukkan ID Unit (misal: UNT-001)" style="flex:1">
+        <button class="btn btn-primary" onclick="handleManualScan()"><i data-lucide="search" class="icon-sm"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Print Receipt (for window.print fallback) -->
+  <div id="print-receipt" style="display:none">
+    <style>
+      @media print {
+        body * { visibility: hidden !important; }
+        #print-receipt, #print-receipt * { visibility: visible !important; }
+        #print-receipt { position: fixed; top: 0; left: 0; width: 58mm; font-family: monospace; font-size: 11px; line-height: 1.4; padding: 4mm; color: #000 !important; background: #fff !important; }
+        #print-receipt .receipt-line { border-top: 1px dashed #000; margin: 4px 0; }
+      }
+    </style>
+    <div style="text-align:center;font-weight:bold;font-size:13px">PALM FERTILIZER</div>
+    <div style="text-align:center;font-size:10px">BUKTI RITASE DROP</div>
+    <div class="receipt-line"></div>
+    <div id="receipt-body"></div>
+    <div class="receipt-line"></div>
+    <div id="receipt-footer" style="text-align:center;font-size:9px"></div>
+  </div>
+
+  <!-- Ritase Form (auto-filled after scan) -->
+  <div class="card card-flat mb-3" id="ritase-form-card" style="display:none">
+    <div class="card-header">
+      <span class="card-title"><i data-lucide="clipboard-list" class="icon-sm"></i> Data Ritase</span>
+    </div>
+    <div class="grid grid-2">
+      <div>
+        <label>Kode Unit</label>
+        <input type="text" id="form-kode-unit" readonly style="background:var(--bg-surface-hover)!important">
+      </div>
+      <div>
+        <label>Driver</label>
+        <input type="text" id="form-driver" readonly style="background:var(--bg-surface-hover)!important">
+      </div>
+      <div>
+        <label>Asal</label>
+        <input type="text" id="form-asal" readonly style="background:var(--bg-surface-hover)!important">
+      </div>
+      <div>
+        <label>Tujuan</label>
+        <input type="text" id="form-tujuan" readonly style="background:var(--bg-surface-hover)!important">
+      </div>
+      <div>
+        <label>TDM</label>
+        <input type="text" id="form-tdm" readonly style="background:var(--bg-surface-hover)!important">
+      </div>
+      <div>
+        <label>Jam Drop</label>
+        <input type="text" id="form-jam" readonly style="background:var(--bg-surface-hover)!important">
+      </div>
+    </div>
+    <div class="flex gap-1 mt-2">
+      <button class="btn btn-primary flex-1" onclick="simpanRitase()">
+        <i data-lucide="save" class="icon-sm"></i> Simpan & Cetak
+      </button>
+      <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+    </div>
+  </div>
+
+  <!-- Ritase Table -->
+  <div class="card card-flat">
+    <div class="card-header">
+      <span class="card-title">Riwayat Ritase Hari Ini</span>
+      <span class="badge badge-primary" id="rit-count">0</span>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead><tr><th>Jam</th><th>Unit</th><th>TDM</th><th>Status</th></tr></thead>
+        <tbody id="ritase-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="modal-autofill" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-autofill')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Atur Titik Drop</h3>
+        <button class="modal-close" onclick="UI.closeModal('modal-autofill')"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <label>Asal (Suplier)</label>
+      <select id="rit-asal"><option value="">Pilih...</option></select>
+      <label>Tujuan (Site)</label>
+      <select id="rit-tujuan"><option value="">Pilih...</option></select>
+      <label>TDM Tujuan</label>
+      <select id="rit-tdm"><option value="">Pilih...</option></select>
+      <label>Jarak (Km)</label>
+      <input type="number" id="rit-jarak" placeholder="0" step="0.1">
+      <label>Tanggal</label>
+      <input type="date" id="rit-tanggal">
+      <button class="btn btn-primary btn-block mt-2" onclick="saveAutofill()">Simpan Pengaturan</button>
+    </div>
+  </div>
+
+  <!-- Modal Detail & Edit Ritase -->
+  <div id="modal-detail-ritase" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-ritase')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detail Ritase</h3>
+        <button class="modal-close" onclick="UI.closeModal('modal-detail-ritase')"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <div id="detail-ritase-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Unit:</span> <strong id="det-unit"></strong></div>
+          <div><span class="text-muted">Jam Drop:</span> <strong id="det-jam"></strong></div>
+          <div><span class="text-muted">Asal:</span> <strong id="det-asal"></strong></div>
+          <div><span class="text-muted">Tujuan:</span> <strong id="det-tujuan"></strong></div>
+          <div><span class="text-muted">TDM:</span> <strong id="det-tdm"></strong></div>
+          <div><span class="text-muted">Jarak:</span> <strong id="det-jarak"></strong> Km</div>
+          <div><span class="text-muted">Status:</span> <strong id="det-status"></strong></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-primary flex-1" onclick="printRitase()"><i data-lucide="printer" class="icon-sm"></i> Cetak Ulang</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditRitase(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteRitase()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-ritase-view" style="display:none">
+        <label>Asal</label><select id="edit-rit-asal"></select>
+        <label>Tujuan</label><select id="edit-rit-tujuan"></select>
+        <label>TDM</label><select id="edit-rit-tdm"></select>
+        <p class="text-sm text-muted mb-2">Jika terdapat kesalahan Scan Unit Truk, harap Hapus data dan lakukan Scan ulang.</p>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="simpanEditRitase()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditRitase(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // Populate selects
+  const supliers = App.getData('suplier_material');
+  const sites = App.getData('site_pt');
+  const tdmList = App.getData('koordinat_tdm');
+  const units = App.getData('unit_truk');
+  const drivers = App.getData('drivers');
+
+  const asalSel = document.getElementById('rit-asal');
+  supliers.forEach(s => { asalSel.innerHTML += `<option value="${s.nama_pt}">${s.nama_pt}</option>`; });
+
+  const tujuanSel = document.getElementById('rit-tujuan');
+  sites.forEach(s => { tujuanSel.innerHTML += `<option value="${s.nama_site}">${s.nama_site}</option>`; });
+
+  const tdmSel = document.getElementById('rit-tdm');
+  tdmList.forEach(t => { tdmSel.innerHTML += `<option value="${t.nama_tdm}">${t.nama_tdm} (Butuh: ${t.kebutuhan_material_tdm} rit)</option>`; });
+
+  document.getElementById('rit-tanggal').value = App.today();
+
+  // Load saved autofill
+  const saved = JSON.parse(localStorage.getItem('pf_rit_drop_set') || 'null');
+  if (saved) {
+    asalSel.value = saved.asal || '';
+    tujuanSel.value = saved.tujuan || '';
+    tdmSel.value = saved.tdm || '';
+    document.getElementById('rit-jarak').value = saved.jarak || '';
+    document.getElementById('rit-tanggal').value = saved.tanggal || App.today();
+  }
+
+  // Render table
+  function renderTable() {
+    const ritase = App.getData('ritase_drop');
+    const todayRit = ritase.filter(r => r.tanggal_drop_tdm === App.today());
+    todayRit.sort((a, b) => b.timestamp_rit.localeCompare(a.timestamp_rit));
+    document.getElementById('rit-count').textContent = todayRit.length;
+
+    document.getElementById('ritase-table').innerHTML = todayRit.length === 0
+      ? '<tr><td colspan="5" class="text-center text-muted">Belum ada ritase hari ini</td></tr>'
+      : todayRit.map(r => `<tr onclick="openDetailRitase('${r.id_input_rit}')" style="cursor:pointer" class="hover-bg">
+          <td>${r.jam_drop_tdm}</td>
+          <td><strong>${r.kode_unit_rit}</strong></td>
+          <td>${r.tdm_tujuan}</td>
+          <td><span class="badge ${r.status_rit === 'Selesai' ? 'badge-success' : 'badge-warning'}">${r.status_rit}</span></td>
+        </tr>`).join('');
+  }
+  renderTable();
+
+  // === QR SCANNER (html5-qrcode) ===
+  let qrScanner = null;
+  function initQrScanner() {
+    if (!window.Html5QrcodeScanner) {
+      document.getElementById('qr-reader').innerHTML = '<p style="color:#fff;text-align:center;padding:2rem">QR Scanner tidak tersedia.<br>Gunakan Input Manual.</p>';
+      return;
+    }
+    qrScanner = new Html5QrcodeScanner('qr-reader', {
+      fps: 10,
+      qrbox: { width: 220, height: 220 },
+      rememberLastUsedCamera: true,
+      showTorchButtonIfSupported: true
+    }, false);
+    qrScanner.render(onScanSuccess, onScanFailure);
+  }
+
+  function onScanSuccess(decodedText) {
+    // Pause scanning after successful read
+    if (qrScanner) qrScanner.pause(true);
+    handleScan(decodedText);
+    // Resume after 3 seconds
+    setTimeout(() => { if (qrScanner) try { qrScanner.resume(); } catch(e) {} }, 3000);
+  }
+
+  function onScanFailure(error) {
+    // Silent — continuous scan
+  }
+
+  // Manual input fallback
+  window.toggleManualInput = function() {
+    const el = document.getElementById('manual-qr-input');
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  };
+
+  window.handleManualScan = function() {
+    const val = document.getElementById('manual-unit-id').value.trim();
+    if (!val) { UI.toast('Masukkan ID Unit!', 'error'); return; }
+    handleScan(val);
+    document.getElementById('manual-unit-id').value = '';
+  };
+
+  // Init scanner
+  try { initQrScanner(); } catch(e) { console.error('QR init error:', e); }
+
+  window.handleScan = function(kodeUnit) {
+    const unit = units.find(u => u.id_unit === kodeUnit);
+    if (!unit) { UI.toast('Unit tidak ditemukan!', 'error'); return; }
+
+    const tdmName = tdmSel.value;
+    if (!tdmName) { UI.toast('Set Autofill TDM belum dipilih!', 'error'); return; }
+
+    const ritase = App.getData('ritase_drop');
+    const tdm = tdmList.find(t => t.nama_tdm === tdmName);
+    const today = App.today();
+    const existingCount = ritase.filter(r => r.tdm_tujuan === tdmName && r.tanggal_drop_tdm === today).length;
+    
+    if (tdm && existingCount >= tdm.kebutuhan_material_tdm) {
+      UI.toast(`TDM ${tdmName} telah terpenuhi! Tidak bisa diisi lagi.`, 'error');
+      return;
+    }
+
+    // Sound feedback
+    try { const ctx = new AudioContext(); const o = ctx.createOscillator(); o.type='sine'; o.frequency.value=800; o.connect(ctx.destination); o.start(); setTimeout(()=>o.stop(),150); } catch(e) {}
+
+    document.getElementById('form-kode-unit').value = unit.kode_unit;
+    document.getElementById('form-driver').value = unit.driver_unit;
+    document.getElementById('form-asal').value = asalSel.value;
+    document.getElementById('form-tujuan').value = tujuanSel.value;
+    document.getElementById('form-tdm').value = tdmSel.value;
+    document.getElementById('form-jam').value = App.timeNow();
+    document.getElementById('ritase-form-card').style.display = 'block';
+    document.getElementById('qr-result').innerHTML = `<span class="badge badge-success">✓ ${unit.kode_unit} — ${unit.driver_unit}</span>`;
+
+    if (window.lucide) lucide.createIcons();
+    
+    // Auto-scroll to form
+    setTimeout(() => {
+      const el = document.getElementById('ritase-form-card');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
+  window.simpanRitase = function() {
+    const tdmName = document.getElementById('form-tdm').value;
+    if (!tdmName) { UI.toast('Pilih TDM terlebih dahulu!', 'error'); return; }
+
+    const ritase = App.getData('ritase_drop');
+    const tdm = tdmList.find(t => t.nama_tdm === tdmName);
+    const today = App.today();
+    const existingCount = ritase.filter(r => r.tdm_tujuan === tdmName && r.tanggal_drop_tdm === today).length + 1;
+    const status = tdm && existingCount >= tdm.kebutuhan_material_tdm ? 'Selesai' : 'Proses';
+
+    App.addRecord('ritase_drop', {
+      id_input_rit: `RIT-${Date.now()}`,
+      timestamp_rit: App.now(),
+      kode_unit_rit: document.getElementById('form-kode-unit').value,
+      asal_drop_suplier: document.getElementById('form-asal').value,
+      tujuan_drop_material: document.getElementById('form-tujuan').value,
+      tdm_tujuan: tdmName,
+      jarak_drop_tdm: parseFloat(document.getElementById('rit-jarak').value) || 0,
+      tanggal_drop_tdm: App.today(),
+      jam_drop_tdm: App.timeNow(),
+      jumlah_rit_tdm: 1,
+      status_rit: status,
+      input_by: App.getSession()?.user?.nama_lengkap || '-'
+    });
+
+    // Update Daily Driver Report
+    const lapHariIni = App.getData('laporan_harian_driver');
+    const kodeUnit = document.getElementById('form-kode-unit').value;
+    const lapIdx = lapHariIni.findIndex(l => l.tanggal_laporan === App.today() && l.kode_unit === kodeUnit);
+    const jarakValue = parseFloat(document.getElementById('rit-jarak').value) || 0;
+    
+    if (lapIdx > -1) {
+      App.updateRecord('laporan_harian_driver', 'id_laporan', lapHariIni[lapIdx].id_laporan, {
+        jumlah_rit: lapHariIni[lapIdx].jumlah_rit + 1,
+        total_jarak_km: lapHariIni[lapIdx].total_jarak_km + jarakValue
+      });
+    } else {
+      App.addRecord('laporan_harian_driver', {
+        id_laporan: `LHD-${Date.now()}`,
+        tanggal_laporan: App.today(),
+        kode_unit: kodeUnit,
+        driver: document.getElementById('form-driver').value,
+        jumlah_rit: 1,
+        total_jarak_km: jarakValue
+      });
+    }
+
+    UI.toast('Ritase tersimpan! Mencetak struk...', 'success');
+    renderTable();
+    resetForm();
+  };
+
+  window.resetForm = function() {
+    document.getElementById('ritase-form-card').style.display = 'none';
+    document.getElementById('qr-result').innerHTML = '';
+  };
+
+  window.saveAutofill = function() {
+    const current = JSON.parse(localStorage.getItem('pf_rit_drop_set') || 'null');
+    const newSet = {
+      asal: asalSel.value,
+      tujuan: tujuanSel.value,
+      tdm: tdmSel.value,
+      jarak: document.getElementById('rit-jarak').value,
+      tanggal: document.getElementById('rit-tanggal').value
+    };
+    if (current && current.tdm !== newSet.tdm && current.tdm) {
+      if (!confirm(`Anda akan berpindah dari "${current.tdm}" ke "${newSet.tdm}". Lanjutkan?`)) return;
+    }
+    localStorage.setItem('pf_rit_drop_set', JSON.stringify(newSet));
+    UI.closeModal('modal-autofill');
+    UI.toast('Set Autofill tersimpan!');
+  };
+
+  let activeRitaseId = null;
+
+  window.openDetailRitase = function(id) {
+    const r = App.getData('ritase_drop').find(x => x.id_input_rit === id);
+    if(!r) return;
+    activeRitaseId = id;
+    document.getElementById('det-unit').textContent = r.kode_unit_rit;
+    document.getElementById('det-jam').textContent = r.jam_drop_tdm;
+    document.getElementById('det-asal').textContent = r.asal_drop_suplier;
+    document.getElementById('det-tujuan').textContent = r.tujuan_drop_material;
+    document.getElementById('det-tdm').textContent = r.tdm_tujuan;
+    document.getElementById('det-jarak').textContent = r.jarak_drop_tdm;
+    document.getElementById('det-status').textContent = r.status_rit;
+
+    // Set initial values for edit form
+    document.getElementById('edit-rit-asal').innerHTML = asalSel.innerHTML;
+    document.getElementById('edit-rit-tujuan').innerHTML = tujuanSel.innerHTML;
+    document.getElementById('edit-rit-tdm').innerHTML = tdmSel.innerHTML;
+    document.getElementById('edit-rit-asal').value = r.asal_drop_suplier;
+    document.getElementById('edit-rit-tujuan').value = r.tujuan_drop_material;
+    document.getElementById('edit-rit-tdm').value = r.tdm_tujuan;
+
+    toggleEditRitase(false);
+    UI.openModal('modal-detail-ritase');
+  };
+
+  window.toggleEditRitase = function(showEdit) {
+    document.getElementById('detail-ritase-view').style.display = showEdit ? 'none' : 'block';
+    document.getElementById('edit-ritase-view').style.display = showEdit ? 'block' : 'none';
+  };
+
+  window.deleteRitase = function() {
+    if(!confirm('Yakin ingin menghapus data ritase ini? Kuota TDM akan otomatis terbuka kembali.')) return;
+    const r = App.getData('ritase_drop').find(x => x.id_input_rit === activeRitaseId);
+    if(r) {
+      App.deleteRecord('ritase_drop', 'id_input_rit', activeRitaseId);
+      
+      // Update Daily Driver Report (Subtract)
+      const lapHariIni = App.getData('laporan_harian_driver');
+      const lapIdx = lapHariIni.findIndex(l => l.tanggal_laporan === r.tanggal_drop_tdm && l.kode_unit === r.kode_unit_rit);
+      if (lapIdx > -1) {
+        App.updateRecord('laporan_harian_driver', 'id_laporan', lapHariIni[lapIdx].id_laporan, {
+          jumlah_rit: Math.max(0, lapHariIni[lapIdx].jumlah_rit - 1),
+          total_jarak_km: Math.max(0, lapHariIni[lapIdx].total_jarak_km - r.jarak_drop_tdm)
+        });
+      }
+    }
+    UI.closeModal('modal-detail-ritase');
+    UI.toast('Data ritase dihapus', 'success');
+    renderTable();
+  };
+
+  // === HYBRID THERMAL PRINT ===
+  window.printRitase = async function() {
+    if (!activeRitaseId) { UI.toast('Tidak ada data ritase aktif', 'error'); return; }
+    const r = App.getData('ritase_drop').find(x => x.id_input_rit === activeRitaseId);
+    if (!r) { UI.toast('Data ritase tidak ditemukan', 'error'); return; }
+
+    const receiptData = {
+      tanggal: r.tanggal_drop_tdm,
+      jam: r.jam_drop_tdm,
+      unit: r.kode_unit_rit,
+      driver: (units.find(u => u.kode_unit === r.kode_unit_rit) || {}).driver_unit || '-',
+      asal: r.asal_drop_suplier,
+      tujuan: r.tujuan_drop_material,
+      tdm: r.tdm_tujuan,
+      jarak: r.jarak_drop_tdm + ' Km',
+      status: r.status_rit,
+      checker: App.getSession()?.user?.nama_lengkap || '-'
+    };
+
+    // Try Bluetooth first, then fallback to window.print
+    if (navigator.bluetooth) {
+      try {
+        await printViaBluetooth_(receiptData);
+        return;
+      } catch (e) {
+        console.warn('[Print] Bluetooth failed, falling back to window.print:', e.message);
+      }
+    }
+    printViaWindow_(receiptData);
+  };
+
+  async function printViaBluetooth_(data) {
+    UI.toast('Mencari printer Bluetooth...', 'info');
+    const device = await navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb']
+    });
+    const server = await device.gatt.connect();
+    const service = await server.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+    const characteristic = await service.getCharacteristic('00002af1-0000-1000-8000-00805f9b34fb');
+
+    // ESC/POS commands
+    const encoder = new TextEncoder();
+    const ESC = '\x1B';
+    const LF = '\n';
+    const BOLD_ON = ESC + 'E\x01';
+    const BOLD_OFF = ESC + 'E\x00';
+    const CENTER = ESC + 'a\x01';
+    const LEFT = ESC + 'a\x00';
+    const CUT = ESC + 'i';
+    const DASHES = '================================';
+
+    let receipt = '';
+    receipt += CENTER + BOLD_ON + 'PALM FERTILIZER' + LF;
+    receipt += 'BUKTI RITASE DROP' + BOLD_OFF + LF;
+    receipt += DASHES + LF;
+    receipt += LEFT;
+    receipt += 'Tanggal : ' + data.tanggal + LF;
+    receipt += 'Jam     : ' + data.jam + LF;
+    receipt += 'Unit    : ' + data.unit + LF;
+    receipt += 'Driver  : ' + data.driver + LF;
+    receipt += 'Asal    : ' + data.asal + LF;
+    receipt += 'Tujuan  : ' + data.tujuan + LF;
+    receipt += 'TDM     : ' + data.tdm + LF;
+    receipt += 'Jarak   : ' + data.jarak + LF;
+    receipt += 'Status  : ' + data.status + LF;
+    receipt += '--------------------------------' + LF;
+    receipt += 'Checker : ' + data.checker + LF;
+    receipt += DASHES + LF + LF + LF + CUT;
+
+    const bytes = encoder.encode(receipt);
+    // Send in chunks (BLE has 20-byte MTU by default)
+    const CHUNK = 20;
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      await characteristic.writeValue(bytes.slice(i, i + CHUNK));
+    }
+    server.disconnect();
+    UI.toast('Struk berhasil dicetak via Bluetooth!', 'success');
+  }
+
+  function printViaWindow_(data) {
+    const body = document.getElementById('receipt-body');
+    const footer = document.getElementById('receipt-footer');
+    body.innerHTML = [
+      `Tanggal : ${data.tanggal}`,
+      `Jam     : ${data.jam}`,
+      `Unit    : ${data.unit}`,
+      `Driver  : ${data.driver}`,
+      `Asal    : ${data.asal}`,
+      `Tujuan  : ${data.tujuan}`,
+      `TDM     : ${data.tdm}`,
+      `Jarak   : ${data.jarak}`,
+      `Status  : ${data.status}`
+    ].join('<br>');
+    footer.textContent = 'Checker: ' + data.checker;
+    document.getElementById('print-receipt').style.display = 'block';
+    window.print();
+    setTimeout(() => { document.getElementById('print-receipt').style.display = 'none'; }, 500);
+    UI.toast('Dialog cetak dibuka', 'success');
+  }
+
+  window.simpanEditRitase = function() {
+    App.updateRecord('ritase_drop', 'id_input_rit', activeRitaseId, {
+      asal_drop_suplier: document.getElementById('edit-rit-asal').value,
+      tujuan_drop_material: document.getElementById('edit-rit-tujuan').value,
+      tdm_tujuan: document.getElementById('edit-rit-tdm').value
+    });
+    UI.closeModal('modal-detail-ritase');
+    UI.toast('Perubahan disimpan', 'success');
+    renderTable();
+  };
+
+  if (window.lucide) lucide.createIcons();
+})();
+</script>

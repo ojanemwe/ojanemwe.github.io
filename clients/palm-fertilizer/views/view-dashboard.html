@@ -1,0 +1,171 @@
+<div class="spa-view active">
+  <h1 class="page-title">Dashboard</h1>
+
+  <!-- Stat Cards -->
+  <div class="grid grid-2 grid-lg-4" style="margin-bottom:1.5rem">
+    <div class="card card-flat">
+      <div class="stat-icon stat-primary"><i data-lucide="truck" class="icon"></i></div>
+      <div class="stat-value" id="stat-ritase">0</div>
+      <div class="stat-label">Total Ritase Hari Ini</div>
+    </div>
+    <div class="card card-flat">
+      <div class="stat-icon stat-accent"><i data-lucide="map-pin" class="icon"></i></div>
+      <div class="stat-value" id="stat-tdm-done">0/0</div>
+      <div class="stat-label">TDM Terpenuhi</div>
+    </div>
+    <div class="card card-flat">
+      <div class="stat-icon" style="background:rgba(16,185,129,.1);color:#10b981"><i data-lucide="sprout" class="icon"></i></div>
+      <div class="stat-value" id="stat-apply-done">0</div>
+      <div class="stat-label">Blok Sudah Dipupuk</div>
+    </div>
+    <div class="card card-flat">
+      <div class="stat-icon stat-warning"><i data-lucide="package" class="icon"></i></div>
+      <div class="stat-value" id="stat-stok">0 T</div>
+      <div class="stat-label">Sisa Stok Material</div>
+    </div>
+  </div>
+
+  <!-- Progress Bars -->
+  <div class="grid grid-2" style="margin-bottom:1.5rem">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Progres Drop Material</span>
+        <span class="badge badge-primary" id="drop-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill progress-green" id="drop-progress" style="width:0%"></div></div>
+      <small class="text-muted" id="drop-detail">0 dari 0 TDM terpenuhi</small>
+    </div>
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Progres Pemupukan</span>
+        <span class="badge badge-accent" id="apply-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill progress-accent" id="apply-progress" style="width:0%"></div></div>
+      <small class="text-muted" id="apply-detail">0 dari 0 blok selesai</small>
+    </div>
+  </div>
+
+  <!-- Chart -->
+  <div class="card card-flat" style="margin-bottom:1.5rem">
+    <div class="card-header">
+      <span class="card-title">Ritase Mingguan</span>
+    </div>
+    <div style="position:relative;height:250px">
+      <canvas id="chart-ritase"></canvas>
+    </div>
+  </div>
+
+  <!-- Tables -->
+  <div class="grid grid-2">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Sisa TDM Belum Terpenuhi</span>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>TDM</th><th>Kebutuhan</th><th>Terisi</th><th>Sisa</th></tr></thead>
+          <tbody id="table-tdm-pending"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Blok Kebun Belum Dipupuk</span>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead><tr><th>Blok</th><th>Lahan</th><th>Status</th></tr></thead>
+          <tbody id="table-kebun-pending"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const ritase = App.getData('ritase_drop');
+  const tdmList = App.getData('koordinat_tdm');
+  const kebun = App.getData('blok_kebun');
+  const pemupukan = App.getData('pemupukan');
+  const stok = App.getData('stok_material');
+
+  // Stat: Ritase today
+  const todayStr = App.today();
+  const todayRit = ritase.filter(r => r.tanggal_drop_tdm === todayStr);
+  document.getElementById('stat-ritase').textContent = todayRit.length;
+
+  // Stat: TDM fulfilled
+  const tdmFilled = {};
+  ritase.forEach(r => { tdmFilled[r.tdm_tujuan] = (tdmFilled[r.tdm_tujuan] || 0) + r.jumlah_rit_tdm; });
+  const tdmDone = tdmList.filter(t => (tdmFilled[t.nama_tdm] || 0) >= t.kebutuhan_material_tdm).length;
+  document.getElementById('stat-tdm-done').textContent = `${tdmDone}/${tdmList.length}`;
+
+  // Stat: Blok applied
+  const appliedKebun = new Set(pemupukan.filter(p => p.foto_end_base64).map(p => p.kode_kebun));
+  document.getElementById('stat-apply-done').textContent = appliedKebun.size;
+
+  // Stat: Stock
+  const totalSisa = stok.reduce((s, m) => s + (m.total_stok - m.stok_terpakai), 0);
+  document.getElementById('stat-stok').textContent = `${totalSisa} T`;
+
+  // Progress: Drop
+  const dropPct = tdmList.length > 0 ? Math.round((tdmDone / tdmList.length) * 100) : 0;
+  document.getElementById('drop-pct').textContent = `${dropPct}%`;
+  document.getElementById('drop-progress').style.width = `${dropPct}%`;
+  document.getElementById('drop-detail').textContent = `${tdmDone} dari ${tdmList.length} TDM terpenuhi`;
+
+  // Progress: Apply
+  const applyPct = kebun.length > 0 ? Math.round((appliedKebun.size / kebun.length) * 100) : 0;
+  document.getElementById('apply-pct').textContent = `${applyPct}%`;
+  document.getElementById('apply-progress').style.width = `${applyPct}%`;
+  document.getElementById('apply-detail').textContent = `${appliedKebun.size} dari ${kebun.length} blok selesai`;
+
+  // Table: Pending TDM
+  const pendingTDM = tdmList.filter(t => (tdmFilled[t.nama_tdm] || 0) < t.kebutuhan_material_tdm).slice(0, 10);
+  document.getElementById('table-tdm-pending').innerHTML = pendingTDM.length === 0
+    ? '<tr><td colspan="4" class="text-center text-muted">Semua TDM terpenuhi ✅</td></tr>'
+    : pendingTDM.map(t => {
+      const filled = tdmFilled[t.nama_tdm] || 0;
+      return `<tr><td><strong>${t.nama_tdm}</strong></td><td>${t.kebutuhan_material_tdm}</td><td>${filled}</td><td><span class="badge badge-warning">${t.kebutuhan_material_tdm - filled}</span></td></tr>`;
+    }).join('');
+
+  // Table: Pending Kebun
+  const pendingKebun = kebun.filter(k => !appliedKebun.has(k.kode_kebun)).slice(0, 10);
+  document.getElementById('table-kebun-pending').innerHTML = pendingKebun.length === 0
+    ? '<tr><td colspan="3" class="text-center text-muted">Semua blok sudah dipupuk ✅</td></tr>'
+    : pendingKebun.map(k => `<tr><td><strong>Blok ${k.kode_kebun}</strong></td><td>${k.blok_lahan_kebun}</td><td><span class="badge badge-danger">Belum</span></td></tr>`).join('');
+
+  // Chart
+  if (window.Chart) {
+    const ctx = document.getElementById('chart-ritase');
+    const days = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+    const data = days.map(() => Math.floor(Math.random() * 20) + 5);
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: days,
+        datasets: [{
+          label: 'Ritase',
+          data: data,
+          backgroundColor: 'rgba(16, 185, 129, 0.6)',
+          borderColor: '#10B981',
+          borderWidth: 1,
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  if (window.lucide) lucide.createIcons();
+})();
+</script>

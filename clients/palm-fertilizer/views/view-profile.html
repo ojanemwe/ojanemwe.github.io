@@ -1,0 +1,72 @@
+<div class="spa-view active">
+  <h1 class="page-title">Profil Saya</h1>
+  <div class="card card-flat" style="max-width:500px">
+    <div class="text-center mb-3">
+      <div id="profile-avatar" style="width:100px;height:100px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:2.5rem;color:#fff;overflow:hidden">👤</div>
+      <button class="btn btn-sm btn-outline mt-1" onclick="document.getElementById('profile-foto-input').click()">Ubah Foto</button>
+      <input type="file" id="profile-foto-input" accept="image/*" style="display:none" onchange="changeProfilePhoto(this)">
+    </div>
+    <label>Nama Lengkap</label>
+    <input type="text" id="prof-nama">
+    <label>No Telepon</label>
+    <input type="tel" id="prof-telp" placeholder="08xxx">
+    <label>Username</label>
+    <input type="text" id="prof-username">
+    <label>Password Baru</label>
+    <input type="password" id="prof-pass" placeholder="Kosongkan jika tidak diubah">
+    <label>PIN Code (6 digit)</label>
+    <input type="password" id="prof-pin" maxlength="6" placeholder="Kosongkan jika tidak diubah">
+    <button class="btn btn-primary btn-block mt-2" onclick="saveProfile()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+  </div>
+</div>
+<script>
+(() => {
+  const session = App.getSession();
+  if (!session) return;
+  const u = session.user;
+  document.getElementById('prof-nama').value = u.nama_lengkap;
+  document.getElementById('prof-telp').value = u.no_telp_user;
+  document.getElementById('prof-username').value = u.username;
+  if (u.foto_base64) {
+    document.getElementById('profile-avatar').innerHTML = `<img src="${u.foto_base64}" style="width:100%;height:100%;object-fit:cover">`;
+  }
+  window.changeProfilePhoto = function(input) {
+    const file = input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas'); const s = Math.min(img.width,img.height,400);
+        c.width=s;c.height=s;const ctx=c.getContext('2d');
+        ctx.beginPath();ctx.arc(s/2,s/2,s/2,0,Math.PI*2);ctx.clip();
+        ctx.drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,s,s);
+        let q=0.7,b=c.toDataURL('image/jpeg',q);
+        while(b.length>50000&&q>0.1){q-=0.1;b=c.toDataURL('image/jpeg',q);}
+        document.getElementById('profile-avatar').innerHTML=`<img src="${b}" style="width:100%;height:100%;object-fit:cover">`;
+        u.foto_base64=b;
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+  window.saveProfile = function() {
+    const nama = document.getElementById('prof-nama').value;
+    const telp = App.formatPhone(document.getElementById('prof-telp').value);
+    const user = document.getElementById('prof-username').value;
+    const pass = document.getElementById('prof-pass').value;
+    const pin = document.getElementById('prof-pin').value;
+    
+    if (!nama || !user) { UI.toast('Nama dan username wajib diisi!', 'error'); return; }
+    
+    const updates = { nama_lengkap:nama, username:user, no_telp_user:telp, foto_base64:u.foto_base64, updated_at:App.now() };
+    if (pass) updates.password = pass;
+    if (pin && pin.length === 6) updates.pin_code = pin;
+    
+    App.updateRecord('users','id_user',u.id_user, updates);
+    Object.assign(session.user, updates);
+    localStorage.setItem('pf_session', JSON.stringify(session));
+    UI.toast('Profil diperbarui!');
+  };
+  if (window.lucide) lucide.createIcons();
+})();
+</script>

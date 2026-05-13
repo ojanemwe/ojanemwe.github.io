@@ -1,0 +1,23 @@
+<div class="spa-view active" style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#065f46 0%,#0a0f0d 50%,#1e3a5f 100%)">
+  <div class="login-card">
+    <div class="login-logo">
+      <div style="width:56px;height:56px;background:var(--warning);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto .75rem"><i data-lucide="key" style="width:28px;height:28px;color:#fff"></i></div>
+      <h1 style="font-size:1.5rem">Lupa Password</h1>
+      <p>Hubungi Admin untuk reset password</p>
+    </div>
+    <label>Username</label><input type="text" id="fp-user" placeholder="Username Anda">
+    <label>Nama Lengkap (verifikasi)</label><input type="text" id="fp-nama" placeholder="Nama lengkap">
+    <label>No Telepon (verifikasi)</label><input type="tel" id="fp-telp" placeholder="No telepon terdaftar">
+    <button class="btn btn-primary btn-block mt-2" onclick="requestReset()"><i data-lucide="send" class="icon-sm"></i> Kirim Permintaan</button>
+    <div class="text-center mt-2"><a href="#" onclick="event.preventDefault();UI.showLogin()">← Kembali ke Login</a></div>
+  </div>
+</div>
+<script>
+window.requestReset = function() {
+  const user = document.getElementById('fp-user').value;
+  if (!user) { UI.toast('Masukkan username!', 'error'); return; }
+  UI.toast('Permintaan reset dikirim ke Admin.', 'success');
+  setTimeout(() => UI.showLogin(), 2000);
+};
+if (window.lucide) lucide.createIcons();
+</script>

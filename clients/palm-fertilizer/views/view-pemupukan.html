@@ -1,0 +1,355 @@
+<div class="spa-view active">
+  <h1 class="page-title">Progres Pemupukan</h1>
+
+  <!-- Input Card -->
+  <div class="card card-flat mb-3">
+    <div class="card-header">
+      <span class="card-title"><i data-lucide="sprout" class="icon-sm"></i> Input Pemupukan</span>
+    </div>
+    <div class="grid grid-2">
+      <div>
+        <label>Lahan</label>
+        <select id="apply-lahan" onchange="filterKebun()"><option value="">Pilih Lahan...</option></select>
+      </div>
+      <div>
+        <label>Blok Kebun</label>
+        <select id="apply-kebun"><option value="">Pilih Blok...</option></select>
+      </div>
+    </div>
+
+    <!-- Foto Sebelum -->
+    <div class="grid grid-2 mt-2">
+      <div>
+        <label>Foto Sebelum</label>
+        <div id="foto-start-preview" style="width:100%;height:160px;background:var(--bg-surface-hover);border:2px dashed var(--border-color);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden" onclick="openCamera('start')">
+          <span class="text-muted text-sm">📷 Tap untuk foto</span>
+        </div>
+      </div>
+      <div>
+        <label>Foto Sesudah</label>
+        <div id="foto-end-preview" style="width:100%;height:160px;background:var(--bg-surface-hover);border:2px dashed var(--border-color);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden" onclick="openCamera('end')">
+          <span class="text-muted text-sm">📷 Tap untuk foto</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-2 mt-2">
+      <button class="btn btn-outline btn-block" onclick="resetFormPemupukan()">
+        <i data-lucide="rotate-ccw" class="icon-sm"></i> Reset
+      </button>
+      <button class="btn btn-primary btn-block" onclick="simpanPemupukan()">
+        <i data-lucide="save" class="icon-sm"></i> Simpan
+      </button>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card card-flat">
+    <div class="card-header">
+      <span class="card-title">Riwayat Pemupukan</span>
+      <span class="badge badge-primary" id="apply-count">0</span>
+    </div>
+    <div class="table-responsive">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Blok</th><th>Status</th><th class="hide-mobile">Lahan</th><th class="hide-mobile">Mulai</th><th class="hide-mobile">Selesai</th></tr></thead>
+        <tbody id="apply-table"></tbody>
+      </table>
+    </div>
+  </div>
+  
+  <!-- Modal Detail Pemupukan -->
+  <div id="modal-detail-pemupukan" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-pemupukan')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Detail Pemupukan</h3>
+        <button class="modal-close" onclick="UI.closeModal('modal-detail-pemupukan')"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Tanggal:</span> <strong id="det-apply-tgl"></strong></div>
+        <div><span class="text-muted">Lahan:</span> <strong id="det-apply-lahan"></strong></div>
+        <div><span class="text-muted">Blok Kebun:</span> <strong id="det-apply-blok"></strong></div>
+        <div><span class="text-muted">Jam Mulai:</span> <strong id="det-apply-mulai"></strong></div>
+        <div><span class="text-muted">Jam Selesai:</span> <strong id="det-apply-selesai"></strong></div>
+        <div><span class="text-muted">Status:</span> <strong id="det-apply-status"></strong></div>
+      </div>
+      <div class="mb-2">
+        <label>Foto Sebelum</label>
+        <div id="det-apply-foto-start" style="height:120px;background:var(--bg-surface-hover);border-radius:var(--radius-md);overflow:hidden;display:flex;align-items:center;justify-content:center"></div>
+      </div>
+      <div class="mb-2">
+        <label>Foto Sesudah</label>
+        <div id="det-apply-foto-end" style="height:120px;background:var(--bg-surface-hover);border-radius:var(--radius-md);overflow:hidden;display:flex;align-items:center;justify-content:center"></div>
+      </div>
+      <div id="det-apply-actions" class="flex gap-1 mt-2"></div>
+    </div>
+  </div>
+
+  <!-- Modal Camera -->
+  <div id="modal-camera" class="modal-overlay" style="z-index:10000; background:#000;">
+    <div style="width:100%; height:100%; display:flex; flex-direction:column; position:relative; max-width:480px; margin:0 auto; background:#000;">
+      <!-- Header -->
+      <div style="position:absolute; top:1rem; left:1rem; right:1rem; display:flex; justify-content:space-between; z-index:10;">
+        <button class="btn btn-icon" style="background:rgba(0,0,0,0.5); color:#fff; border:none;" onclick="closeCamera()"><i data-lucide="x" class="icon"></i></button>
+        <button class="btn btn-icon" style="background:rgba(0,0,0,0.5); color:#fff; border:none;" onclick="switchCamera()"><i data-lucide="refresh-cw" class="icon"></i></button>
+      </div>
+      <!-- Video Feed -->
+      <video id="camera-feed" autoplay playsinline style="flex:1; width:100%; height:100%; object-fit:cover; background:#000;"></video>
+      <!-- Controls -->
+      <div style="position:absolute; bottom:2rem; left:0; right:0; display:flex; justify-content:center; z-index:10;">
+        <button class="btn btn-icon" style="width:72px; height:72px; border:4px solid #fff; background:var(--primary); color:#fff;" onclick="takePhoto()">
+          <i data-lucide="camera" class="icon-lg"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edit Foto Sesudah -->
+  <div id="modal-edit-pemupukan" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-edit-pemupukan')">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tambah Foto Sesudah</h3>
+        <button class="modal-close" onclick="UI.closeModal('modal-edit-pemupukan')"><i data-lucide="x" class="icon"></i></button>
+      </div>
+      <input type="hidden" id="edit-apply-id">
+      <div class="mb-2">
+        <label>Foto Sesudah</label>
+        <div id="edit-foto-end-preview" style="width:100%;height:180px;background:var(--bg-surface-hover);border:2px dashed var(--border-color);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden" onclick="openCamera('edit-end')">
+          <span class="text-muted text-sm">📷 Tap untuk foto</span>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-block mt-2" onclick="saveFotoSesudah()">
+        <i data-lucide="check" class="icon-sm"></i> Simpan & Selesaikan
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Fullscreen Photo Preview -->
+  <div id="modal-foto-preview" class="modal-overlay" onclick="UI.closeModal('modal-foto-preview')" style="z-index:10001; background:rgba(0,0,0,0.9); padding:0;">
+    <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; position:relative;">
+      <button class="btn btn-icon" style="position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,0.2); color:#fff; border:none; z-index:10;" onclick="event.stopPropagation(); UI.closeModal('modal-foto-preview')"><i data-lucide="x" class="icon"></i></button>
+      <img id="foto-preview-img" src="" style="max-width:95%; max-height:90vh; object-fit:contain; border-radius:var(--radius-md);">
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const lahanList = App.getData('blok_lahan');
+  const kebunList = App.getData('blok_kebun');
+  let fotoStartBase64 = '', fotoEndBase64 = '';
+  let jamStart = '', jamEnd = '';
+  let editFotoEndBase64 = '';
+  const session = App.getSession();
+  const userRole = session && session.user ? session.user.role : '';
+  const canDelete = App.hasPermission('delete_pemupukan');
+
+  const lahanSel = document.getElementById('apply-lahan');
+  lahanList.forEach(l => { lahanSel.innerHTML += `<option value="${l.kode_lahan}">${l.kode_lahan} (${l.luas_lahan} Ha)</option>`; });
+
+  window.filterKebun = function() {
+    const lahan = lahanSel.value;
+    const kebunSel = document.getElementById('apply-kebun');
+    kebunSel.innerHTML = '<option value="">Pilih Blok...</option>';
+    kebunList.filter(k => k.blok_lahan_kebun === lahan).forEach(k => {
+      kebunSel.innerHTML += `<option value="${k.kode_kebun}">Blok ${k.kode_kebun} (${k.jumlah_pohon} pohon)</option>`;
+    });
+  };
+
+  let currentCameraStream = null;
+  let currentPhotoTarget = '';
+  let useFrontCamera = false;
+
+  window.openCamera = async function(target) {
+    currentPhotoTarget = target;
+    useFrontCamera = false;
+    document.getElementById('modal-camera').style.display = 'flex';
+    if (window.lucide) lucide.createIcons();
+    await startCamera();
+  };
+
+  window.closeCamera = function() {
+    if (currentCameraStream) {
+      currentCameraStream.getTracks().forEach(t => t.stop());
+      currentCameraStream = null;
+    }
+    document.getElementById('modal-camera').style.display = 'none';
+  };
+
+  window.switchCamera = async function() {
+    useFrontCamera = !useFrontCamera;
+    await startCamera();
+  };
+
+  async function startCamera() {
+    if (currentCameraStream) {
+      currentCameraStream.getTracks().forEach(t => t.stop());
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: useFrontCamera ? 'user' : 'environment' },
+        audio: false
+      });
+      currentCameraStream = stream;
+      document.getElementById('camera-feed').srcObject = stream;
+    } catch (e) {
+      UI.toast('Gagal mengakses kamera! Pastikan izin diberikan.', 'error');
+      closeCamera();
+    }
+  }
+
+  window.takePhoto = function() {
+    const video = document.getElementById('camera-feed');
+    if (!video.videoWidth) return; // Wait for video to be ready
+
+    const canvas = document.createElement('canvas');
+    // Scale down for optimization
+    const maxW = 1200;
+    const scale = Math.min(1, maxW / video.videoWidth);
+    canvas.width = video.videoWidth * scale;
+    canvas.height = video.videoHeight * scale;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    
+    let quality = 0.7;
+    let base64 = canvas.toDataURL('image/jpeg', quality);
+    
+    // Compress to max 50k chars
+    while (base64.length > 50000 && quality > 0.1) {
+      quality -= 0.1;
+      base64 = canvas.toDataURL('image/jpeg', quality);
+    }
+    
+    if (currentPhotoTarget === 'start') {
+      fotoStartBase64 = base64;
+      jamStart = App.timeNow();
+      document.getElementById('foto-start-preview').innerHTML = `<img src="${base64}" style="width:100%;height:100%;object-fit:cover">`;
+    } else if (currentPhotoTarget === 'edit-end') {
+      editFotoEndBase64 = base64;
+      document.getElementById('edit-foto-end-preview').innerHTML = `<img src="${base64}" style="width:100%;height:100%;object-fit:cover">`;
+    } else {
+      fotoEndBase64 = base64;
+      jamEnd = App.timeNow();
+      document.getElementById('foto-end-preview').innerHTML = `<img src="${base64}" style="width:100%;height:100%;object-fit:cover">`;
+    }
+    
+    closeCamera();
+  };
+
+  window.simpanPemupukan = function() {
+    const lahan = lahanSel.value;
+    const kebun = document.getElementById('apply-kebun').value;
+    if (!lahan || !kebun) { UI.toast('Pilih lahan dan blok kebun!', 'error'); return; }
+    if (!fotoStartBase64) { UI.toast('Foto sebelum wajib diisi!', 'error'); return; }
+    
+    // Check duplicate blok kebun hari ini
+    const today = App.today();
+    const existing = App.getData('pemupukan').find(p => p.kode_kebun === kebun && p.kode_lahan === lahan && p.tanggal_apply === today);
+    if (existing) { UI.toast(`Blok ${kebun} di lahan ${lahan} sudah memiliki data pemupukan hari ini!`, 'error'); return; }
+
+    App.addRecord('pemupukan', {
+      id_apply: `APL-${Date.now()}`,
+      timestamp_apply: App.now(),
+      kode_lahan: lahan,
+      kode_kebun: kebun,
+      tanggal_apply: App.today(),
+      foto_start_base64: fotoStartBase64,
+      jam_start_apply: jamStart,
+      foto_end_base64: fotoEndBase64,
+      jam_end_apply: jamEnd,
+      input_by: App.getSession()?.user?.nama_lengkap || '-'
+    });
+
+    UI.toast('Data pemupukan tersimpan!');
+    resetFormPemupukan();
+    renderTable();
+  };
+
+  window.resetFormPemupukan = function() {
+    fotoStartBase64 = ''; fotoEndBase64 = ''; jamStart = ''; jamEnd = '';
+    document.getElementById('apply-lahan').value = '';
+    document.getElementById('apply-kebun').innerHTML = '<option value="">Pilih Blok...</option>';
+    document.getElementById('foto-start-preview').innerHTML = '<span class="text-muted text-sm">📷 Tap untuk foto</span>';
+    document.getElementById('foto-end-preview').innerHTML = '<span class="text-muted text-sm">📷 Tap untuk foto</span>';
+  };
+
+  function renderTable() {
+    const data = App.getData('pemupukan');
+    data.sort((a, b) => b.timestamp_apply.localeCompare(a.timestamp_apply));
+    document.getElementById('apply-count').textContent = data.length;
+    document.getElementById('apply-table').innerHTML = data.length === 0
+      ? '<tr><td colspan="6" class="text-center text-muted">Belum ada data pemupukan</td></tr>'
+      : data.slice(0, 20).map(p => `<tr onclick="openDetailPemupukan('${p.id_apply}')" style="cursor:pointer" class="hover-bg">
+          <td>${p.tanggal_apply}</td><td>Blok ${p.kode_kebun}</td>
+          <td><span class="badge ${p.foto_end_base64 ? 'badge-success' : 'badge-warning'}">${p.foto_end_base64 ? 'Selesai' : 'Proses'}</span></td>
+          <td class="hide-mobile">${p.kode_lahan}</td>
+          <td class="hide-mobile">${p.jam_start_apply || '-'}</td><td class="hide-mobile">${p.jam_end_apply || '-'}</td>
+        </tr>`).join('');
+  }
+  window.openDetailPemupukan = function(id) {
+    const p = App.getData('pemupukan').find(x => x.id_apply === id);
+    if(!p) return;
+    document.getElementById('det-apply-tgl').textContent = p.tanggal_apply;
+    document.getElementById('det-apply-lahan').textContent = p.kode_lahan;
+    document.getElementById('det-apply-blok').textContent = p.kode_kebun;
+    document.getElementById('det-apply-mulai').textContent = p.jam_start_apply || '-';
+    document.getElementById('det-apply-selesai').textContent = p.jam_end_apply || '-';
+    document.getElementById('det-apply-status').textContent = p.foto_end_base64 ? 'Selesai' : 'Proses';
+    
+    document.getElementById('det-apply-foto-start').innerHTML = p.foto_start_base64 ? `<img src="${p.foto_start_base64}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="event.stopPropagation();openFotoPreview(this.src)">` : '<span class="text-muted">Tidak ada</span>';
+    document.getElementById('det-apply-foto-end').innerHTML = p.foto_end_base64 ? `<img src="${p.foto_end_base64}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="event.stopPropagation();openFotoPreview(this.src)">` : '<span class="text-muted">Tidak ada</span>';
+    
+    // Build action buttons
+    let actionsHtml = '';
+    if (!p.foto_end_base64) {
+      actionsHtml += `<button class="btn btn-primary flex-1" onclick="editPemupukan('${p.id_apply}')"><i data-lucide="camera" class="icon-sm"></i> Tambah Foto Sesudah</button>`;
+    }
+    if (canDelete) {
+      actionsHtml += `<button class="btn btn-danger btn-icon" onclick="deletePemupukan('${p.id_apply}')" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>`;
+    }
+    document.getElementById('det-apply-actions').innerHTML = actionsHtml;
+    
+    UI.openModal('modal-detail-pemupukan');
+    if (window.lucide) lucide.createIcons();
+  };
+
+  window.editPemupukan = function(id) {
+    UI.closeModal('modal-detail-pemupukan');
+    editFotoEndBase64 = '';
+    document.getElementById('edit-apply-id').value = id;
+    document.getElementById('edit-foto-end-preview').innerHTML = '<span class="text-muted text-sm">📷 Tap untuk foto</span>';
+    UI.openModal('modal-edit-pemupukan');
+    if (window.lucide) lucide.createIcons();
+  };
+
+  window.saveFotoSesudah = function() {
+    const id = document.getElementById('edit-apply-id').value;
+    if (!editFotoEndBase64) { UI.toast('Ambil foto sesudah terlebih dahulu!', 'error'); return; }
+    App.updateRecord('pemupukan', 'id_apply', id, {
+      foto_end_base64: editFotoEndBase64,
+      jam_end_apply: App.timeNow()
+    });
+    UI.closeModal('modal-edit-pemupukan');
+    UI.toast('Foto sesudah berhasil ditambahkan! Status: Selesai');
+    editFotoEndBase64 = '';
+    renderTable();
+  };
+
+  window.deletePemupukan = function(id) {
+    if (!confirm('Yakin hapus data pemupukan ini?')) return;
+    App.deleteRecord('pemupukan', 'id_apply', id);
+    UI.closeModal('modal-detail-pemupukan');
+    UI.toast('Data pemupukan berhasil dihapus!');
+    renderTable();
+  };
+
+  window.openFotoPreview = function(src) {
+    document.getElementById('foto-preview-img').src = src;
+    UI.openModal('modal-foto-preview');
+    if (window.lucide) lucide.createIcons();
+  };
+
+  renderTable();
+  if (window.lucide) lucide.createIcons();
+})();
+</script>

@@ -1,0 +1,394 @@
+<div class="spa-view active">
+  <h1 class="page-title">Lahan & Kebun</h1>
+  <div class="tabs" id="lahan-tabs">
+    <button class="tab-btn active" onclick="switchLahanTab('tdm')">Drop Material (TDM)</button>
+    <button class="tab-btn" onclick="switchLahanTab('kebun')">Kebun</button>
+    <button class="tab-btn" onclick="switchLahanTab('lahan')">Lahan</button>
+  </div>
+
+  <!-- TDM -->
+  <div class="tab-content active" id="tab-tdm">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Koordinat TDM</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-tdm')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Kebutuhan Rit</th><th class="hide-mobile">Longitude</th><th class="hide-mobile">Latitude</th></tr></thead><tbody id="tbl-tdm"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Kebun -->
+  <div class="tab-content" id="tab-kebun">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Blok Kebun</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-kebun')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th>Blok</th><th>Lahan</th><th class="hide-mobile">Luas (Ha)</th><th class="hide-mobile">Pohon</th></tr></thead><tbody id="tbl-kebun"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Lahan -->
+  <div class="tab-content" id="tab-lahan">
+    <div class="card card-flat">
+      <div class="card-header">
+        <span class="card-title">Blok Lahan</span>
+        <button class="btn btn-sm btn-primary" onclick="UI.openModal('modal-lahan')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+      </div>
+      <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Luas (Ha)</th></tr></thead><tbody id="tbl-lahan"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Modal TDM -->
+  <div id="modal-tdm" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-tdm')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah TDM</h3><button class="modal-close" onclick="UI.closeModal('modal-tdm')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Nama TDM</label><input type="text" id="add-tdm-nama" placeholder="TDM-19">
+      <label>Kebutuhan Rit</label><input type="number" id="add-tdm-rit" placeholder="0">
+      <div class="grid grid-2">
+        <div><label>Longitude</label><input type="number" id="add-tdm-lng" step="0.0001" placeholder="116.9100"></div>
+        <div><label>Latitude</label><input type="number" id="add-tdm-lat" step="0.0001" placeholder="-0.5200"></div>
+      </div>
+      <button class="btn btn-outline btn-block mb-2" onclick="getGPSForTDM()"><i data-lucide="locate" class="icon-sm"></i> Ambil dari GPS</button>
+      <div id="gps-accuracy-tdm" class="text-xs text-muted mb-2"></div>
+      <button class="btn btn-primary btn-block" onclick="addTDM()">Simpan</button>
+    </div>
+  </div>
+
+  <!-- Modal Kebun -->
+  <div id="modal-kebun" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-kebun')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Blok Kebun</h3><button class="modal-close" onclick="UI.closeModal('modal-kebun')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Kode Blok</label><input type="text" id="add-kebun-kode" placeholder="109">
+      <label>Lahan</label><select id="add-kebun-lahan"><option value="">Pilih...</option></select>
+      <label>Luas (Ha)</label><input type="number" id="add-kebun-luas" step="0.01" placeholder="0">
+      <label>Jumlah Pohon</label><input type="number" id="add-kebun-pohon" placeholder="0">
+      <div class="grid grid-2">
+        <div><label>Longitude</label><input type="number" id="add-kebun-lng" step="0.0001"></div>
+        <div><label>Latitude</label><input type="number" id="add-kebun-lat" step="0.0001"></div>
+      </div>
+      <button class="btn btn-outline btn-block mb-2" onclick="getGPSForKebun()"><i data-lucide="locate" class="icon-sm"></i> Ambil dari GPS</button>
+      <button class="btn btn-primary btn-block" onclick="addKebun()">Simpan</button>
+    </div>
+  </div>
+
+  <!-- Modal Lahan -->
+  <div id="modal-lahan" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-lahan')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Lahan</h3><button class="modal-close" onclick="UI.closeModal('modal-lahan')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Kode Lahan</label><input type="text" id="add-lahan-kode" placeholder="L05">
+      <label>Luas (Ha)</label><input type="number" id="add-lahan-luas" step="0.01" placeholder="0">
+      <button class="btn btn-primary btn-block" onclick="addLahan()">Simpan</button>
+    </div>
+  </div>
+
+  <!-- Detail Modals -->
+  <div id="modal-detail-tdm" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-tdm')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail TDM</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-tdm')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-tdm-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Nama:</span> <strong id="det-tdm-nama"></strong></div>
+          <div><span class="text-muted">Kebutuhan:</span> <strong id="det-tdm-rit"></strong> Rit</div>
+          <div><span class="text-muted">Longitude:</span> <strong id="det-tdm-lng"></strong></div>
+          <div><span class="text-muted">Latitude:</span> <strong id="det-tdm-lat"></strong></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditTDM(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteTDM()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-tdm-view" style="display:none">
+        <label>Nama TDM</label><input type="text" id="edit-tdm-nama">
+        <label>Kebutuhan Rit</label><input type="number" id="edit-tdm-rit">
+        <div class="grid grid-2">
+          <div><label>Longitude</label><input type="number" id="edit-tdm-lng" step="0.0001"></div>
+          <div><label>Latitude</label><input type="number" id="edit-tdm-lat" step="0.0001"></div>
+        </div>
+        <button class="btn btn-outline btn-block mb-2" onclick="getGPSForEditTDM()"><i data-lucide="locate" class="icon-sm"></i> Ambil dari GPS</button>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditTDM()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditTDM(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-kebun" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-kebun')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Blok Kebun</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-kebun')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-kebun-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Kode Blok:</span> <strong id="det-kebun-kode"></strong></div>
+          <div><span class="text-muted">Lahan:</span> <strong id="det-kebun-lahan"></strong></div>
+          <div><span class="text-muted">Luas:</span> <strong id="det-kebun-luas"></strong> Ha</div>
+          <div><span class="text-muted">Pohon:</span> <strong id="det-kebun-pohon"></strong></div>
+          <div><span class="text-muted">Longitude:</span> <strong id="det-kebun-lng"></strong></div>
+          <div><span class="text-muted">Latitude:</span> <strong id="det-kebun-lat"></strong></div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditKebun(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteKebun()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-kebun-view" style="display:none">
+        <label>Kode Blok</label><input type="text" id="edit-kebun-kode">
+        <label>Lahan</label><select id="edit-kebun-lahan"></select>
+        <label>Luas (Ha)</label><input type="number" id="edit-kebun-luas" step="0.01">
+        <label>Jumlah Pohon</label><input type="number" id="edit-kebun-pohon">
+        <div class="grid grid-2">
+          <div><label>Longitude</label><input type="number" id="edit-kebun-lng" step="0.0001"></div>
+          <div><label>Latitude</label><input type="number" id="edit-kebun-lat" step="0.0001"></div>
+        </div>
+        <button class="btn btn-outline btn-block mb-2" onclick="getGPSForEditKebun()"><i data-lucide="locate" class="icon-sm"></i> Ambil dari GPS</button>
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditKebun()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditKebun(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-lahan" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-lahan')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Lahan</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-lahan')"><i data-lucide="x" class="icon"></i></button></div>
+      <div id="det-lahan-view">
+        <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+          <div><span class="text-muted">Kode:</span> <strong id="det-lahan-kode"></strong></div>
+          <div><span class="text-muted">Luas:</span> <strong id="det-lahan-luas"></strong> Ha</div>
+        </div>
+        <div class="flex gap-1">
+          <button class="btn btn-secondary flex-1" onclick="toggleEditLahan(true)"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+          <button class="btn btn-danger btn-icon" onclick="deleteLahan()" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+        </div>
+      </div>
+      <div id="edit-lahan-view" style="display:none">
+        <label>Kode Lahan</label><input type="text" id="edit-lahan-kode">
+        <label>Luas (Ha)</label><input type="number" id="edit-lahan-luas" step="0.01">
+        <div class="flex gap-1 mt-2">
+          <button class="btn btn-primary flex-1" onclick="saveEditLahan()"><i data-lucide="save" class="icon-sm"></i> Simpan</button>
+          <button class="btn btn-secondary flex-1" onclick="toggleEditLahan(false)">Batal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  function render() {
+    const tdm = App.getData('koordinat_tdm');
+    document.getElementById('tbl-tdm').innerHTML = tdm.map(t =>
+      `<tr onclick="openDetTDM('${t.id_tdm}')" style="cursor:pointer" class="hover-bg"><td><strong>${t.nama_tdm}</strong></td><td>${t.kebutuhan_material_tdm}</td><td class="hide-mobile">${t.longitude_tdm.toFixed(4)}</td><td class="hide-mobile">${t.latitude_tdm.toFixed(4)}</td></tr>`
+    ).join('') || '<tr><td colspan="4" class="text-center text-muted">Tidak ada data</td></tr>';
+
+    const kebun = App.getData('blok_kebun');
+    document.getElementById('tbl-kebun').innerHTML = kebun.slice(0, 50).map(k =>
+      `<tr onclick="openDetKebun('${k.id_kebun}')" style="cursor:pointer" class="hover-bg"><td><strong>Blok ${k.kode_kebun}</strong></td><td>${k.blok_lahan_kebun}</td><td class="hide-mobile">${k.luas_kebun}</td><td class="hide-mobile">${k.jumlah_pohon}</td></tr>`
+    ).join('') || '<tr><td colspan="4" class="text-center text-muted">Tidak ada data</td></tr>';
+    if (kebun.length > 50) {
+      document.getElementById('tbl-kebun').innerHTML += `<tr><td colspan="4" class="text-center text-muted">... dan ${kebun.length - 50} blok lainnya</td></tr>`;
+    }
+
+    const lahan = App.getData('blok_lahan');
+    document.getElementById('tbl-lahan').innerHTML = lahan.map(l =>
+      `<tr onclick="openDetLahan('${l.id_lahan}')" style="cursor:pointer" class="hover-bg"><td><strong>${l.kode_lahan}</strong></td><td>${l.luas_lahan}</td></tr>`
+    ).join('') || '<tr><td colspan="2" class="text-center text-muted">Tidak ada data</td></tr>';
+
+    // Populate kebun lahan select
+    const sel = document.getElementById('add-kebun-lahan');
+    sel.innerHTML = '<option value="">Pilih...</option>';
+    lahan.forEach(l => { sel.innerHTML += `<option value="${l.kode_lahan}">${l.kode_lahan}</option>`; });
+  }
+  render();
+
+  window.switchLahanTab = function(tab) {
+    document.querySelectorAll('#lahan-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+  };
+
+  window.getGPSForTDM = async function() {
+    try {
+      document.getElementById('gps-accuracy-tdm').textContent = 'Mengambil GPS...';
+      const pos = await App.getGPS();
+      document.getElementById('add-tdm-lng').value = pos.lng.toFixed(6);
+      document.getElementById('add-tdm-lat').value = pos.lat.toFixed(6);
+      document.getElementById('gps-accuracy-tdm').textContent = `Akurasi: ±${pos.accuracy.toFixed(1)}m`;
+    } catch(e) { UI.toast('GPS gagal: ' + e.message, 'error'); }
+  };
+
+  window.getGPSForKebun = async function() {
+    try {
+      const pos = await App.getGPS();
+      document.getElementById('add-kebun-lng').value = pos.lng.toFixed(6);
+      document.getElementById('add-kebun-lat').value = pos.lat.toFixed(6);
+      UI.toast(`GPS OK (±${pos.accuracy.toFixed(1)}m)`);
+    } catch(e) { UI.toast('GPS gagal: ' + e.message, 'error'); }
+  };
+
+  window.addTDM = function() {
+    const nama = document.getElementById('add-tdm-nama').value;
+    if (!nama) { UI.toast('Nama TDM wajib!', 'error'); return; }
+    App.addRecord('koordinat_tdm', { id_tdm:`TDM-${Date.now()}`, nama_tdm:nama, kebutuhan_material_tdm:parseInt(document.getElementById('add-tdm-rit').value)||0, longitude_tdm:parseFloat(document.getElementById('add-tdm-lng').value)||0, latitude_tdm:parseFloat(document.getElementById('add-tdm-lat').value)||0 });
+    UI.closeModal('modal-tdm'); render(); UI.toast('TDM ditambahkan!');
+  };
+
+  window.addKebun = function() {
+    const kode = document.getElementById('add-kebun-kode').value;
+    if (!kode) { UI.toast('Kode blok wajib!', 'error'); return; }
+    App.addRecord('blok_kebun', { id_kebun:`KBN-${Date.now()}`, kode_kebun:kode, luas_kebun:parseFloat(document.getElementById('add-kebun-luas').value)||0, blok_lahan_kebun:document.getElementById('add-kebun-lahan').value, longitude_kebun:parseFloat(document.getElementById('add-kebun-lng').value)||0, latitude_kebun:parseFloat(document.getElementById('add-kebun-lat').value)||0, jumlah_pohon:parseInt(document.getElementById('add-kebun-pohon').value)||0 });
+    UI.closeModal('modal-kebun'); render(); UI.toast('Blok kebun ditambahkan!');
+  };
+
+  window.addLahan = function() {
+    const kode = document.getElementById('add-lahan-kode').value;
+    if (!kode) { UI.toast('Kode lahan wajib!', 'error'); return; }
+    App.addRecord('blok_lahan', { id_lahan:`LHN-${Date.now()}`, kode_lahan:kode, luas_lahan:parseFloat(document.getElementById('add-lahan-luas').value)||0 });
+    UI.closeModal('modal-lahan'); render(); UI.toast('Lahan ditambahkan!');
+  };
+
+  let activeTdmId = null, activeKebunId = null, activeLahanId = null;
+
+  window.openDetTDM = function(id) {
+    const d = App.getData('koordinat_tdm').find(x => x.id_tdm === id); if(!d) return;
+    activeTdmId = id;
+    document.getElementById('det-tdm-nama').textContent = d.nama_tdm;
+    document.getElementById('det-tdm-rit').textContent = d.kebutuhan_material_tdm;
+    document.getElementById('det-tdm-lng').textContent = d.longitude_tdm;
+    document.getElementById('det-tdm-lat').textContent = d.latitude_tdm;
+    toggleEditTDM(false);
+    UI.openModal('modal-detail-tdm');
+  };
+  window.toggleEditTDM = function(show) {
+    document.getElementById('det-tdm-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-tdm-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('koordinat_tdm').find(x => x.id_tdm === activeTdmId); if(!d) return;
+      document.getElementById('edit-tdm-nama').value = d.nama_tdm;
+      document.getElementById('edit-tdm-rit').value = d.kebutuhan_material_tdm;
+      document.getElementById('edit-tdm-lng').value = d.longitude_tdm;
+      document.getElementById('edit-tdm-lat').value = d.latitude_tdm;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditTDM = function() {
+    const nama = document.getElementById('edit-tdm-nama').value;
+    if (!nama) { UI.toast('Nama TDM wajib!', 'error'); return; }
+    App.updateRecord('koordinat_tdm', 'id_tdm', activeTdmId, {
+      nama_tdm: nama,
+      kebutuhan_material_tdm: parseInt(document.getElementById('edit-tdm-rit').value) || 0,
+      longitude_tdm: parseFloat(document.getElementById('edit-tdm-lng').value) || 0,
+      latitude_tdm: parseFloat(document.getElementById('edit-tdm-lat').value) || 0
+    });
+    UI.closeModal('modal-detail-tdm'); render(); UI.toast('TDM diperbarui!');
+  };
+  window.deleteTDM = function() {
+    if (!confirm('Hapus data TDM ini?')) return;
+    App.deleteRecord('koordinat_tdm', 'id_tdm', activeTdmId);
+    UI.closeModal('modal-detail-tdm'); render(); UI.toast('TDM dihapus');
+  };
+  window.getGPSForEditTDM = async function() {
+    try {
+      const pos = await App.getGPS();
+      document.getElementById('edit-tdm-lng').value = pos.lng.toFixed(6);
+      document.getElementById('edit-tdm-lat').value = pos.lat.toFixed(6);
+      UI.toast(`GPS OK (±${pos.accuracy.toFixed(1)}m)`);
+    } catch(e) { UI.toast('GPS gagal: ' + e.message, 'error'); }
+  };
+
+  window.openDetKebun = function(id) {
+    const d = App.getData('blok_kebun').find(x => x.id_kebun === id); if(!d) return;
+    activeKebunId = id;
+    document.getElementById('det-kebun-kode').textContent = d.kode_kebun;
+    document.getElementById('det-kebun-lahan').textContent = d.blok_lahan_kebun;
+    document.getElementById('det-kebun-luas').textContent = d.luas_kebun;
+    document.getElementById('det-kebun-pohon').textContent = d.jumlah_pohon;
+    document.getElementById('det-kebun-lng').textContent = d.longitude_kebun;
+    document.getElementById('det-kebun-lat').textContent = d.latitude_kebun;
+    toggleEditKebun(false);
+    UI.openModal('modal-detail-kebun');
+  };
+  window.toggleEditKebun = function(show) {
+    document.getElementById('det-kebun-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-kebun-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('blok_kebun').find(x => x.id_kebun === activeKebunId); if(!d) return;
+      document.getElementById('edit-kebun-kode').value = d.kode_kebun;
+      const lahan = App.getData('blok_lahan');
+      const sel = document.getElementById('edit-kebun-lahan');
+      sel.innerHTML = '<option value="">Pilih...</option>';
+      lahan.forEach(l => { sel.innerHTML += `<option value="${l.kode_lahan}">${l.kode_lahan}</option>`; });
+      sel.value = d.blok_lahan_kebun;
+      document.getElementById('edit-kebun-luas').value = d.luas_kebun;
+      document.getElementById('edit-kebun-pohon').value = d.jumlah_pohon;
+      document.getElementById('edit-kebun-lng').value = d.longitude_kebun;
+      document.getElementById('edit-kebun-lat').value = d.latitude_kebun;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditKebun = function() {
+    const kode = document.getElementById('edit-kebun-kode').value;
+    if (!kode) { UI.toast('Kode blok wajib!', 'error'); return; }
+    App.updateRecord('blok_kebun', 'id_kebun', activeKebunId, {
+      kode_kebun: kode,
+      blok_lahan_kebun: document.getElementById('edit-kebun-lahan').value,
+      luas_kebun: parseFloat(document.getElementById('edit-kebun-luas').value) || 0,
+      jumlah_pohon: parseInt(document.getElementById('edit-kebun-pohon').value) || 0,
+      longitude_kebun: parseFloat(document.getElementById('edit-kebun-lng').value) || 0,
+      latitude_kebun: parseFloat(document.getElementById('edit-kebun-lat').value) || 0
+    });
+    UI.closeModal('modal-detail-kebun'); render(); UI.toast('Blok kebun diperbarui!');
+  };
+  window.deleteKebun = function() {
+    if (!confirm('Hapus blok kebun ini?')) return;
+    App.deleteRecord('blok_kebun', 'id_kebun', activeKebunId);
+    UI.closeModal('modal-detail-kebun'); render(); UI.toast('Blok kebun dihapus');
+  };
+  window.getGPSForEditKebun = async function() {
+    try {
+      const pos = await App.getGPS();
+      document.getElementById('edit-kebun-lng').value = pos.lng.toFixed(6);
+      document.getElementById('edit-kebun-lat').value = pos.lat.toFixed(6);
+      UI.toast(`GPS OK (±${pos.accuracy.toFixed(1)}m)`);
+    } catch(e) { UI.toast('GPS gagal: ' + e.message, 'error'); }
+  };
+
+  window.openDetLahan = function(id) {
+    const d = App.getData('blok_lahan').find(x => x.id_lahan === id); if(!d) return;
+    activeLahanId = id;
+    document.getElementById('det-lahan-kode').textContent = d.kode_lahan;
+    document.getElementById('det-lahan-luas').textContent = d.luas_lahan;
+    toggleEditLahan(false);
+    UI.openModal('modal-detail-lahan');
+  };
+  window.toggleEditLahan = function(show) {
+    document.getElementById('det-lahan-view').style.display = show ? 'none' : 'block';
+    document.getElementById('edit-lahan-view').style.display = show ? 'block' : 'none';
+    if (show) {
+      const d = App.getData('blok_lahan').find(x => x.id_lahan === activeLahanId); if(!d) return;
+      document.getElementById('edit-lahan-kode').value = d.kode_lahan;
+      document.getElementById('edit-lahan-luas').value = d.luas_lahan;
+      if (window.lucide) lucide.createIcons();
+    }
+  };
+  window.saveEditLahan = function() {
+    const kode = document.getElementById('edit-lahan-kode').value;
+    if (!kode) { UI.toast('Kode lahan wajib!', 'error'); return; }
+    App.updateRecord('blok_lahan', 'id_lahan', activeLahanId, {
+      kode_lahan: kode,
+      luas_lahan: parseFloat(document.getElementById('edit-lahan-luas').value) || 0
+    });
+    UI.closeModal('modal-detail-lahan'); render(); UI.toast('Lahan diperbarui!');
+  };
+  window.deleteLahan = function() {
+    if (!confirm('Hapus data lahan ini?')) return;
+    App.deleteRecord('blok_lahan', 'id_lahan', activeLahanId);
+    UI.closeModal('modal-detail-lahan'); render(); UI.toast('Lahan dihapus');
+  };
+
+  if (window.lucide) lucide.createIcons();
+})();
+</script>
+

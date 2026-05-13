@@ -1,0 +1,495 @@
+<div class="spa-view active">
+  <h1 class="page-title">Settings</h1>
+
+  <!-- Umum (Collapsible) -->
+  <div class="card card-flat mb-3 card-collapsible collapsed">
+    <div class="card-header card-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span class="card-title"><i data-lucide="globe" class="icon-sm"></i> Umum</span>
+      <i data-lucide="chevron-down" class="icon-sm card-chevron"></i>
+    </div>
+    <div class="card-body-collapse">
+      <div class="grid grid-2">
+        <div>
+          <label>Zona Waktu</label>
+          <select id="set-timezone" onchange="App.setTimezone(this.value);UI.toast('Zona waktu diperbarui')">
+            <option value="WIB">WIB (GMT+7)</option>
+            <option value="WITA">WITA (GMT+8)</option>
+            <option value="WIT">WIT (GMT+9)</option>
+          </select>
+        </div>
+        <div>
+          <label>Satuan Rit (Ton per Rit)</label>
+          <input type="number" id="set-ton-rit" step="0.5" onchange="App.setSetting('ton_per_rit',this.value);UI.toast('Satuan Rit diperbarui')">
+          <small class="text-muted" id="set-rit-info"></small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manajemen User (Collapsible) -->
+  <div class="card card-flat mb-3 card-collapsible collapsed">
+    <div class="card-header card-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span class="card-title"><i data-lucide="users" class="icon-sm"></i> Manajemen User</span>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openAddUser()"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+        <i data-lucide="chevron-down" class="icon-sm card-chevron"></i>
+      </div>
+    </div>
+    <div class="card-body-collapse">
+      <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Role</th><th class="hide-mobile">Username</th></tr></thead><tbody id="tbl-users"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Unit Truk (Collapsible) -->
+  <div class="card card-flat mb-3 card-collapsible collapsed">
+    <div class="card-header card-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span class="card-title"><i data-lucide="truck" class="icon-sm"></i> Unit Truk</span>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();UI.openModal('modal-add-unit')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+        <i data-lucide="chevron-down" class="icon-sm card-chevron"></i>
+      </div>
+    </div>
+    <div class="card-body-collapse">
+      <div class="table-responsive"><table><thead><tr><th>Kode</th><th>Nama</th><th class="hide-mobile">Plat</th><th class="hide-mobile">Driver</th></tr></thead><tbody id="tbl-units"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Driver (Collapsible) -->
+  <div class="card card-flat mb-3 card-collapsible collapsed">
+    <div class="card-header card-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span class="card-title"><i data-lucide="hard-hat" class="icon-sm"></i> Driver</span>
+      <div style="display:flex;align-items:center;gap:.5rem">
+        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();UI.openModal('modal-add-driver')"><i data-lucide="plus" class="icon-sm"></i> Tambah</button>
+        <i data-lucide="chevron-down" class="icon-sm card-chevron"></i>
+      </div>
+    </div>
+    <div class="card-body-collapse">
+      <div class="table-responsive"><table><thead><tr><th>Nama</th><th>Unit</th><th class="hide-mobile">NIK</th><th class="hide-mobile">Telp</th></tr></thead><tbody id="tbl-drivers"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Export/Import Data Master (Collapsible) -->
+  <div class="card card-flat mb-3 card-collapsible collapsed">
+    <div class="card-header card-toggle" onclick="this.parentElement.classList.toggle('collapsed')">
+      <span class="card-title"><i data-lucide="database" class="icon-sm"></i> Export/Import Data Master</span>
+      <i data-lucide="chevron-down" class="icon-sm card-chevron"></i>
+    </div>
+    <div class="card-body-collapse">
+      <p class="text-muted text-sm mb-2">Kelola data master secara masal menggunakan file Excel (<code>.xlsx</code>) dengan 9 sheet (tabel). Kolom ID tidak perlu diisi — sistem akan men-generate otomatis.</p>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        <button class="btn btn-secondary btn-block" onclick="App.downloadExcelTemplate()">
+          <i data-lucide="file-spreadsheet" class="icon-sm"></i> Unduh Template Excel
+        </button>
+        <button class="btn btn-primary btn-block" onclick="App.exportMasterDataExcel()">
+          <i data-lucide="upload" class="icon-sm"></i> Export Data Saat Ini
+        </button>
+        <button class="btn btn-accent btn-block" onclick="confirmImportData()">
+          <i data-lucide="download" class="icon-sm"></i> Import Data Masal
+        </button>
+        <input type="file" id="import-file-input" accept=".xlsx,.xls" style="display:none" onchange="handleImportFile(this)">
+      </div>
+      <p class="text-muted text-xs mt-2" style="line-height:1.4">
+        <strong>⚠️ Import akan menimpa seluruh data master.</strong> Pastikan Anda sudah meng-export data lama sebelum melakukan import.
+      </p>
+    </div>
+  </div>
+
+  <!-- Pending Registrations (NOT Collapsible) -->
+  <div class="card card-flat">
+    <div class="card-header">
+      <span class="card-title"><i data-lucide="user-plus" class="icon-sm"></i> Registrasi Menunggu</span>
+      <span class="badge badge-danger" id="pending-count">0</span>
+    </div>
+    <p class="text-muted text-sm">Belum ada registrasi baru.</p>
+  </div>
+
+  <!-- Modal Add/Edit User -->
+  <div id="modal-add-user" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-add-user')">
+    <div class="modal-content">
+      <div class="modal-header"><h3 id="u-modal-title">Tambah User</h3><button class="modal-close" onclick="UI.closeModal('modal-add-user')"><i data-lucide="x" class="icon"></i></button></div>
+      <input type="hidden" id="add-u-id">
+      <label>Nama Lengkap</label><input type="text" id="add-u-nama">
+      <label>Username</label><input type="text" id="add-u-user">
+      <label>Password <span class="text-sm text-muted" id="u-pass-hint"></span></label><input type="password" id="add-u-pass">
+      <label>No Telp</label><input type="tel" id="add-u-telp" placeholder="08xxx">
+      <label>Role</label>
+      <select id="add-u-role" onchange="updateRBACToggles(this.value)"><option value="CHECKER">CHECKER</option><option value="MANDOR">MANDOR</option><option value="ASISTEN">ASISTEN</option></select>
+
+      <!-- RBAC Toggle Section -->
+      <div id="rbac-section" style="display:none">
+        <div class="toggle-group">
+          <div class="toggle-group-title">Izin Akses Menu</div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="layout-dashboard" class="icon-sm"></i> Dashboard</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-dashboard" checked disabled><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="scan-line" class="icon-sm"></i> Cek Ritase</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-ritase"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="sprout" class="icon-sm"></i> Pemupukan</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-pemupukan"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="package" class="icon-sm"></i> Material</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-material"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="map-pin" class="icon-sm"></i> Lahan & Kebun</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-lahan"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="file-spreadsheet" class="icon-sm"></i> Laporan</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-laporan"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="settings" class="icon-sm"></i> Settings</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-settings"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="toggle-group">
+          <div class="toggle-group-title">Izin Aksi</div>
+          <div class="toggle-row">
+            <span class="toggle-label"><i data-lucide="trash-2" class="icon-sm"></i> Hapus Data Pemupukan</span>
+            <label class="toggle-switch"><input type="checkbox" id="rbac-delete-pemupukan"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" onclick="saveUser()">Simpan</button>
+    </div>
+  </div>
+  <!-- Modal Add Unit -->
+  <div id="modal-add-unit" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-add-unit')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Unit</h3><button class="modal-close" onclick="UI.closeModal('modal-add-unit')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Kode Unit</label><input type="text" id="add-unit-kode" placeholder="HL 07">
+      <label>Nama Unit</label><input type="text" id="add-unit-nama" placeholder="ARM ROLL 130 HD">
+      <label>Plat Nomor</label><input type="text" id="add-unit-plat">
+      <label>Kapasitas (Ton)</label><input type="number" id="add-unit-kap" step="0.5" value="8">
+      <button class="btn btn-primary btn-block" onclick="addUnit()">Simpan</button>
+    </div>
+  </div>
+  <!-- Modal Add Driver -->
+  <div id="modal-add-driver" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-add-driver')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Tambah Driver</h3><button class="modal-close" onclick="UI.closeModal('modal-add-driver')"><i data-lucide="x" class="icon"></i></button></div>
+      <label>Nama</label><input type="text" id="add-drv-nama">
+      <label>NIK</label><input type="text" id="add-drv-nik">
+      <label>No Telp</label><input type="tel" id="add-drv-telp" placeholder="08xxx">
+      <label>Unit</label><select id="add-drv-unit"><option value="">Pilih...</option></select>
+      <button class="btn btn-primary btn-block" onclick="addDriver()">Simpan</button>
+    </div>
+  </div>
+
+  <!-- Detail Modals -->
+  <div id="modal-detail-user" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-user')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail User</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-user')"><i data-lucide="x" class="icon"></i></button></div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Nama:</span> <strong id="det-usr-nama"></strong></div>
+        <div><span class="text-muted">Username:</span> <strong id="det-usr-user"></strong></div>
+        <div><span class="text-muted">Telp:</span> <strong id="det-usr-telp"></strong></div>
+        <div><span class="text-muted">Role:</span> <span class="badge badge-primary" id="det-usr-role"></span></div>
+      </div>
+      <div class="flex gap-1">
+        <button class="btn btn-secondary flex-1" id="btn-edit-user"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+        <button class="btn btn-danger btn-icon" id="btn-del-user" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-unit" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-unit')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Unit Truk</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-unit')"><i data-lucide="x" class="icon"></i></button></div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Kode:</span> <strong id="det-unt-kode"></strong></div>
+        <div><span class="text-muted">Nama:</span> <strong id="det-unt-nama"></strong></div>
+        <div><span class="text-muted">Plat:</span> <strong id="det-unt-plat"></strong></div>
+        <div><span class="text-muted">Kapasitas:</span> <strong id="det-unt-kap"></strong> T</div>
+        <div><span class="text-muted">Driver:</span> <strong id="det-unt-driver"></strong></div>
+      </div>
+      <div class="mb-3 text-center">
+        <label class="text-sm font-medium mb-1 block">QR Code</label>
+        <canvas id="qr-canvas" style="border-radius:var(--radius-md);border:1px solid var(--border-color);padding:0.5rem"></canvas>
+      </div>
+      <div class="flex gap-1">
+        <button class="btn btn-primary flex-1" onclick="downloadQR()"><i data-lucide="download" class="icon-sm"></i> Download QR</button>
+        <button class="btn btn-secondary btn-icon" onclick="UI.toast('Simulasi Edit')" title="Edit"><i data-lucide="edit-2" class="icon"></i></button>
+        <button class="btn btn-danger btn-icon" onclick="UI.toast('Simulasi Hapus')" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-detail-driver" class="modal-overlay" onclick="if(event.target===this)UI.closeModal('modal-detail-driver')">
+    <div class="modal-content">
+      <div class="modal-header"><h3>Detail Driver</h3><button class="modal-close" onclick="UI.closeModal('modal-detail-driver')"><i data-lucide="x" class="icon"></i></button></div>
+      <div class="grid grid-2 mb-2" style="font-size:0.875rem">
+        <div><span class="text-muted">Nama:</span> <strong id="det-drv-nama"></strong></div>
+        <div><span class="text-muted">NIK:</span> <strong id="det-drv-nik"></strong></div>
+        <div><span class="text-muted">Telp:</span> <strong id="det-drv-telp"></strong></div>
+        <div><span class="text-muted">Unit:</span> <strong id="det-drv-unit"></strong></div>
+      </div>
+      <div class="flex gap-1">
+        <button class="btn btn-secondary flex-1" onclick="UI.toast('Simulasi Edit')"><i data-lucide="edit-2" class="icon-sm"></i> Edit</button>
+        <button class="btn btn-danger btn-icon" onclick="UI.toast('Simulasi Hapus')" title="Hapus"><i data-lucide="trash-2" class="icon"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // Init settings
+  document.getElementById('set-timezone').value = App.getTimezone();
+  const ritConv = App.getRitConversion();
+  document.getElementById('set-ton-rit').value = ritConv.tonPerRit;
+  document.getElementById('set-rit-info').textContent = `1 Rit = ${ritConv.tonPerRit} Ton = ${ritConv.kgPerRit} Kg`;
+
+  function render() {
+    const users = App.getData('users');
+    document.getElementById('tbl-users').innerHTML = users.map(u =>
+      `<tr onclick="openDetUser('${u.id_user}')" style="cursor:pointer" class="hover-bg">
+        <td><strong>${u.nama_lengkap}</strong></td>
+        <td><span class="badge badge-primary">${u.role}</span></td>
+        <td class="hide-mobile">${u.username}</td>
+      </tr>`
+    ).join('');
+
+    const units = App.getData('unit_truk');
+    document.getElementById('tbl-units').innerHTML = units.map(u =>
+      `<tr onclick="openDetUnit('${u.id_unit}')" style="cursor:pointer" class="hover-bg">
+        <td><strong>${u.kode_unit}</strong></td>
+        <td>${u.nama_unit}</td>
+        <td class="hide-mobile">${u.plat_nomor}</td>
+        <td class="hide-mobile">${u.driver_unit}</td>
+      </tr>`
+    ).join('');
+
+    const drivers = App.getData('drivers');
+    document.getElementById('tbl-drivers').innerHTML = drivers.map(d =>
+      `<tr onclick="openDetDriver('${d.id_driver}')" style="cursor:pointer" class="hover-bg">
+        <td><strong>${d.nama_driver}</strong></td>
+        <td><strong>${d.kode_unit_driver}</strong></td>
+        <td class="hide-mobile">${d.nik_driver}</td>
+        <td class="hide-mobile">${d.no_telp_driver}</td>
+      </tr>`
+    ).join('');
+
+    // Populate driver unit select
+    const sel = document.getElementById('add-drv-unit');
+    sel.innerHTML = '<option value="">Pilih...</option>';
+    units.forEach(u => { sel.innerHTML += `<option value="${u.kode_unit}">${u.kode_unit}</option>`; });
+
+    if (window.lucide) lucide.createIcons();
+  }
+  render();
+
+  window.openAddUser = function() {
+    document.getElementById('add-u-id').value = '';
+    document.getElementById('add-u-nama').value = '';
+    document.getElementById('add-u-user').value = '';
+    document.getElementById('add-u-pass').value = '';
+    document.getElementById('add-u-telp').value = '';
+    document.getElementById('add-u-role').value = 'CHECKER';
+    document.getElementById('u-modal-title').textContent = 'Tambah User';
+    document.getElementById('u-pass-hint').textContent = '';
+    updateRBACToggles('CHECKER');
+    UI.openModal('modal-add-user');
+  };
+
+  // === RBAC Toggle Helpers ===
+  const RBAC_KEYS = ['dashboard','ritase','pemupukan','material','lahan','laporan','settings'];
+  const RBAC_PRESETS = {
+    ADMIN:   { dashboard:true, ritase:true, pemupukan:true, material:true, lahan:true, laporan:true, settings:true, delete_pemupukan:true },
+    ASISTEN: { dashboard:true, ritase:true, pemupukan:true, material:true, lahan:true, laporan:true, settings:true, delete_pemupukan:true },
+    CHECKER: { dashboard:true, ritase:true, pemupukan:false, material:false, lahan:false, laporan:false, settings:false, delete_pemupukan:false },
+    MANDOR:  { dashboard:true, ritase:false, pemupukan:true, material:true, lahan:false, laporan:false, settings:false, delete_pemupukan:false }
+  };
+
+  window.updateRBACToggles = function(role, customAccess) {
+    const section = document.getElementById('rbac-section');
+    section.style.display = 'block';
+    const preset = RBAC_PRESETS[role] || RBAC_PRESETS.CHECKER;
+    const isConfigurable = (role === 'ASISTEN');
+    const access = customAccess || preset;
+
+    RBAC_KEYS.forEach(key => {
+      const el = document.getElementById(`rbac-${key}`);
+      if (!el) return;
+      el.checked = key === 'dashboard' ? true : !!access[key];
+      // Dashboard always on; ADMIN/CHECKER/MANDOR locked; ASISTEN editable
+      el.disabled = (key === 'dashboard') || !isConfigurable;
+    });
+    // Delete pemupukan toggle
+    const delEl = document.getElementById('rbac-delete-pemupukan');
+    if (delEl) {
+      delEl.checked = !!access.delete_pemupukan;
+      delEl.disabled = !isConfigurable;
+    }
+    if (window.lucide) lucide.createIcons();
+  };
+
+  function buildHakAksesFromToggles() {
+    const obj = {};
+    RBAC_KEYS.forEach(key => {
+      const el = document.getElementById(`rbac-${key}`);
+      obj[key] = el ? el.checked : false;
+    });
+    const delEl = document.getElementById('rbac-delete-pemupukan');
+    obj.delete_pemupukan = delEl ? delEl.checked : false;
+    return JSON.stringify(obj);
+  }
+
+  window.saveUser = function() {
+    const id = document.getElementById('add-u-id').value;
+    const nama = document.getElementById('add-u-nama').value;
+    const username = document.getElementById('add-u-user').value;
+    const pass = document.getElementById('add-u-pass').value;
+    if (!nama || !username) { UI.toast('Nama & username wajib!', 'error'); return; }
+    const role = document.getElementById('add-u-role').value;
+    const hakAkses = buildHakAksesFromToggles();
+    
+    if (id) {
+      // Update
+      const updates = { nama_lengkap:nama, username, no_telp_user:App.formatPhone(document.getElementById('add-u-telp').value), role, hak_akses:hakAkses, updated_at:App.now() };
+      if (pass) updates.password = pass;
+      App.updateRecord('users', 'id_user', id, updates);
+      UI.closeModal('modal-add-user'); render(); UI.toast('User diperbarui!');
+    } else {
+      // Insert
+      App.addRecord('users', { id_user:`USR-${Date.now()}`, foto_base64:'', nama_lengkap:nama, no_telp_user:App.formatPhone(document.getElementById('add-u-telp').value), username, password:pass||'password', pin_code:'888888', role, hak_akses:hakAkses, created_at:App.now(), updated_at:App.now(), modified_by:'' });
+      UI.closeModal('modal-add-user'); render(); UI.toast('User ditambahkan!');
+    }
+  };
+
+  window.addUnit = function() {
+    const kode = document.getElementById('add-unit-kode').value;
+    if (!kode) { UI.toast('Kode unit wajib!', 'error'); return; }
+    App.addRecord('unit_truk', { id_unit:`UNT-${Date.now()}`, kode_unit:kode, nama_unit:document.getElementById('add-unit-nama').value, site_unit:'', plat_nomor:document.getElementById('add-unit-plat').value, driver_unit:'', kapasitas_unit:parseFloat(document.getElementById('add-unit-kap').value)||8, qr_unit_base64:'' });
+    UI.closeModal('modal-add-unit'); render(); UI.toast('Unit ditambahkan!');
+  };
+
+  window.addDriver = function() {
+    const nama = document.getElementById('add-drv-nama').value;
+    if (!nama) { UI.toast('Nama wajib!', 'error'); return; }
+    App.addRecord('drivers', { id_driver:`DRV-${Date.now()}`, nama_driver:nama, nik_driver:document.getElementById('add-drv-nik').value, no_telp_driver:App.formatPhone(document.getElementById('add-drv-telp').value), kode_unit_driver:document.getElementById('add-drv-unit').value, modified_by:'' });
+    UI.closeModal('modal-add-driver'); render(); UI.toast('Driver ditambahkan!');
+  };
+
+  window.deleteUser = function(id) {
+    if (!confirm('Hapus user ini?')) return;
+    App.deleteRecord('users', 'id_user', id);
+    render(); UI.toast('User dihapus');
+  };
+
+  window.openDetUser = function(id) {
+    const d = App.getData('users').find(x => x.id_user === id); if(!d) return;
+    document.getElementById('det-usr-nama').textContent = d.nama_lengkap;
+    document.getElementById('det-usr-user').textContent = d.username;
+    document.getElementById('det-usr-telp').textContent = d.no_telp_user || '-';
+    document.getElementById('det-usr-role').textContent = d.role;
+    const btn = document.getElementById('btn-del-user');
+    btn.onclick = () => { UI.closeModal('modal-detail-user'); deleteUser(id); };
+    
+    const btnEdit = document.getElementById('btn-edit-user');
+    btnEdit.onclick = () => {
+      UI.closeModal('modal-detail-user');
+      document.getElementById('add-u-id').value = d.id_user;
+      document.getElementById('add-u-nama').value = d.nama_lengkap;
+      document.getElementById('add-u-user').value = d.username;
+      document.getElementById('add-u-pass').value = '';
+      document.getElementById('add-u-telp').value = d.no_telp_user;
+      document.getElementById('add-u-role').value = d.role;
+      document.getElementById('u-modal-title').textContent = 'Edit User';
+      document.getElementById('u-pass-hint').textContent = '(Kosongkan jika tidak diubah)';
+      // Populate RBAC toggles from existing hak_akses
+      let existingAccess = null;
+      try { existingAccess = JSON.parse(d.hak_akses || '{}'); } catch(e) {}
+      updateRBACToggles(d.role, existingAccess);
+      UI.openModal('modal-add-user');
+    };
+    
+    UI.openModal('modal-detail-user');
+  };
+
+  let currentQR = null;
+  window.openDetUnit = function(id) {
+    const d = App.getData('unit_truk').find(x => x.id_unit === id); if(!d) return;
+    document.getElementById('det-unt-kode').textContent = d.kode_unit;
+    document.getElementById('det-unt-nama').textContent = d.nama_unit;
+    document.getElementById('det-unt-plat').textContent = d.plat_nomor;
+    document.getElementById('det-unt-kap').textContent = d.kapasitas_unit;
+    document.getElementById('det-unt-driver').textContent = d.driver_unit || '-';
+    
+    // Generate QR using Qrious
+    if (window.QRious) {
+      currentQR = new QRious({
+        element: document.getElementById('qr-canvas'),
+        value: d.id_unit,
+        size: 200,
+        level: 'H'
+      });
+    }
+    
+    UI.openModal('modal-detail-unit');
+  };
+
+  window.downloadQR = function() {
+    if (!currentQR) return;
+    const canvas = document.getElementById('qr-canvas');
+    const link = document.createElement('a');
+    link.download = `QR_${document.getElementById('det-unt-kode').textContent}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    UI.toast('QR Code berhasil diunduh', 'success');
+  };
+
+  window.openDetDriver = function(id) {
+    const d = App.getData('drivers').find(x => x.id_driver === id); if(!d) return;
+    document.getElementById('det-drv-nama').textContent = d.nama_driver;
+    document.getElementById('det-drv-nik').textContent = d.nik_driver;
+    document.getElementById('det-drv-telp').textContent = d.no_telp_driver || '-';
+    document.getElementById('det-drv-unit').textContent = d.kode_unit_driver || '-';
+    UI.openModal('modal-detail-driver');
+  };
+
+  // === Import Confirmation (SweetAlert2) ===
+  window.confirmImportData = async function() {
+    if (window.Swal) {
+      const result = await Swal.fire({
+        title: 'Import Data Master',
+        html: '<div style="text-align:left;font-size:0.9rem;line-height:1.6">'
+          + '<p>Proses ini akan <strong>menimpa seluruh data master</strong> yang ada dengan data baru dari file Excel.</p>'
+          + '<p style="margin-top:.75rem">Apakah Anda sudah <strong>mengekspor / menyimpan data lama</strong> sebelumnya?</p></div>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Sudah Disimpan',
+        cancelButtonText: 'Batal',
+        confirmButtonColor: '#10B981',
+        reverseButtons: true
+      });
+      if (result.isConfirmed) {
+        document.getElementById('import-file-input').click();
+      }
+    } else {
+      if (confirm('⚠️ Proses ini akan menimpa seluruh data master.\n\nApakah Anda sudah mengekspor/menyimpan data lama?')) {
+        document.getElementById('import-file-input').click();
+      }
+    }
+  };
+
+  window.handleImportFile = function(input) {
+    if (!input.files[0]) return;
+    App.importMasterDataExcel(input.files[0], function() {
+      render(); // Refresh settings tables after import
+    });
+    input.value = '';
+  };
+
+})();
+</script>
