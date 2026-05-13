@@ -1,4 +1,4 @@
-const CACHE_NAME = 'palm-fertilizer-v1.6';
+const CACHE_NAME = 'palm-fertilizer-v1.7';
 const ASSETS = [
   '/', '/index.html', '/style.css', '/main.js', '/app.js', '/dotenv.js',
   '/views/view-dashboard.html', '/views/view-ritase.html',
