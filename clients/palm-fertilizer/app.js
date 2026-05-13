@@ -350,6 +350,11 @@ const App = (() => {
       if (result && result.success && result.data) {
         // Update localStorage with server data
         for (const [table, records] of Object.entries(result.data)) {
+          if (table === 'sistem') {
+            // Apply system settings from server
+            applySettingsFromServer_(records);
+            continue;
+          }
           if (Array.isArray(records) && records.length > 0) {
             setData(table, records);
           }
@@ -362,6 +367,22 @@ const App = (() => {
       isPulling = false;
     }
     return null;
+  }
+
+  // Apply settings received from GAS 'sistem' sheet
+  function applySettingsFromServer_(rows) {
+    if (!Array.isArray(rows)) return;
+    for (const row of rows) {
+      const key = row.setting_key;
+      const val = row.setting_value;
+      if (!key) continue;
+      if (key === 'timezone') {
+        currentTimezone = val || 'WITA';
+        localStorage.setItem('pf_timezone', currentTimezone);
+      } else {
+        localStorage.setItem(`pf_setting_${key}`, val);
+      }
+    }
   }
 
   // Background pull interval
@@ -499,9 +520,12 @@ const App = (() => {
     } catch (e) { return false; }
   }
 
-  // === SETTINGS ===
+  // === SETTINGS (localStorage + GAS sync) ===
   function getSetting(key, def) { return localStorage.getItem(`pf_setting_${key}`) || def; }
-  function setSetting(key, val) { localStorage.setItem(`pf_setting_${key}`, val); }
+  function setSetting(key, val) {
+    localStorage.setItem(`pf_setting_${key}`, val);
+    syncSettingsToGAS_({ [key]: val });
+  }
 
   function getRitConversion() {
     return {
@@ -514,6 +538,20 @@ const App = (() => {
   function setTimezone(tz) {
     currentTimezone = tz;
     localStorage.setItem('pf_timezone', tz);
+    syncSettingsToGAS_({ timezone: tz });
+  }
+
+  // Push settings to GAS 'sistem' sheet (fire-and-forget)
+  async function syncSettingsToGAS_(settingsObj) {
+    if (!isOnline()) return;
+    const env = window.ENV || {};
+    if (!env.GAS_API_URL || env.GAS_API_URL.includes('GANTI_DEPLOY_ID')) return;
+    try {
+      await apiPost({ action: 'save_settings', settings: settingsObj });
+      console.log('[Settings] Synced to GAS:', Object.keys(settingsObj));
+    } catch (e) {
+      console.warn('[Settings] Sync failed:', e.message);
+    }
   }
 
   // === ONLINE STATUS ===
@@ -601,6 +639,7 @@ const App = (() => {
       try {
         const wb = XLSX.read(e.target.result, { type:'array' });
         let total = 0;
+        const importedTables = {};
         for (const [table, cfg] of Object.entries(EXCEL_TABLES)) {
           const ws = wb.Sheets[table];
           if (!ws) continue;
@@ -615,16 +654,59 @@ const App = (() => {
             return rec;
           });
           setData(table, records);
+          importedTables[table] = records;
           total += records.length;
         }
-        if(window.UI) UI.toast(`Import berhasil! ${total} record diproses.`,'success');
+        if(window.UI) UI.toast(`Import lokal berhasil! ${total} record. Menyinkronkan ke server...`,'info');
         if (typeof onComplete === 'function') onComplete();
+        // Push to GAS in background
+        pushBulkImportToGAS_(importedTables);
       } catch(err) {
         console.error('Import error:', err);
         if(window.UI) UI.toast('Gagal membaca file Excel. Pastikan format benar.','error');
       }
     };
     reader.readAsArrayBuffer(file);
+  }
+
+  // Push all imported tables to GAS via dedicated bulk_import endpoint
+  async function pushBulkImportToGAS_(tablesData) {
+    if (!isOnline()) {
+      // Queue for later: add all records to sync queue as fallback
+      for (const [table, records] of Object.entries(tablesData)) {
+        for (const record of records) {
+          addToSyncQueue({ action: 'create', table, record });
+        }
+      }
+      if(window.UI) UI.toast('Offline — data akan disinkronkan saat online.','warning');
+      return;
+    }
+    const env = window.ENV || {};
+    if (!env.GAS_API_URL || env.GAS_API_URL.includes('GANTI_DEPLOY_ID')) {
+      if(window.UI) UI.toast('GAS API belum dikonfigurasi. Data hanya tersimpan lokal.','warning');
+      return;
+    }
+    try {
+      const result = await apiPost({
+        action: 'bulk_import',
+        schema: buildSchema_(),
+        tables: tablesData
+      });
+      if (result && result.success) {
+        if(window.UI) UI.toast(`✅ Sinkronisasi ke database berhasil! ${result.total_records} record diperbarui.`,'success');
+      } else {
+        throw new Error(result?.error || 'Bulk import failed');
+      }
+    } catch (e) {
+      console.error('[BulkImport] Error:', e.message);
+      // Fallback: add to sync queue for retry
+      for (const [table, records] of Object.entries(tablesData)) {
+        for (const record of records) {
+          addToSyncQueue({ action: 'create', table, record });
+        }
+      }
+      if(window.UI) UI.toast('⚠️ Gagal sinkronisasi ke server. Data masuk ke antrian sync.','warning');
+    }
   }
 
   // === INIT ===
