@@ -8,6 +8,8 @@ const ASSETS = [
   '/views/view-forgot-pw.html', '/views/view-laporan.html',
   '/lib/xlsx.full.min.js',
   '/PWA/pwa.css', '/PWA/pwa.js',
+  '/PWA/PalmFert-192.png',
+  '/PWA/PalmFert-512.png',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js',
   'https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js',
