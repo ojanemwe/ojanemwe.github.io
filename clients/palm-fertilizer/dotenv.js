@@ -10,7 +10,7 @@ const ENV = {
   // Google Apps Script Web App Anda!
   // (Spreadsheet → Extensions → Apps Script → Deploy → Web App)
   // =============================================
-  GAS_API_URL: "https://script.google.com/macros/s/AKfycbziDMU9hsO5yL8FAAC9r4AqRKkepEXYQoQuYr5WFkKcEyUMitTIRjnpQnBzXAdP0I0/exec",
+  GAS_API_URL: "https://script.google.com/macros/s/AKfycbyvsCYYFal_IcpM7nHt7ZhFo8cqtE2ICbJF8Oo7PFtdhzlIf49fibx1e1pUR0IEAF28/exec",
 
   // =============================================
   // Kunci API ini HARUS SAMA PERSIS dengan
