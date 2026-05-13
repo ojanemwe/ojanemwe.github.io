@@ -563,8 +563,12 @@ const App = (() => {
     const env = window.ENV || {};
     if (!env.GAS_API_URL || env.GAS_API_URL.includes('GANTI_DEPLOY_ID')) return;
     try {
-      await apiPost({ action: 'save_settings', settings: settingsObj });
-      console.log('[Settings] Synced to GAS:', Object.keys(settingsObj));
+      const result = await apiPost({ action: 'save_settings', settings: settingsObj });
+      if (result && result.success) {
+        console.log('[Settings] Synced to GAS:', Object.keys(settingsObj));
+      } else {
+        console.warn('[Settings] GAS returned error:', result?.error);
+      }
     } catch (e) {
       console.warn('[Settings] Sync failed:', e.message);
     }
