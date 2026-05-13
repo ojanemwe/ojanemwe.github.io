@@ -203,6 +203,7 @@ const App = (() => {
   }
 
   // === BACKGROUND SYNC ENGINE (Real) ===
+  const CHUNK_SIZE = 50; // Max items per sync batch (GAS limit is 100, use 50 for safety)
   let isSyncing = false;
   async function processSyncQueue() {
     if (isSyncing || !isOnline()) return;
@@ -221,38 +222,53 @@ const App = (() => {
       // Deduplicate: keep only latest operation per table+id
       const deduped = deduplicateQueue_(q);
 
-      const result = await apiPost({
-        action: 'sync',
-        schema: buildSchema_(),
-        batch: deduped
-      });
+      // Split into chunks to stay under GAS MAX_BATCH_SIZE
+      const chunks = [];
+      for (let i = 0; i < deduped.length; i += CHUNK_SIZE) {
+        chunks.push(deduped.slice(i, i + CHUNK_SIZE));
+      }
 
-      if (result && result.success) {
-        // Remove successfully synced items
-        const successIds = (result.results || []).filter(r => r.success).map(r => r.id);
-        let remaining = q.filter(item => !successIds.includes(item.id));
-        // Also remove items that were in deduped but not in results (already collapsed)
-        const dedupedIds = deduped.map(d => d.id);
-        const originalIds = q.filter(item => dedupedIds.includes(item.id)).map(item => item.id);
-        remaining = q.filter(item => {
-          if (successIds.includes(item.id)) return false;
-          // Remove all original queue items that were deduped into successful syncs
-          const dedupedEntry = deduped.find(d => d.id === item.id);
-          if (dedupedEntry && successIds.includes(dedupedEntry.id)) return false;
-          return true;
-        });
+      let allSuccess = true;
+      let totalProcessed = 0;
 
-        // Simpler approach: if all processed, clear queue
-        if (result.processed === deduped.length && result.errors === 0) {
-          remaining = [];
+      for (const chunk of chunks) {
+        try {
+          const result = await apiPost({
+            action: 'sync',
+            schema: buildSchema_(),
+            batch: chunk
+          });
+
+          if (result && result.success) {
+            totalProcessed += result.processed || 0;
+            // Remove synced items from queue
+            const successIds = (result.results || []).filter(r => r.success).map(r => r.id);
+            let current = getSyncQueue();
+            if (result.processed === chunk.length && result.errors === 0) {
+              // All items in this chunk succeeded — remove them all
+              const chunkIds = new Set(chunk.map(c => c.id));
+              current = current.filter(item => !chunkIds.has(item.id));
+            } else {
+              current = current.filter(item => !successIds.includes(item.id));
+            }
+            localStorage.setItem('pf_sync_queue', JSON.stringify(current));
+            updateSyncBadge();
+            if (window.UI && window.UI.updateSyncMenu) window.UI.updateSyncMenu();
+          } else {
+            allSuccess = false;
+            throw new Error(result?.error || 'Sync chunk failed');
+          }
+        } catch (chunkErr) {
+          console.error('[Sync] Chunk error:', chunkErr.message);
+          allSuccess = false;
+          break; // Stop processing remaining chunks on error
         }
+      }
 
-        localStorage.setItem('pf_sync_queue', JSON.stringify(remaining));
-        updateSyncBadge();
-        if (window.UI && window.UI.updateSyncMenu) window.UI.updateSyncMenu();
-        _retryCount = 0; // Reset retry on success
+      if (allSuccess) {
+        _retryCount = 0;
       } else {
-        throw new Error(result?.error || 'Sync failed');
+        _retryCount = Math.min(_retryCount + 1, (window.ENV?.MAX_RETRY || 5));
       }
     } catch (e) {
       console.error('[Sync] Error:', e.message);
@@ -672,13 +688,9 @@ const App = (() => {
   // Push all imported tables to GAS via dedicated bulk_import endpoint
   async function pushBulkImportToGAS_(tablesData) {
     if (!isOnline()) {
-      // Queue for later: add all records to sync queue as fallback
-      for (const [table, records] of Object.entries(tablesData)) {
-        for (const record of records) {
-          addToSyncQueue({ action: 'create', table, record });
-        }
-      }
-      if(window.UI) UI.toast('Offline — data akan disinkronkan saat online.','warning');
+      if(window.UI) UI.toast('Offline — data tersimpan lokal, akan disinkronkan saat online.','warning');
+      // Store a single bulk-import marker in sync queue for retry when back online
+      addToSyncQueue({ action: 'bulk_import', table: '_bulk_', record: { tables: Object.keys(tablesData) } });
       return;
     }
     const env = window.ENV || {};
@@ -693,20 +705,29 @@ const App = (() => {
         tables: tablesData
       });
       if (result && result.success) {
+        // Success! Clear any stale sync queue items for imported tables
+        clearSyncQueueForTables_(Object.keys(tablesData));
         if(window.UI) UI.toast(`✅ Sinkronisasi ke database berhasil! ${result.total_records} record diperbarui.`,'success');
       } else {
         throw new Error(result?.error || 'Bulk import failed');
       }
     } catch (e) {
       console.error('[BulkImport] Error:', e.message);
-      // Fallback: add to sync queue for retry
-      for (const [table, records] of Object.entries(tablesData)) {
-        for (const record of records) {
-          addToSyncQueue({ action: 'create', table, record });
-        }
-      }
-      if(window.UI) UI.toast('⚠️ Gagal sinkronisasi ke server. Data masuk ke antrian sync.','warning');
+      if(window.UI) UI.toast('⚠️ Gagal sinkronisasi ke server. Akan dicoba ulang otomatis.','warning');
+      // Do NOT flood sync queue with individual records!
+      // Store a compact retry marker instead
+      addToSyncQueue({ action: 'bulk_import', table: '_bulk_', record: { tables: Object.keys(tablesData) } });
     }
+  }
+
+  // Remove all sync queue items belonging to specified tables
+  function clearSyncQueueForTables_(tableNames) {
+    const tableSet = new Set(tableNames);
+    const q = getSyncQueue();
+    const filtered = q.filter(item => !tableSet.has(item.table));
+    localStorage.setItem('pf_sync_queue', JSON.stringify(filtered));
+    updateSyncBadge();
+    if (window.UI && window.UI.updateSyncMenu) window.UI.updateSyncMenu();
   }
 
   // === INIT ===
