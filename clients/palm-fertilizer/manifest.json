@@ -2,7 +2,7 @@
   "name": "Palm Fertilizer",
   "short_name": "PalmFert",
   "description": "Aplikasi Manajemen Pemupukan Kebun Sawit",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0f0d",
