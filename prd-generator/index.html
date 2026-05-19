@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PRD & ERD Generator - Universal PWA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .chat-bubble-user { background-color: #3b82f6; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+        .chat-bubble-ai { background-color: #e2e8f0; color: #1e293b; align-self: flex-start; border-bottom-left-radius: 0; }
+        .markdown-body h1 { font-size: 1.5em; font-weight: bold; margin-top: 1em; border-bottom: 1px solid #ccc; }
+        .markdown-body h2 { font-size: 1.25em; font-weight: bold; margin-top: 1em; }
+        .markdown-body h3 { font-size: 1.1em; font-weight: bold; margin-top: 0.5em; }
+        .markdown-body ul { list-style-type: disc; margin-left: 1.5em; }
+        .markdown-body p { margin-bottom: 0.5em; }
+        .markdown-body pre { background: #1e293b; color: white; padding: 1em; border-radius: 0.5em; overflow-x: auto; margin-top: 0.5em; margin-bottom: 0.5em; }
+    </style>
+</head>
+<body class="text-slate-800 pb-20">
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+    <header class="mb-8 text-center">
+        <h1 class="text-3xl font-bold text-blue-600 mb-2">PWA Blueprint Generator</h1>
+        <p class="text-slate-500">Buat PRD & ERD Interaktif untuk Universal PWA (Vite, SPA/MPA, Offline-First)</p>
+    </header>
+
+    <!-- API Key Section -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 mb-6">
+        <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
+            Google AI Studio API Key
+        </h2>
+        <div class="flex flex-col sm:flex-row gap-3">
+            <input type="password" id="apiKey" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Masukkan API Key Gemini..." value="AIzaSyCPPuQCTiXNF3gOHIIRh6lNyVSXOy3vIXY">
+            <a href="https://aistudio.google.com/app/api-keys" target="_blank" class="text-blue-600 hover:underline text-sm flex items-center justify-center sm:justify-start">Dapatkan API Key di sini &rarr;</a>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <form id="appForm" class="space-y-6">
+        <!-- Basic Info -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="font-semibold text-lg mb-4 border-b pb-2">1. Informasi Dasar</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Brand Aplikasi (Merk Klien)</label>
+                    <input type="text" id="brand" required class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Misal: TokoMaju POS">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Jenis Aplikasi</label>
+                    <input type="text" id="appType" required list="appTypes" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Misal: Point of Sale, ERP, dll.">
+                    <datalist id="appTypes">
+                        <option value="Point of Sale (POS)"></option>
+                        <option value="Sistem Manajemen Inventaris (WMS)"></option>
+                        <option value="Aplikasi Kasir Makanan (F&B)"></option>
+                        <option value="Dashboard Analitik (Admin Panel)"></option>
+                        <option value="Aplikasi Pencatatan Keuangan"></option>
+                        <option value="Sistem Antrian & Reservasi"></option>
+                        <option value="E-Commerce / Katalog Online"></option>
+                    </datalist>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Context & Project Goal</label>
+                <textarea id="goal" required rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Apa tujuan utama dari aplikasi ini? Siapa penggunanya?"></textarea>
+            </div>
+        </div>
+
+        <!-- Tech Stack & Architecture -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="font-semibold text-lg mb-4 border-b pb-2">2. Arsitektur & Teknologi</h2>
+            
+            <div class="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <label class="block text-sm font-medium mb-1">Target Backend / Database (Adapter)</label>
+                <select id="backendAdapter" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                    <option value="Mock (Dummy JSON)">Mock (Dummy JSON)</option>
+                    <option value="Google Apps Script (GAS / Spreadsheet)">Google Apps Script (GAS / Spreadsheet)</option>
+                    <option value="Supabase (PostgreSQL)">Supabase (PostgreSQL)</option>
+                    <option value="API Custom (PHP / Laravel / Node.js)">API Custom (PHP / Laravel / Node.js)</option>
+                </select>
+                <div class="mt-2 text-sm text-amber-700 flex items-start gap-1">
+                    <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span><strong>Offline-first (IndexedDB via Dexie JS)</strong> bersifat Wajib dan Terkunci secara otomatis untuk skema arsitektur Universal PWA.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features & Menu -->
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h2 class="font-semibold text-lg mb-4 border-b pb-2">3. Fitur & Menu</h2>
+            <div id="featuresContainer" class="space-y-4 mb-4">
+                <!-- Dynamic features will be injected here -->
+            </div>
+            <button type="button" id="btnAddFeature" class="flex items-center gap-2 text-blue-600 font-medium hover:text-blue-800 px-3 py-2 bg-blue-50 rounded-lg hover:bg-blue-100 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Tambah Fitur
+            </button>
+        </div>
+
+        <!-- Start Consultation Button -->
+        <button type="button" id="btnStartAI" class="w-full bg-slate-800 text-white font-bold py-3 px-4 rounded-xl hover:bg-slate-700 transition shadow-lg">
+            Mulai Konsultasi Kuesioner AI
+        </button>
+    </form>
+
+    <!-- AI Questionnaire Chat -->
+    <div id="chatSection" class="hidden mt-8 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-[500px]">
+        <div class="bg-slate-800 text-white p-4 font-semibold flex justify-between items-center">
+            <span>Kuesioner Pintar AI</span>
+            <span class="text-xs bg-slate-600 px-2 py-1 rounded">Gemini Pro</span>
+        </div>
+        <div id="chatBox" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50">
+            <!-- Messages go here -->
+        </div>
+        <div class="p-3 border-t bg-white">
+            <div class="flex gap-2">
+                <input type="text" id="chatInput" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Jawab pertanyaan AI di sini...">
+                <button type="button" id="btnSendChat" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Kirim</button>
+            </div>
+            <button type="button" id="btnGeneratePRD" class="w-full mt-3 bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">
+                Selesai & Generate PRD + ERD (.md)
+            </button>
+        </div>
+    </div>
+
+    <!-- Final Output -->
+    <div id="outputSection" class="hidden mt-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 class="font-bold text-xl text-green-700">Hasil PRD & ERD</h2>
+            <button id="btnDownload" class="bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-700 text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Download .md
+            </button>
+        </div>
+        <div id="markdownPreview" class="markdown-body text-sm"></div>
+    </div>
+
+</div>
+
+<script>
+// --- KNOWLEDGE BASE (Embedded) ---
+const KNOWLEDGE_BASE = `
+**ATURAN ARSITEKTUR WAJIB (Universal PWA):**
+1. Struktur Folder: Aplikasi dipisah menjadi index.html (Login/Publik) dan dashboard.html (Shell SPA).
+2. Routing: WAJIB menggunakan History API (pushState & popstate) agar navigasi Back/Forward berfungsi (untuk SPA).
+3. Pola Data: WAJIB menggunakan Adapter Pattern (Adapter Mock, GAS, Supabase, API). UI hanya memanggil Repository.
+4. Offline-First: WAJIB menggunakan IndexedDB (Dexie.js) untuk Data Dinamis dan Service Worker (sw.js) untuk App Shell.
+5. Optimistic UI: Pembacaan data pakai pola Stale-While-Revalidate (dari Dexie dulu instan, background fetch ke API). Pengiriman data langsung disimpan ke Dexie, UI update, lalu data masuk antrean (Background Sync) untuk dikirim ke Backend.
+6. Bundler: Vite JS.
+
+**CDN/LIBRARY YANG DIIZINKAN (Vanilla JS):**
+Lucide Icon, SweetAlert2, HTML5-QRCode, Qrious, JSBarcode, Vanilla-LazyLoad, Vanilla-Routing, Vanilla-Modal, Vanilla-Tilt, VanillaMasker, Cropper.js, SheetJS, Papaparse, DOMPurify, Day.js, Dexie.js.
+
+**ATURAN ERD & KEAMANAN:**
+- Berikan rekomendasi Keamanan & Standarisasi Data berdasarkan database/adapter yang dipilih pengguna.
+- Untuk ERD, susun dalam format tabel Markdown atau Mermaid JS yang rapi.
+`;
+
+// --- STATE MANAGEMENT ---
+let features = [ { id: Date.now(), name: '', desc: '' } ];
+let chatHistory = [];
+let generatedMarkdown = '';
+
+// --- DOM ELEMENTS ---
+const featuresContainer = document.getElementById('featuresContainer');
+const btnAddFeature = document.getElementById('btnAddFeature');
+const btnStartAI = document.getElementById('btnStartAI');
+const chatSection = document.getElementById('chatSection');
+const chatBox = document.getElementById('chatBox');
+const chatInput = document.getElementById('chatInput');
+const btnSendChat = document.getElementById('btnSendChat');
+const btnGeneratePRD = document.getElementById('btnGeneratePRD');
+const outputSection = document.getElementById('outputSection');
+const markdownPreview = document.getElementById('markdownPreview');
+const btnDownload = document.getElementById('btnDownload');
+
+// --- FEATURE MANAGEMENT ---
+function renderFeatures() {
+    featuresContainer.innerHTML = '';
+    features.forEach((feat, index) => {
+        const div = document.createElement('div');
+        div.className = 'p-4 border rounded-lg bg-slate-50 relative';
+        div.innerHTML = `
+            ${features.length > 1 ? `<button type="button" onclick="removeFeature(${feat.id})" class="absolute top-2 right-2 text-red-500 hover:text-red-700 p-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` : ''}
+            <div class="mb-3">
+                <label class="block text-sm font-medium mb-1">Nama Fitur</label>
+                <input type="text" value="${feat.name}" onchange="updateFeature(${feat.id}, 'name', this.value)" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Misal: Manajemen Kasir">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1">Alur Kerja (Workflow)</label>
+                <textarea rows="2" onchange="updateFeature(${feat.id}, 'desc', this.value)" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Jelaskan detail alur kerjanya..."></textarea>
+            </div>
+        `;
+        featuresContainer.appendChild(div);
+        
+        // Populate textarea explicitly to avoid escaping issues
+        const textarea = div.querySelector('textarea');
+        textarea.value = feat.desc;
+    });
+}
+
+window.removeFeature = (id) => {
+    features = features.filter(f => f.id !== id);
+    renderFeatures();
+};
+
+window.updateFeature = (id, field, value) => {
+    const feature = features.find(f => f.id === id);
+    if (feature) feature[field] = value;
+};
+
+btnAddFeature.addEventListener('click', () => {
+    features.push({ id: Date.now(), name: '', desc: '' });
+    renderFeatures();
+});
+
+// Initialize features UI
+renderFeatures();
+
+// --- AI INTERACTION (GEMINI API) ---
+
+async function callGemini(isSystemGen = false, customPrompt = '') {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    if (!apiKey) {
+        alert("Silakan masukkan API Key Google AI Studio terlebih dahulu.");
+        return null;
+    }
+
+    // Daftar model alternatif dari yang paling stabil untuk pemrosesan obrolan/struktur
+    const models = ['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-1.5-pro'];
+    let lastError = '';
+
+    for (const model of models) {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        
+        let payload = {};
+        if (isSystemGen) {
+            payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: customPrompt }]
+                }]
+            };
+        } else {
+            payload = {
+                contents: chatHistory,
+                systemInstruction: {
+                    parts: [{
+                        text: `Anda adalah Konsultan Arsitektur Aplikasi PWA. Tugas Anda adalah mewawancarai saya untuk mematangkan konsep aplikasi sebelum PRD dibuat.
+Berikut adalah basis pengetahuan proyek:
+${KNOWLEDGE_BASE}
+---`
+                    }]
+                }
+            };
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error?.message || `HTTP ${response.status} saat menggunakan ${model}`);
+            }
+            
+            const data = await response.json();
+            if (data.error) throw new Error(data.error.message);
+            
+            return data.candidates[0].content.parts[0].text;
+        } catch (error) {
+            console.warn(`Gagal memanggil model ${model}:`, error.message);
+            lastError = error.message;
+            // Berlanjut mengecek model berikutnya di daftar fallback
+        }
+    }
+    
+    return `__ERROR__: ${lastError}`;
+}
+
+function appendMessage(role, text) {
+    const div = document.createElement('div');
+    div.className = `px-4 py-3 rounded-2xl max-w-[85%] text-sm leading-relaxed ${role === 'user' ? 'chat-bubble-user ml-auto' : 'chat-bubble-ai'}`;
+    div.innerHTML = marked.parse(text);
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    if (role !== 'system') {
+        chatHistory.push({
+            role: role === 'user' ? 'user' : 'model',
+            parts: [{ text: text }]
+        });
+    }
+}
+
+btnStartAI.addEventListener('click', async () => {
+    // Collect data
+    const brand = document.getElementById('brand').value;
+    const appType = document.getElementById('appType').value;
+    const goal = document.getElementById('goal').value;
+    const backend = document.getElementById('backendAdapter').value;
+    
+    if (!brand || !appType || !goal) {
+        alert("Mohon lengkapi Informasi Dasar (Brand, Jenis, dan Goal).");
+        return;
+    }
+
+    // Show Chat UI
+    chatSection.classList.remove('hidden');
+    btnStartAI.classList.add('hidden');
+    document.getElementById('appForm').querySelectorAll('input, textarea, select, button').forEach(el => el.disabled = true);
+    document.getElementById('apiKey').disabled = false; // keep api key enabled
+    
+    const initialPrompt = `Ini adalah draft aplikasi yang ingin saya buat:
+- Brand: ${brand}
+- Jenis: ${appType}
+- Goal: ${goal}
+- Backend: ${backend}
+- Arsitektur: Universal PWA (Vite, Dexie, Offline-First)
+
+Fitur yang direncanakan:
+${features.map(f => `- ${f.name}: ${f.desc}`).join('\n')}
+
+Tugas Anda: Ajukan 2-3 pertanyaan tajam (satu per satu secara bertahap atau sekaligus) untuk memvalidasi alur kerja (workflow) atau menemukan celah dari fitur yang saya sebutkan di atas berdasarkan arsitektur PWA kita. Jangan generate PRD dulu. Cukup wawancara saya.`;
+
+    chatBox.innerHTML = '<div class="text-center text-slate-500 italic text-sm py-4">AI sedang menganalisis rencana Anda...</div>';
+    
+    // Inisialisasi awal riwayat obrolan
+    chatHistory = [{
+        role: 'user',
+        parts: [{ text: initialPrompt }]
+    }];
+
+    const response = await callGemini();
+    if (response && !response.startsWith('__ERROR__')) {
+        chatBox.innerHTML = '';
+        appendMessage('model', response);
+    } else {
+        const errMsg = response ? response.replace('__ERROR__: ', '') : 'Koneksi ke server API gagal tanpa respons.';
+        chatBox.innerHTML = `
+            <div class="p-4 bg-red-50 text-red-700 rounded-lg text-sm border border-red-200">
+                <strong class="font-bold">Gagal menghubungkan ke AI:</strong><br>
+                <span class="block mt-1 font-mono text-xs whitespace-pre-wrap">${errMsg}</span>
+                <hr class="my-2 border-red-200">
+                <p class="text-xs">Rekomendasi tindakan:</p>
+                <ul class="list-disc list-inside text-xs mt-1">
+                    <li>Pastikan API Key Google AI Studio Anda aktif dan tidak dinonaktifkan secara otomatis akibat paparan publik.</li>
+                    <li>Gunakan koneksi internet lain atau matikan VPN/Proxy yang mungkin memblokir port API Google.</li>
+                    <li>Jika Anda menetapkan batasan aplikasi (IP/Referrer) pada GCP Console, hapus batasan tersebut sementara waktu.</li>
+                </ul>
+            </div>`;
+    }
+});
+
+btnSendChat.addEventListener('click', async () => {
+    const text = chatInput.value.trim();
+    if (!text) return;
+    
+    appendMessage('user', text);
+    chatInput.value = '';
+    chatInput.disabled = true;
+    
+    // Add temporary loading message
+    const loadId = 'load-' + Date.now();
+    chatBox.insertAdjacentHTML('beforeend', `<div id="${loadId}" class="px-4 py-2 text-slate-400 italic text-xs">AI sedang mengetik...</div>`);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    
+    const response = await callGemini();
+    document.getElementById(loadId).remove();
+    
+    if (response && !response.startsWith('__ERROR__')) {
+        appendMessage('model', response);
+    } else {
+        const errMsg = response ? response.replace('__ERROR__: ', '') : 'Koneksi API terputus.';
+        appendMessage('model', `🚨 **Gagal membalas obrolan:**\n\n\`\`\`\n${errMsg}\n\`\`\``);
+    }
+    chatInput.disabled = false;
+    chatInput.focus();
+});
+
+chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') btnSendChat.click();
+});
+
+// --- GENERATE PRD & ERD ---
+
+btnGeneratePRD.addEventListener('click', async () => {
+    const brand = document.getElementById('brand').value;
+    const backend = document.getElementById('backendAdapter').value;
+    
+    const finalSystemPrompt = `Bertindaklah sebagai Senior System Analyst. Buatkan dokumen PRD (Product Requirements Document) dan ERD (Entity Relationship Diagram) lengkap dalam format Markdown murni (.md).
+
+Konteks Proyek:
+Brand: ${brand}
+Database Adapter: ${backend}
+History Percakapan (untuk referensi perbaikan workflow):
+${JSON.stringify(chatHistory.map(h => h.role + ': ' + h.parts[0].text))}
+
+WAJIB ADA DI DALAM PRD:
+1. Header PRD (Info Umum).
+2. Context & Project Goal.
+3. Arsitektur & Tech Stack (Sebutkan Vite, SPA/MPA, PWA, Offline-First Dexie.js + Service Worker, dll. Sesuai Knowledge base).
+4. Catatan Kewajiban: Tulis TEBAL peringatan WAJIB "menggunakan History API (pushState & popstate) agar navigasi Back/Forward berfungsi (untuk SPA)".
+5. Penjelasan Fitur & Menu.
+6. Keamanan & Standarisasi Data (BERIKAN REKOMENDASI SPESIFIK BERDASARKAN DATABASE: ${backend}).
+7. ERD: Buatkan rancangan relasi database berdasarkan fitur, format menggunakan tabel markdown yang jelas tipe data dan relasinya.
+
+Aturan Output:
+- HANYA hasilkan teks berformat Markdown (tanpa block code backtick pembungkus html/markdown).
+- Gunakan bahasa Indonesia profesional.`;
+
+    btnGeneratePRD.disabled = true;
+    btnGeneratePRD.textContent = "Sedang Menyusun Dokumen...";
+    
+    const response = await callGemini(true, finalSystemPrompt);
+    
+    btnGeneratePRD.textContent = "Selesai & Generate PRD + ERD (.md)";
+    btnGeneratePRD.disabled = false;
+    
+    if (response && !response.startsWith('__ERROR__')) {
+        generatedMarkdown = response.replace(/^```markdown/g, '').replace(/```$/g, '').trim(); // clean code blocks if ai adds them
+        
+        chatSection.classList.add('hidden');
+        outputSection.classList.remove('hidden');
+        markdownPreview.innerHTML = marked.parse(generatedMarkdown);
+        window.scrollTo({ top: outputSection.offsetTop, behavior: 'smooth' });
+    } else {
+        const errMsg = response ? response.replace('__ERROR__: ', '') : 'Gagal memproses pembuatan dokumen PRD.';
+        alert("Gagal membuat dokumen: " + errMsg);
+    }
+});
+
+btnDownload.addEventListener('click', () => {
+    if (!generatedMarkdown) return;
+    const blob = new Blob([generatedMarkdown], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const brandName = document.getElementById('brand').value.replace(/\s+/g, '-').toLowerCase();
+    a.href = url;
+    a.download = `PRD-ERD-${brandName}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+});
+
+</script>
+</body>
+</html>
