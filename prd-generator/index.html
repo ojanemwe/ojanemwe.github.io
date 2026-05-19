@@ -230,8 +230,8 @@ async function callGemini(isSystemGen = false, customPrompt = '') {
         return null;
     }
 
-    // Daftar model alternatif dari yang paling stabil untuk pemrosesan obrolan/struktur
-    const models = ['gemini-2.5-pro', 'gemini-3.1-flash-lite', 'gemini-1.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'];
+    // Daftar model stabil v1beta yang diakui Google AI Studio saat ini
+    const models = ['gemini-3.5-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite'];
     let lastError = '';
 
     for (const model of models) {
