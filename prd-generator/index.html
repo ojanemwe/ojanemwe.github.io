@@ -231,7 +231,7 @@ async function callGemini(isSystemGen = false, customPrompt = '') {
     }
 
     // Daftar model alternatif dari yang paling stabil untuk pemrosesan obrolan/struktur
-    const models = ['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-1.5-pro'];
+    const models = ['gemini-2.5-pro', 'gemini-3.1-flash-lite', 'gemini-1.5-pro', 'gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-1.5-flash'];
     let lastError = '';
 
     for (const model of models) {
@@ -409,8 +409,9 @@ WAJIB ADA DI DALAM PRD:
 3. Arsitektur & Tech Stack (Sebutkan Vite, SPA/MPA, PWA, Offline-First Dexie.js + Service Worker, dll. Sesuai Knowledge base).
 4. Catatan Kewajiban: Tulis TEBAL peringatan WAJIB "menggunakan History API (pushState & popstate) agar navigasi Back/Forward berfungsi (untuk SPA)".
 5. Penjelasan Fitur & Menu.
-6. Keamanan & Standarisasi Data (BERIKAN REKOMENDASI SPESIFIK BERDASARKAN DATABASE: ${backend}).
-7. ERD: Buatkan rancangan relasi database berdasarkan fitur, format menggunakan tabel markdown yang jelas tipe data dan relasinya.
+6. Alur Kerja Setiap Fitur.
+7. Keamanan & Standarisasi Data (BERIKAN REKOMENDASI SPESIFIK BERDASARKAN DATABASE: ${backend}).
+8. ERD: Buatkan rancangan relasi database berdasarkan fitur, format menggunakan tabel markdown yang jelas tipe data dan relasinya.
 
 Aturan Output:
 - HANYA hasilkan teks berformat Markdown (tanpa block code backtick pembungkus html/markdown).
