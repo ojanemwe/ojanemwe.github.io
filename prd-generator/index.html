@@ -76,15 +76,18 @@
             
             <div class="mb-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
                 <label class="block text-sm font-medium mb-1">Target Backend / Database (Adapter)</label>
-                <select id="backendAdapter" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                    <option value="Mock (Dummy JSON)">Mock (Dummy JSON)</option>
+                <select id="backendAdapter" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white mb-2">
                     <option value="Google Apps Script (GAS / Spreadsheet)">Google Apps Script (GAS / Spreadsheet)</option>
                     <option value="Supabase (PostgreSQL)">Supabase (PostgreSQL)</option>
                     <option value="API Custom (PHP / Laravel / Node.js)">API Custom (PHP / Laravel / Node.js)</option>
                 </select>
+                <div class="mt-2 text-sm text-slate-600 flex items-start gap-1 mb-2">
+                    <svg class="w-4 h-4 mt-0.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span><strong>Mock (Dummy JSON):</strong> Selalu aktif dan wajib digunakan untuk tahap awal penyempurnaan UI/UX sebelum integrasi database nyata.</span>
+                </div>
                 <div class="mt-2 text-sm text-amber-700 flex items-start gap-1">
                     <svg class="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <span><strong>Offline-first (IndexedDB via Dexie JS)</strong> bersifat Wajib dan Terkunci secara otomatis untuk skema arsitektur Universal PWA.</span>
+                    <span><strong>Offline-first (IndexedDB via Dexie JS):</strong> Bersifat Wajib dan Terkunci secara otomatis untuk skema arsitektur Universal PWA.</span>
                 </div>
             </div>
         </div>
@@ -325,6 +328,8 @@ btnStartAI.addEventListener('click', async () => {
 - Backend: ${backend}
 - Arsitektur: Universal PWA (Vite, Dexie, Offline-First)
 
+Catatan Penting: Tahap awal pengembangan UI/UX wajib menggunakan Mock (Dummy JSON) sebagai file data awal sebelum integrasi database/adapter sesungguhnya yang dipilih diatas.
+
 Fitur yang direncanakan:
 ${features.map(f => `- ${f.name}: ${f.desc}`).join('\n')}
 
@@ -409,7 +414,7 @@ WAJIB ADA DI DALAM PRD:
 3. Arsitektur & Tech Stack (Sebutkan Vite, SPA/MPA, PWA, Offline-First Dexie.js + Service Worker, dll. Sesuai Knowledge base).
 4. Catatan Kewajiban: Tulis TEBAL peringatan WAJIB "menggunakan History API (pushState & popstate) agar navigasi Back/Forward berfungsi (untuk SPA)".
 5. Penjelasan Fitur & Menu.
-6. Alur Kerja Setiap Fitur.
+6. Alur Kerja Setiap Fitur (Tegaskan penggunaan Mock/Dummy JSON di awal fase UI/UX sebelum integrasi adapter riil ${backend}).
 7. Keamanan & Standarisasi Data (BERIKAN REKOMENDASI SPESIFIK BERDASARKAN DATABASE: ${backend}).
 8. ERD: Buatkan rancangan relasi database berdasarkan fitur, format menggunakan tabel markdown yang jelas tipe data dan relasinya.
 
