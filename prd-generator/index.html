@@ -121,8 +121,8 @@
         </div>
         <div class="p-3 border-t bg-white">
             <div class="flex gap-2">
-                <input type="text" id="chatInput" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Jawab pertanyaan AI di sini...">
-                <button type="button" id="btnSendChat" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">Kirim</button>
+                <textarea id="chatInput" rows="2" class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-y" placeholder="Jawab pertanyaan AI di sini... (Ctrl+Enter untuk kirim)"></textarea>
+                <button type="button" id="btnSendChat" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition h-fit">Kirim</button>
             </div>
             <button type="button" id="btnGeneratePRD" class="w-full mt-3 bg-green-600 text-white font-bold py-2 rounded-lg hover:bg-green-700 transition">
                 Selesai & Generate PRD + ERD (.md)
@@ -149,18 +149,30 @@
 const KNOWLEDGE_BASE = `
 **ATURAN ARSITEKTUR WAJIB (Universal PWA):**
 1. Struktur Folder: Aplikasi dipisah menjadi index.html (Login/Publik) dan dashboard.html (Shell SPA).
-2. Routing: WAJIB menggunakan History API (pushState & popstate) agar navigasi Back/Forward berfungsi (untuk SPA).
-3. Pola Data: WAJIB menggunakan Adapter Pattern (Adapter Mock, GAS, Supabase, API). UI hanya memanggil Repository.
-4. Offline-First: WAJIB menggunakan IndexedDB (Dexie.js) untuk Data Dinamis dan Service Worker (sw.js) untuk App Shell.
-5. Optimistic UI: Pembacaan data pakai pola Stale-While-Revalidate (dari Dexie dulu instan, background fetch ke API). Pengiriman data langsung disimpan ke Dexie, UI update, lalu data masuk antrean (Background Sync) untuk dikirim ke Backend.
+2. Routing: WAJIB menggunakan History API (pushState & popstate) agar navigasi Back/Forward berfungsi. Dilarang menggunakan <a href="..."> mentah.
+3. Pola Data: Menggunakan Adapter Pattern. Mock (Dummy JSON) WAJIB untuk tahap awal UI/UX, dan DINONAKTIFKAN (switch ke GAS/Supabase/API) setelah integrasi nyata.
+4. Offline-First: WAJIB menggunakan IndexedDB (Dexie.js) untuk Data Dinamis dan Service Worker (sw.js) dengan Workbox untuk App Shell.
+5. Optimistic UI: Pembacaan data dengan Stale-While-Revalidate. Pengiriman data dengan Write-Through Queue (simpan ke Dexie -> UI update -> masuk Sync Queue -> Background Sync).
 6. Bundler: Vite JS.
 
 **CDN/LIBRARY YANG DIIZINKAN (Vanilla JS):**
-Lucide Icon, SweetAlert2, HTML5-QRCode, Qrious, JSBarcode, Vanilla-LazyLoad, Vanilla-Routing, Vanilla-Modal, Vanilla-Tilt, VanillaMasker, Cropper.js, SheetJS, Papaparse, DOMPurify, Day.js, Dexie.js.
+Lucide Icon, SweetAlert2, HTML5-QRCode, Qrious, JSBarcode, Vanilla-LazyLoad, Vanilla-Routing, Vanilla-Modal, Vanilla-Tilt, VanillaMasker, Cropper.js, SheetJS (ekspor otomatis tanpa kolom ID), Papaparse, DOMPurify, Day.js, Dexie.js, PrintHub. Rekomendasikan optimasi (Preconnect, preload, defer).
 
-**ATURAN ERD & KEAMANAN:**
-- Berikan rekomendasi Keamanan & Standarisasi Data berdasarkan database/adapter yang dipilih pengguna.
-- Untuk ERD, susun dalam format tabel Markdown atau Mermaid JS yang rapi.
+**INTEGRASI HARDWARE & PERIFERAL:**
+- Printer: Bluetooth Thermal (PrintHub via Web Bluetooth API, UUID 000018f0/00002af1) dengan fallback window.print() (HTML 58mm).
+- Kamera: Native WebRTC (navigator.mediaDevices.getUserMedia). Foto digambar ke <canvas>, hindari <input type="file" capture>. Kompresi iteratif base64 (Maks 50KB untuk GAS, Supabase/Custom API bisa kualitas lebih tinggi/WebP).
+
+**KEAMANAN & STANDAR:**
+- Waktu: Default WIB. Format DB/API WAJIB ISO 8601 dengan offset (YYYY-MM-DDTHH:mm:ss.sss+07:00). UI format via Day.js.
+- Kredensial: Lindungi via Vite .env, .gitignore.
+- Autentikasi: Password ber-Salt untuk login awal, PIN (6 digit) untuk unlock sesi idle/device mati.
+
+**ATURAN ERD & DATABASE:**
+- IndexedDB: Semua tabel wajib pakai UUID.
+- ERD: Susun format tabel Markdown/Mermaid JS rapi berdasar fitur.
+- Berikan rekomendasi spesifik:
+  - Jika GAS: Terapkan LockService, Batch Sync, Conflict Resolution (Last Write Wins via updated_at). Batas payload 50MB.
+  - Jika Supabase/Custom API: Eksplorasi performa spesifik dan error handling-nya.
 `;
 
 // --- STATE MANAGEMENT ---
@@ -254,6 +266,7 @@ async function callGemini(isSystemGen = false, customPrompt = '') {
                 systemInstruction: {
                     parts: [{
                         text: `Anda adalah Konsultan Arsitektur Aplikasi PWA. Tugas Anda adalah mewawancarai saya untuk mematangkan konsep aplikasi sebelum PRD dibuat.
+Gunakan format Markdown yang sangat rapi. Pisahkan setiap poin pertanyaan atau pilihan dengan bullet points, list, atau bold agar mudah dibaca oleh user.
 Berikut adalah basis pengetahuan proyek:
 ${KNOWLEDGE_BASE}
 ---`
@@ -328,12 +341,12 @@ btnStartAI.addEventListener('click', async () => {
 - Backend: ${backend}
 - Arsitektur: Universal PWA (Vite, Dexie, Offline-First)
 
-Catatan Penting: Tahap awal pengembangan UI/UX wajib menggunakan Mock (Dummy JSON) sebagai file data awal sebelum integrasi database/adapter sesungguhnya yang dipilih diatas.
+Catatan Penting: Tahap awal pengembangan UI/UX wajib menggunakan Mock (Dummy JSON) sebagai file data awal sebelum integrasi database/adapter sesungguhnya yang dipilih diatas. Setelah integrasi database sesungguhnya, Mock JSON akan dinonaktifkan via config.
 
 Fitur yang direncanakan:
 ${features.map(f => `- ${f.name}: ${f.desc}`).join('\n')}
 
-Tugas Anda: Ajukan 2-3 pertanyaan tajam (satu per satu secara bertahap atau sekaligus) untuk memvalidasi alur kerja (workflow) atau menemukan celah dari fitur yang saya sebutkan di atas berdasarkan arsitektur PWA kita. Jangan generate PRD dulu. Cukup wawancara saya.`;
+Tugas Anda: Ajukan 2-3 pertanyaan tajam (satu per satu secara bertahap atau sekaligus) untuk memvalidasi alur kerja (workflow) atau menemukan celah dari fitur yang saya sebutkan di atas berdasarkan arsitektur PWA kita. Sajikan pilihan-pilihan solusi atau pertanyaan Anda dalam format Markdown berpoin (bullet points/list) yang rapi. Jangan generate PRD dulu. Cukup wawancara saya.`;
 
     chatBox.innerHTML = '<div class="text-center text-slate-500 italic text-sm py-4">AI sedang menganalisis rencana Anda...</div>';
     
@@ -390,8 +403,12 @@ btnSendChat.addEventListener('click', async () => {
     chatInput.focus();
 });
 
-chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') btnSendChat.click();
+chatInput.addEventListener('keydown', (e) => {
+    // Biarkan Enter membuat baris baru, gunakan Ctrl+Enter untuk kirim
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        btnSendChat.click();
+    }
 });
 
 // --- GENERATE PRD & ERD ---
