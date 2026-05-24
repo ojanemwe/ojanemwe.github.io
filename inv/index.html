@@ -622,5 +622,34 @@
                 }
             });
         }
+
+        // URL Parameter Validation & Dynamic Guest Name
+        document.addEventListener("DOMContentLoaded", async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const to = urlParams.get('to');
+            const guestDisplay = document.getElementById('guest-display');
+            
+            if (!to) {
+                show404();
+                return;
+            }
+
+            // Validate against database
+            const { data, error } = await supabaseClient.from('invitation_links').select('id').eq('guest_name', to).limit(1);
+            if (data && data.length > 0) {
+                guestDisplay.innerText = to;
+            } else {
+                show404();
+            }
+        });
+
+        function show404() {
+            document.body.innerHTML = `
+                <div style="height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#0a141f;color:#d9e3f3;font-family:'Lato', sans-serif;text-align:center;padding:20px;">
+                    <h1 style="font-family:'Playfair Display', serif;font-size:3rem;color:#e6c364;margin-bottom:10px;">404</h1>
+                    <p style="color:#8d9198;font-size:1rem;">Tautan undangan tidak valid atau telah kedaluwarsa.</p>
+                </div>
+            `;
+        }
     </script>
 </body></html>
