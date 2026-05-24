@@ -486,38 +486,38 @@
         });
 
         // Supabase Auth Integration
-        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
+        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabaseClient.co';
         const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
         const BASE_URL = 'https://ojanemwe.github.io/inv/';
 
         async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
                 window.location.replace('login.html');
                 return;
             }
 
             // Get user profile for RBAC
-            const { data: profile, error } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            const { data: profile, error } = await supabaseClient.from('user_profiles').select('*').eq('id', session.user.id).single();
             
             if (error || !profile) {
                 alert('Gagal memuat profil pengguna.');
-                await supabase.auth.signOut();
+                await supabaseClient.auth.signOut();
                 window.location.replace('login.html');
                 return;
             }
 
             if (!profile.is_approved) {
                 alert('Akun Anda belum disetujui oleh Admin. Hubungi Admin (Juju & Ojan) untuk persetujuan.');
-                await supabase.auth.signOut();
+                await supabaseClient.auth.signOut();
                 window.location.replace('login.html');
                 return;
             }
 
             // Get permissions
-            const { data: perms } = await supabase.from('role_permissions').select('*').eq('role', profile.role).single();
+            const { data: perms } = await supabaseClient.from('role_permissions').select('*').eq('role', profile.role).single();
             const rolePerms = perms || { can_access_dashboard: false, can_access_rsvp: false, can_access_gift: false, can_access_generator: true };
 
             window.userProfile = profile; // save globally
@@ -559,13 +559,13 @@
         checkAuth();
 
         document.getElementById('logout-btn').addEventListener('click', async () => {
-            await supabase.auth.signOut();
+            await supabaseClient.auth.signOut();
             window.location.replace('login.html');
         });
 
         // ---------------- Dashboard Stats ---------------- //
         async function fetchDashboardStats() {
-            const { data: rsvpData, error: rsvpErr } = await supabase.from('rsvp').select('*');
+            const { data: rsvpData, error: rsvpErr } = await supabaseClient.from('rsvp').select('*');
             if(!rsvpErr && rsvpData) {
                 const totalRsvp = rsvpData.length;
                 const totalHadir = rsvpData.filter(r => r.status === 'Hadir').length;
@@ -594,7 +594,7 @@
                 });
             }
 
-            const { data: giftData, error: giftErr } = await supabase.from('digital_gifts').select('*');
+            const { data: giftData, error: giftErr } = await supabaseClient.from('digital_gifts').select('*');
             if(!giftErr && giftData) {
                 const totalGiftTx = giftData.length;
                 const totalAmount = giftData.reduce((sum, g) => sum + Number(g.amount), 0);
@@ -612,7 +612,7 @@
 
         // ---------------- Tables Render ---------------- //
         async function fetchRsvpTable() {
-            const { data, error } = await supabase.from('rsvp').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('rsvp').select('*').order('created_at', { ascending: false });
             if(error) return;
             const tbody = document.getElementById('rsvp-tbody');
             tbody.innerHTML = '';
@@ -638,7 +638,7 @@
         };
 
         async function fetchGiftTable() {
-            const { data, error } = await supabase.from('digital_gifts').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('digital_gifts').select('*').order('created_at', { ascending: false });
             if(error) return;
             const tbody = document.getElementById('gift-tbody');
             tbody.innerHTML = '';
@@ -659,7 +659,7 @@
         }
 
         async function fetchUsersTable() {
-            const { data, error } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('user_profiles').select('*').order('created_at', { ascending: false });
             if(error) return;
             const tbody = document.getElementById('users-tbody');
             tbody.innerHTML = '';
@@ -684,27 +684,27 @@
         }
 
         window.toggleUserApprove = async function(id, isApproved) {
-            const { error } = await supabase.from('user_profiles').update({ is_approved: isApproved }).eq('id', id);
+            const { error } = await supabaseClient.from('user_profiles').update({ is_approved: isApproved }).eq('id', id);
             if(error) alert('Gagal update user: ' + error.message);
             else fetchUsersTable(); // refresh
         }
 
         window.deleteRsvp = async function(id) {
             if(!confirm('Yakin ingin menghapus RSVP ini?')) return;
-            const { error } = await supabase.from('rsvp').delete().eq('id', id);
+            const { error } = await supabaseClient.from('rsvp').delete().eq('id', id);
             if(error) alert('Gagal menghapus: ' + error.message);
             else fetchRsvpTable();
         };
 
         window.deleteGift = async function(id) {
             if(!confirm('Yakin ingin menghapus riwayat Gift/Transfer ini?')) return;
-            const { error } = await supabase.from('digital_gifts').delete().eq('id', id);
+            const { error } = await supabaseClient.from('digital_gifts').delete().eq('id', id);
             if(error) alert('Gagal menghapus: ' + error.message);
             else fetchGiftTable();
         };
 
         async function fetchPermissionsConfig() {
-            const { data } = await supabase.from('role_permissions').select('*').eq('role', 'family').single();
+            const { data } = await supabaseClient.from('role_permissions').select('*').eq('role', 'family').single();
             if(data) {
                 document.getElementById('perm-dashboard').checked = data.can_access_dashboard;
                 document.getElementById('perm-rsvp').checked = data.can_access_rsvp;
@@ -718,7 +718,7 @@
                 can_access_rsvp: document.getElementById('perm-rsvp').checked,
                 can_access_gift: document.getElementById('perm-gift').checked,
             };
-            const { error } = await supabase.from('role_permissions').update(updates).eq('role', 'family');
+            const { error } = await supabaseClient.from('role_permissions').update(updates).eq('role', 'family');
             if(error) alert('Gagal update permissions: ' + error.message);
             else alert('Hak akses berhasil diperbarui!');
         }
@@ -744,9 +744,9 @@
             currentGeneratedUrl = `${BASE_URL}?to=${encodedName}`;
             urlText.innerText = currentGeneratedUrl;
 
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             
-            const { error } = await supabase.from('invitation_links').insert([{
+            const { error } = await supabaseClient.from('invitation_links').insert([{
                 guest_name: guestName,
                 url: currentGeneratedUrl,
                 created_by: session.user.id
@@ -776,7 +776,7 @@
         });
 
         async function fetchLinks() {
-            const { data, error } = await supabase.from('invitation_links').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabaseClient.from('invitation_links').select('*').order('created_at', { ascending: false });
             if(error) return console.error(error);
             
             const tbody = document.getElementById('links-tbody');
