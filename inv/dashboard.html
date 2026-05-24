@@ -407,7 +407,24 @@
 
 <!-- View: Settings -->
 <div class="col-start-1 row-start-1 flex flex-col gap-8 view-section w-full" id="view-settings" style="display: none;">
+    
     <div class="card-gold-border overflow-hidden">
+        <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
+            <h4 class="font-body-standard font-bold text-on-surface">Profil Saya</h4>
+            <p class="text-xs text-text-light mt-1">Ubah nama tampilan Anda di sini.</p>
+        </div>
+        <div class="p-6 flex flex-col gap-4">
+            <div>
+                <label class="block font-body-small text-text-light mb-1">Nama Tampilan (Display Name)</label>
+                <div class="flex gap-2">
+                    <input id="my-display-name" class="input-field max-w-sm" type="text" placeholder="Masukkan nama..." />
+                    <button onclick="saveMyDisplayName()" class="btn-gold py-2 px-6">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-gold-border overflow-hidden" id="admin-settings-container">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Persetujuan Pengguna (Admin)</h4>
             <p class="text-xs text-text-light mt-1">Pendaftar baru otomatis memiliki Role 'family' dan butuh persetujuan Anda.</p>
@@ -428,7 +445,7 @@
         </div>
     </div>
 
-    <div class="card-gold-border overflow-hidden mt-8">
+    <div class="card-gold-border overflow-hidden mt-8" id="admin-settings-rbac">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Hak Akses Menu & CRUD (Role: Family)</h4>
             <p class="text-xs text-text-light mt-1">Pilih menu mana saja yang dapat dilihat & dikelola oleh user dengan role Family.</p>
@@ -562,8 +579,9 @@
             if (!rolePerms.can_access_gift) document.querySelector('[data-target="gift"]').classList.add('hidden');
             
             if (profile.role !== 'admin') {
-                document.querySelector('[data-target="settings"]').classList.add('hidden');
-                document.querySelector('.pt-6.pb-2').classList.add('hidden'); // Hide "System" label
+                document.querySelector('.pt-6.pb-2').classList.add('hidden'); // Hide "System" label in desktop sidebar
+                document.getElementById('admin-settings-container').style.display = 'none';
+                document.getElementById('admin-settings-rbac').style.display = 'none';
                 
                 // Switch to URL Generator if dashboard is disabled for this role
                 if (!rolePerms.can_access_dashboard) {
@@ -577,6 +595,10 @@
             } else {
                 fetchUsersTable();
                 fetchPermissionsConfig(); // Load settings toggles for Admin
+            }
+
+            if(profile.display_name) {
+                document.getElementById('my-display-name').value = profile.display_name;
             }
 
             // Execute fetches based on access
@@ -710,18 +732,46 @@
                         <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>ADMIN</option>
                     </select>
                 `;
+
+                const nameInput = `
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="disp-name-${u.id}" value="${u.display_name || ''}" class="bg-surface-container border border-outline-variant/50 rounded px-2 py-1 text-xs text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary outline-none w-24 md:w-32">
+                        <button onclick="updateUserDisplayName('${u.id}')" class="text-secondary hover:text-secondary/70 transition-colors" title="Simpan Nama"><i class="w-4 h-4" data-lucide="save"></i></button>
+                    </div>
+                `;
                 
                 tbody.innerHTML += `
                     <tr class="hover:bg-surface-variant/50 transition-colors">
-                        <td class="p-4 text-xs font-mono text-text-light truncate max-w-[150px]" title="${u.id}">${u.id.substring(0,8)}...</td>
+                        <td class="p-4 text-xs font-mono text-text-light truncate max-w-[100px]" title="${u.id}">${u.id.substring(0,8)}...</td>
+                        <td class="p-4">${nameInput}</td>
                         <td class="p-4">${roleSelect}</td>
                         <td class="p-4">${statusBadge}</td>
                         <td class="p-4">${actionBtn}</td>
                     </tr>
                 `;
             });
+            lucide.createIcons(); // re-init icons for the new save buttons
         }
         
+        window.saveMyDisplayName = async function() {
+            const newName = document.getElementById('my-display-name').value;
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if(!session) return;
+            const { error } = await supabaseClient.from('user_profiles').update({ display_name: newName }).eq('id', session.user.id);
+            if(error) alert('Gagal menyimpan nama: ' + error.message);
+            else {
+                alert('Nama berhasil disimpan!');
+                fetchUsersTable(); // in case admin is viewing their own table row
+            }
+        }
+
+        window.updateUserDisplayName = async function(id) {
+            const newName = document.getElementById('disp-name-'+id).value;
+            const { error } = await supabaseClient.from('user_profiles').update({ display_name: newName }).eq('id', id);
+            if(error) alert('Gagal update nama: ' + error.message);
+            else alert('Nama pengguna berhasil diperbarui!');
+        }
+
         window.changeUserRole = async function(id, newRole) {
             if(!confirm(`Yakin ingin mengubah role user ini menjadi ${newRole.toUpperCase()}?`)) {
                 fetchUsersTable(); // reset select
