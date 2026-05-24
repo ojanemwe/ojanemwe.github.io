@@ -134,10 +134,45 @@
             
             <div id="error-message" class="text-error text-sm hidden font-body-small text-center">Login gagal. Periksa kembali email dan password.</div>
             
-            <button type="submit" id="submit-btn" class="btn-gold w-full flex justify-center items-center py-3 mt-4 font-bold">
-                Masuk
-            </button>
+            <div class="flex flex-col gap-3 mt-4">
+                <button type="submit" id="submit-btn" class="btn-gold w-full flex justify-center items-center py-3 font-bold">
+                    Masuk
+                </button>
+                <button type="button" id="open-register-btn" class="btn-outline-gold w-full flex justify-center items-center py-3 font-bold">
+                    Daftar Akun Baru
+                </button>
+            </div>
         </form>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="card-gold-border p-8 w-full max-w-md glass-panel">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="font-label-overline text-secondary tracking-widest text-xl">Daftar Akun</h2>
+                <button id="close-register-btn" class="text-text-light hover:text-secondary">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <form id="register-form" class="space-y-4">
+                <div>
+                    <label class="block font-body-small text-text-light mb-1">Email</label>
+                    <input id="reg-email" class="input-field" type="email" required />
+                </div>
+                <div>
+                    <label class="block font-body-small text-text-light mb-1">Password</label>
+                    <input id="reg-password" class="input-field" type="password" required minlength="6" />
+                </div>
+                
+                <div id="reg-error-message" class="text-error text-sm hidden font-body-small"></div>
+                <div id="reg-success-message" class="text-primary text-sm hidden font-body-small">Pendaftaran berhasil! Hubungi Admin untuk meminta persetujuan akses.</div>
+                
+                <button type="submit" id="reg-submit-btn" class="btn-gold w-full flex justify-center items-center py-3 mt-4 font-bold">
+                    Daftar
+                </button>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -178,6 +213,44 @@
             } else {
                 window.location.href = 'dashboard.html';
             }
+        });
+
+        // Register Modal Logic
+        const regModal = document.getElementById('register-modal');
+        document.getElementById('open-register-btn').addEventListener('click', () => {
+            regModal.classList.remove('hidden');
+        });
+        document.getElementById('close-register-btn').addEventListener('click', () => {
+            regModal.classList.add('hidden');
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const btn = document.getElementById('reg-submit-btn');
+            const errorMsg = document.getElementById('reg-error-message');
+            const successMsg = document.getElementById('reg-success-message');
+            
+            btn.innerHTML = 'Memproses...';
+            btn.disabled = true;
+            errorMsg.classList.add('hidden');
+            successMsg.classList.add('hidden');
+
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                errorMsg.classList.remove('hidden');
+                errorMsg.innerText = error.message;
+            } else {
+                successMsg.classList.remove('hidden');
+                document.getElementById('register-form').reset();
+            }
+            btn.innerHTML = 'Daftar';
+            btn.disabled = false;
         });
     </script>
 </body>
