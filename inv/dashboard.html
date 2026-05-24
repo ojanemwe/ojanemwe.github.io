@@ -142,6 +142,12 @@
             .btn-outline-gold {
                 @apply bg-transparent border border-secondary text-secondary px-6 py-2 rounded-md font-label-overline text-label-overline transition-all duration-300 hover:bg-secondary/10;
             }
+            .nav-item-mobile {
+                @apply flex flex-col items-center justify-center py-1 px-2 text-on-surface-variant/60 hover:text-secondary transition-all duration-300;
+            }
+            .nav-item-mobile.active {
+                @apply text-secondary font-bold scale-110;
+            }
             .input-field {
                 @apply w-full bg-surface-container-highest border border-outline-variant rounded px-4 py-2 text-on-surface font-body-standard focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-colors;
             }
@@ -149,8 +155,8 @@
     </style>
 </head>
 <body class="bg-background text-on-surface font-body-standard overflow-hidden h-screen flex opacity-0 transition-opacity duration-300" id="admin-body">
-<!-- Sidebar -->
-<aside class="w-64 glass-panel border-r border-secondary/20 flex flex-col z-20 flex-shrink-0 transition-all duration-300 relative" id="sidebar">
+<!-- Sidebar (Desktop) -->
+<aside class="hidden md:flex w-64 glass-panel border-r border-secondary/20 flex-col z-20 flex-shrink-0 transition-all duration-300 relative" id="sidebar">
 <div class="h-16 flex items-center justify-center border-b border-secondary/20">
 <h1 class="font-label-overline text-label-overline text-secondary tracking-widest">JUJU &amp; OJAN</h1>
 </div>
@@ -212,9 +218,9 @@
 </div>
 </header>
 <!-- Scrollable Content Area -->
-<div class="flex-1 overflow-y-auto p-section-h md:p-8 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-midnight-interactive/20 via-background to-background relative">
+<div class="flex-1 overflow-y-auto p-4 pb-24 md:p-8 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-midnight-interactive/20 via-background to-background relative w-full block">
 <!-- View: Dashboard -->
-<div class="space-y-8 block view-section" id="view-dashboard">
+<div class="flex flex-col gap-8 block view-section w-full" id="view-dashboard">
 <!-- Stat Cards Grid -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 <div class="card-gold-border p-6 flex flex-col gap-4">
@@ -296,7 +302,7 @@
 </div>
 </div>
 <!-- View: URL Generator -->
-<div class="space-y-8 hidden view-section" id="view-url-generator">
+<div class="flex flex-col gap-8 hidden view-section w-full" id="view-url-generator">
 <div class="card-gold-border p-6">
 <h3 class="font-headline-section text-[24px] text-secondary mb-4">Buat Tautan Undangan</h3>
 <div class="flex flex-col md:flex-row gap-4">
@@ -352,7 +358,7 @@
 </div>
 
 <!-- View: RSVP -->
-<div class="space-y-8 hidden view-section" id="view-rsvp">
+<div class="flex flex-col gap-8 hidden view-section w-full" id="view-rsvp">
     <div class="card-gold-border overflow-hidden">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Data RSVP &amp; Ucapan</h4>
@@ -375,7 +381,7 @@
 </div>
 
 <!-- View: Gift -->
-<div class="space-y-8 hidden view-section" id="view-gift">
+<div class="flex flex-col gap-8 hidden view-section w-full" id="view-gift">
     <div class="card-gold-border overflow-hidden">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Konfirmasi Transfer / Digital Gift</h4>
@@ -398,7 +404,7 @@
 </div>
 
 <!-- View: Settings -->
-<div class="space-y-8 hidden view-section" id="view-settings">
+<div class="flex flex-col gap-8 hidden view-section w-full" id="view-settings">
     <div class="card-gold-border overflow-hidden">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Persetujuan Pengguna (Admin)</h4>
@@ -448,21 +454,49 @@
     </div>
 </div>
 </main>
+
+<!-- Bottom Nav (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 h-16 glass-panel border-t border-secondary/30 bg-surface/90 pb-safe">
+    <a class="nav-item-mobile active" data-target="dashboard" href="#">
+        <i class="w-5 h-5 mb-1" data-lucide="layout-dashboard"></i>
+        <span class="font-label-overline text-[9px]">Dashboard</span>
+    </a>
+    <a class="nav-item-mobile" data-target="url-generator" href="#">
+        <i class="w-5 h-5 mb-1" data-lucide="link"></i>
+        <span class="font-label-overline text-[9px]">Generator</span>
+    </a>
+    <a class="nav-item-mobile" data-target="rsvp" href="#">
+        <i class="w-5 h-5 mb-1" data-lucide="mail"></i>
+        <span class="font-label-overline text-[9px]">RSVP</span>
+    </a>
+    <a class="nav-item-mobile" data-target="gift" href="#">
+        <i class="w-5 h-5 mb-1" data-lucide="gift"></i>
+        <span class="font-label-overline text-[9px]">Gift</span>
+    </a>
+    <a class="nav-item-mobile" data-target="settings" href="#">
+        <i class="w-5 h-5 mb-1" data-lucide="settings"></i>
+        <span class="font-label-overline text-[9px]">Settings</span>
+    </a>
+</nav>
+
+
 <script>
         // Initialize Lucide icons
         lucide.createIcons();
 
         // Simple SPA navigation logic
-        document.querySelectorAll('.nav-item[data-target]').forEach(item => {
+        document.querySelectorAll('.nav-item[data-target], .nav-item-mobile[data-target]').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 
                 // Remove active class from all nav items
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                document.querySelectorAll('.nav-item, .nav-item-mobile').forEach(nav => nav.classList.remove('active'));
                 
-                // Add active class to clicked item
+                // Add active class to clicked items (both desktop and mobile)
                 const targetId = item.getAttribute('data-target');
-                item.classList.add('active');
+                document.querySelectorAll(`.nav-item[data-target="${targetId}"], .nav-item-mobile[data-target="${targetId}"]`).forEach(nav => {
+                    nav.classList.add('active');
+                });
                 
                 // Hide all views
                 document.querySelectorAll('.view-section').forEach(view => {
@@ -533,8 +567,8 @@
                 
                 // Switch to URL Generator if dashboard is disabled for this role
                 if (!rolePerms.can_access_dashboard) {
-                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                    document.querySelector('[data-target="url-generator"]').classList.add('active');
+                    document.querySelectorAll('.nav-item, .nav-item-mobile').forEach(nav => nav.classList.remove('active'));
+                    document.querySelectorAll('[data-target="url-generator"]').forEach(nav => nav.classList.add('active'));
                     
                     document.getElementById('view-dashboard').classList.add('hidden');
                     document.getElementById('view-dashboard').classList.remove('block');
