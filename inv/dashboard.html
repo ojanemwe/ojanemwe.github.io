@@ -191,8 +191,8 @@
 <i class="w-5 h-5 text-secondary" data-lucide="user"></i>
 </div>
 <div class="overflow-hidden">
-<p class="font-body-small text-on-surface truncate">Admin Royal</p>
-<p class="text-xs text-text-light truncate">admin@jujuojan.id</p>
+<p id="sidebar-user-name" class="font-body-small text-on-surface truncate">Memuat...</p>
+<p id="sidebar-user-email" class="text-xs text-text-light truncate">memuat...</p>
 </div>
 </div>
 </div>
@@ -601,6 +601,9 @@
             if(profile.display_name) {
                 document.getElementById('my-display-name').value = profile.display_name;
             }
+
+            document.getElementById('sidebar-user-name').innerText = profile.display_name || 'User';
+            document.getElementById('sidebar-user-email').innerText = session.user.email;
 
             // Execute fetches based on access
             if (rolePerms.can_access_dashboard) fetchDashboardStats();
