@@ -220,7 +220,7 @@
 <!-- Scrollable Content Area -->
 <div class="flex-1 overflow-y-auto p-4 pb-24 md:p-8 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-midnight-interactive/20 via-background to-background relative w-full block">
 <!-- View: Dashboard -->
-<div class="flex flex-col gap-8 block view-section w-full" id="view-dashboard">
+<div class="flex flex-col gap-8 view-section w-full" id="view-dashboard" style="display: flex;">
 <!-- Stat Cards Grid -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 <div class="card-gold-border p-6 flex flex-col gap-4">
@@ -302,7 +302,7 @@
 </div>
 </div>
 <!-- View: URL Generator -->
-<div class="flex flex-col gap-8 hidden view-section w-full" id="view-url-generator">
+<div class="flex flex-col gap-8 view-section w-full" id="view-url-generator" style="display: none;">
 <div class="card-gold-border p-6">
 <h3 class="font-headline-section text-[24px] text-secondary mb-4">Buat Tautan Undangan</h3>
 <div class="flex flex-col md:flex-row gap-4">
@@ -358,7 +358,7 @@
 </div>
 
 <!-- View: RSVP -->
-<div class="flex flex-col gap-8 hidden view-section w-full" id="view-rsvp">
+<div class="flex flex-col gap-8 view-section w-full" id="view-rsvp" style="display: none;">
     <div class="card-gold-border overflow-hidden">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Data RSVP &amp; Ucapan</h4>
@@ -381,7 +381,7 @@
 </div>
 
 <!-- View: Gift -->
-<div class="flex flex-col gap-8 hidden view-section w-full" id="view-gift">
+<div class="flex flex-col gap-8 view-section w-full" id="view-gift" style="display: none;">
     <div class="card-gold-border overflow-hidden">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Konfirmasi Transfer / Digital Gift</h4>
@@ -404,7 +404,7 @@
 </div>
 
 <!-- View: Settings -->
-<div class="flex flex-col gap-8 hidden view-section w-full" id="view-settings">
+<div class="flex flex-col gap-8 view-section w-full" id="view-settings" style="display: none;">
     <div class="card-gold-border overflow-hidden">
         <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
             <h4 class="font-body-standard font-bold text-on-surface">Persetujuan Pengguna (Admin)</h4>
@@ -498,20 +498,17 @@
                     nav.classList.add('active');
                 });
                 
-                // Hide all views
+                // Hide all views completely from DOM flow using inline styles
                 document.querySelectorAll('.view-section').forEach(view => {
-                    view.classList.add('hidden');
-                    view.classList.remove('block');
+                    view.style.display = 'none';
                 });
                 
                 // Show target view (fallback to dashboard if not implemented yet in this snippet)
                 const targetView = document.getElementById(`view-${targetId}`);
                 if(targetView) {
-                    targetView.classList.remove('hidden');
-                    targetView.classList.add('block');
+                    targetView.style.display = 'flex';
                 } else {
-                     document.getElementById('view-dashboard').classList.remove('hidden');
-                     document.getElementById('view-dashboard').classList.add('block');
+                     document.getElementById('view-dashboard').style.display = 'flex';
                 }
 
                 // Update Header Title
@@ -570,10 +567,8 @@
                     document.querySelectorAll('.nav-item, .nav-item-mobile').forEach(nav => nav.classList.remove('active'));
                     document.querySelectorAll('[data-target="url-generator"]').forEach(nav => nav.classList.add('active'));
                     
-                    document.getElementById('view-dashboard').classList.add('hidden');
-                    document.getElementById('view-dashboard').classList.remove('block');
-                    document.getElementById('view-url-generator').classList.remove('hidden');
-                    document.getElementById('view-url-generator').classList.add('block');
+                    document.getElementById('view-dashboard').style.display = 'none';
+                    document.getElementById('view-url-generator').style.display = 'flex';
                     document.getElementById('page-title').innerText = 'URL Generator';
                 }
             } else {
