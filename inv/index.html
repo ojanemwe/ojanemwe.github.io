@@ -482,6 +482,57 @@
                 el.classList.add('fade-in-up');
                 observer.observe(el);
             });
+
+            // Scroll Spy for Bottom Navigation
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a[href^="#"]');
+            
+            function updateActiveNav() {
+                let currentSection = '';
+                const scrollPos = window.scrollY + 100; // Offset for better UX
+                
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    
+                    if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
+                        currentSection = section.getAttribute('id');
+                    }
+                });
+                
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href').substring(1); // Remove #
+                    
+                    if (href === currentSection) {
+                        // Desktop nav
+                        if (link.closest('nav').classList.contains('hidden') === false && window.innerWidth >= 768) {
+                            link.classList.add('text-secondary', 'font-bold', 'border-b-2', 'border-secondary', 'pb-1');
+                            link.classList.remove('text-on-surface/70');
+                        }
+                        // Mobile nav
+                        if (link.closest('nav').classList.contains('md:hidden')) {
+                            link.classList.add('bg-secondary-container/30', 'text-secondary', 'rounded-xl', 'px-3', 'py-1', 'scale-90');
+                            link.classList.remove('text-on-surface-variant/60');
+                        }
+                    } else {
+                        // Desktop nav
+                        if (link.closest('nav').classList.contains('hidden') === false && window.innerWidth >= 768) {
+                            link.classList.remove('text-secondary', 'font-bold', 'border-b-2', 'border-secondary', 'pb-1');
+                            link.classList.add('text-on-surface/70');
+                        }
+                        // Mobile nav
+                        if (link.closest('nav').classList.contains('md:hidden')) {
+                            link.classList.remove('bg-secondary-container/30', 'text-secondary', 'rounded-xl', 'px-3', 'py-1', 'scale-90');
+                            link.classList.add('text-on-surface-variant/60');
+                        }
+                    }
+                });
+            }
+            
+            // Run on scroll
+            window.addEventListener('scroll', updateActiveNav);
+            // Run on load
+            updateActiveNav();
         });
 
         // YouTube Background Music Integration
