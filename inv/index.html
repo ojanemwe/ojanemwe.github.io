@@ -716,6 +716,9 @@
             const { data, error } = await supabaseClient.from('invitation_links').select('id').eq('guest_name', to).limit(1);
             if (data && data.length > 0) {
                 guestDisplay.innerText = to;
+                // Auto-fill form fields
+                document.getElementById('gift-name').value = to;
+                document.getElementById('rsvp-name').value = to;
             } else {
                 show404();
             }
