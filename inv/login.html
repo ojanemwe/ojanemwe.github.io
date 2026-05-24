@@ -142,18 +142,18 @@
         </form>
         
         <div class="mt-4 pt-4 border-t border-outline-variant/30">
-            <button type="button" id="open-register-btn" class="btn-outline-gold w-full flex justify-center items-center py-3 font-bold">
+            <button type="button" id="open-register-btn" onclick="document.getElementById('register-modal').showModal()" class="btn-outline-gold w-full flex justify-center items-center py-3 font-bold">
                 Daftar Akun Baru
             </button>
         </div>
     </div>
 
     <!-- Register Modal -->
-    <div id="register-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 items-center justify-center p-4" style="display: none;">
-        <div class="card-gold-border p-8 w-full max-w-md glass-panel">
+    <dialog id="register-modal" class="bg-transparent backdrop:bg-background/80 backdrop:backdrop-blur-sm p-4 w-full max-w-md m-auto outline-none rounded-xl open:flex flex-col">
+        <div class="card-gold-border p-8 w-full glass-panel relative shadow-2xl">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="font-label-overline text-secondary tracking-widest text-xl">Daftar Akun</h2>
-                <button id="close-register-btn" class="text-text-light hover:text-secondary">
+                <button type="button" id="close-register-btn" onclick="document.getElementById('register-modal').close()" class="text-text-light hover:text-secondary">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -176,16 +176,16 @@
                 </button>
             </form>
         </div>
-    </div>
+    </dialog>
 
     <script>
         const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
         const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
         // Check if already logged in
         async function checkSession() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 window.location.href = 'dashboard.html';
             }
@@ -203,7 +203,7 @@
             btn.disabled = true;
             errorMsg.classList.add('hidden');
 
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: password,
             });
@@ -218,15 +218,7 @@
             }
         });
 
-        // Register Modal Logic
-        const regModal = document.getElementById('register-modal');
-        document.getElementById('open-register-btn').addEventListener('click', () => {
-            regModal.style.display = 'flex';
-        });
-        document.getElementById('close-register-btn').addEventListener('click', () => {
-            regModal.style.display = 'none';
-        });
-
+        // Register Form Handler
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('reg-email').value;
@@ -240,7 +232,7 @@
             errorMsg.classList.add('hidden');
             successMsg.classList.add('hidden');
 
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabaseClient.auth.signUp({
                 email: email,
                 password: password,
             });
