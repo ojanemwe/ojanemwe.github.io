@@ -419,6 +419,33 @@
             </table>
         </div>
     </div>
+
+    <div class="card-gold-border overflow-hidden mt-8">
+        <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
+            <h4 class="font-body-standard font-bold text-on-surface">Hak Akses Menu & CRUD (Role: Family)</h4>
+            <p class="text-xs text-text-light mt-1">Pilih menu mana saja yang dapat dilihat & dikelola oleh user dengan role Family.</p>
+        </div>
+        <div class="p-6 flex flex-col gap-4" id="permissions-container">
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="perm-dashboard" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary focus:ring-offset-0">
+                <span class="font-body-small text-on-surface">Akses Dashboard (Statistik)</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="perm-rsvp" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary focus:ring-offset-0">
+                <span class="font-body-small text-on-surface">Akses Manajemen RSVP (Termasuk Fungsi Hapus)</span>
+            </label>
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" id="perm-gift" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary focus:ring-secondary focus:ring-offset-0">
+                <span class="font-body-small text-on-surface">Akses Digital Gift / Amplop (Termasuk Fungsi Hapus)</span>
+            </label>
+            <label class="flex items-center gap-3 opacity-50">
+                <input type="checkbox" id="perm-generator" class="w-4 h-4 rounded border-outline-variant bg-surface-container text-secondary" checked disabled>
+                <span class="font-body-small text-on-surface">Akses URL Generator (Wajib/Paten)</span>
+            </label>
+            
+            <button onclick="savePermissions()" class="btn-gold w-max mt-4">Simpan Pengaturan Akses</button>
+        </div>
+    </div>
 </div>
 </main>
 <script>
@@ -489,33 +516,44 @@
                 return;
             }
 
-            // RBAC UI adjustments
-            if (profile.role === 'family') {
-                document.querySelector('[data-target="dashboard"]').classList.add('hidden');
-                document.querySelector('[data-target="rsvp"]').classList.add('hidden');
-                document.querySelector('[data-target="gift"]').classList.add('hidden');
+            // Get permissions
+            const { data: perms } = await supabase.from('role_permissions').select('*').eq('role', profile.role).single();
+            const rolePerms = perms || { can_access_dashboard: false, can_access_rsvp: false, can_access_gift: false, can_access_generator: true };
+
+            window.userProfile = profile; // save globally
+
+            // RBAC UI adjustments dynamically based on permissions table
+            if (!rolePerms.can_access_dashboard) document.querySelector('[data-target="dashboard"]').classList.add('hidden');
+            if (!rolePerms.can_access_rsvp) document.querySelector('[data-target="rsvp"]').classList.add('hidden');
+            if (!rolePerms.can_access_gift) document.querySelector('[data-target="gift"]').classList.add('hidden');
+            
+            if (profile.role !== 'admin') {
                 document.querySelector('[data-target="settings"]').classList.add('hidden');
-                document.querySelector('.pt-6.pb-2').classList.add('hidden'); // Hide "System"
+                document.querySelector('.pt-6.pb-2').classList.add('hidden'); // Hide "System" label
                 
-                // Force switch to URL Generator
-                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-                document.querySelector('[data-target="url-generator"]').classList.add('active');
-                
-                document.getElementById('view-dashboard').classList.add('hidden');
-                document.getElementById('view-dashboard').classList.remove('block');
-                document.getElementById('view-url-generator').classList.remove('hidden');
-                document.getElementById('view-url-generator').classList.add('block');
-                document.getElementById('page-title').innerText = 'URL Generator';
+                // Switch to URL Generator if dashboard is disabled for this role
+                if (!rolePerms.can_access_dashboard) {
+                    document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                    document.querySelector('[data-target="url-generator"]').classList.add('active');
+                    
+                    document.getElementById('view-dashboard').classList.add('hidden');
+                    document.getElementById('view-dashboard').classList.remove('block');
+                    document.getElementById('view-url-generator').classList.remove('hidden');
+                    document.getElementById('view-url-generator').classList.add('block');
+                    document.getElementById('page-title').innerText = 'URL Generator';
+                }
             } else {
-                // Admin specific calls
-                fetchDashboardStats();
-                fetchRsvpTable();
-                fetchGiftTable();
                 fetchUsersTable();
+                fetchPermissionsConfig(); // Load settings toggles for Admin
             }
 
+            // Execute fetches based on access
+            if (rolePerms.can_access_dashboard) fetchDashboardStats();
+            if (rolePerms.can_access_rsvp) fetchRsvpTable();
+            if (rolePerms.can_access_gift) fetchGiftTable();
+            fetchLinks(); // Generator is always accessible
+
             document.getElementById('admin-body').classList.remove('opacity-0');
-            fetchLinks();
         }
         
         checkAuth();
@@ -585,7 +623,10 @@
                         <td class="p-4 font-bold text-on-surface">${r.guest_name}</td>
                         <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] ${r.status === 'Hadir' ? 'bg-secondary/20 text-secondary' : 'bg-outline-variant/30 text-on-surface'}">${r.status}</span></td>
                         <td class="p-4 italic text-on-surface-variant text-xs">${r.message || '-'}</td>
-                        <td class="p-4 text-text-light">${date}</td>
+                        <td class="p-4 text-text-light flex items-center justify-between">
+                            ${date}
+                            <button onclick="deleteRsvp(${r.id})" class="text-error hover:text-error/70 ml-2" title="Hapus RSVP"><i class="w-4 h-4 inline" data-lucide="trash-2"></i></button>
+                        </td>
                     </tr>
                 `;
             });
@@ -608,8 +649,9 @@
                         <td class="p-4 font-bold text-on-surface">${g.sender_name}</td>
                         <td class="p-4 text-secondary font-mono">${amt}</td>
                         <td class="p-4 text-text-light">${g.bank_name}</td>
-                        <td class="p-4">
+                        <td class="p-4 flex gap-2">
                             <button onclick="viewImage('${g.proof_image}')" class="text-secondary hover:underline text-xs border border-secondary/30 px-3 py-1 rounded">Lihat Bukti</button>
+                            <button onclick="deleteGift(${g.id})" class="text-error hover:underline text-xs border border-error/30 px-3 py-1 rounded" title="Hapus Gift"><i class="w-3 h-3 inline" data-lucide="trash-2"></i> Hapus</button>
                         </td>
                     </tr>
                 `;
@@ -645,6 +687,40 @@
             const { error } = await supabase.from('user_profiles').update({ is_approved: isApproved }).eq('id', id);
             if(error) alert('Gagal update user: ' + error.message);
             else fetchUsersTable(); // refresh
+        }
+
+        window.deleteRsvp = async function(id) {
+            if(!confirm('Yakin ingin menghapus RSVP ini?')) return;
+            const { error } = await supabase.from('rsvp').delete().eq('id', id);
+            if(error) alert('Gagal menghapus: ' + error.message);
+            else fetchRsvpTable();
+        };
+
+        window.deleteGift = async function(id) {
+            if(!confirm('Yakin ingin menghapus riwayat Gift/Transfer ini?')) return;
+            const { error } = await supabase.from('digital_gifts').delete().eq('id', id);
+            if(error) alert('Gagal menghapus: ' + error.message);
+            else fetchGiftTable();
+        };
+
+        async function fetchPermissionsConfig() {
+            const { data } = await supabase.from('role_permissions').select('*').eq('role', 'family').single();
+            if(data) {
+                document.getElementById('perm-dashboard').checked = data.can_access_dashboard;
+                document.getElementById('perm-rsvp').checked = data.can_access_rsvp;
+                document.getElementById('perm-gift').checked = data.can_access_gift;
+            }
+        }
+
+        window.savePermissions = async function() {
+            const updates = {
+                can_access_dashboard: document.getElementById('perm-dashboard').checked,
+                can_access_rsvp: document.getElementById('perm-rsvp').checked,
+                can_access_gift: document.getElementById('perm-gift').checked,
+            };
+            const { error } = await supabase.from('role_permissions').update(updates).eq('role', 'family');
+            if(error) alert('Gagal update permissions: ' + error.message);
+            else alert('Hak akses berhasil diperbarui!');
         }
 
         // URL Generator Logic
