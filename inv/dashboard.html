@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="id"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard Admin | JUJU &amp; OJAN</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&amp;family=Playfair+Display:wght@400;700&amp;family=Lato:wght@300;400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary-container": "#0f2d4a",
+                        "background": "#0a141f",
+                        "tertiary": "#d2c6a0",
+                        "primary-fixed-dim": "#aec9ed",
+                        "secondary-fixed": "#ffe08f",
+                        "surface-dim": "#0a141f",
+                        "on-secondary-container": "#fdd977",
+                        "text-light": "#3d5a7a",
+                        "surface-container-highest": "#2c3542",
+                        "primary-fixed": "#d2e4ff",
+                        "gold-light": "#e8c97a",
+                        "on-surface-variant": "#c3c6ce",
+                        "secondary-container": "#785d00",
+                        "on-tertiary-container": "#9d926f",
+                        "secondary": "#e6c364",
+                        "on-secondary-fixed": "#241a00",
+                        "surface-cream-dark": "#dde6f2",
+                        "on-secondary-fixed-variant": "#584400",
+                        "on-primary-container": "#7a95b7",
+                        "on-secondary": "#3d2e00",
+                        "inverse-primary": "#466080",
+                        "on-tertiary-fixed-variant": "#4e4629",
+                        "on-background": "#d9e3f3",
+                        "midnight-deep": "#071929",
+                        "on-error": "#690005",
+                        "surface-container": "#17202c",
+                        "error-container": "#93000a",
+                        "error": "#ffb4ab",
+                        "surface-cream": "#f0f4fa",
+                        "on-primary-fixed": "#001d36",
+                        "inverse-on-surface": "#27313d",
+                        "surface-bright": "#303a46",
+                        "tertiary-fixed-dim": "#d2c6a0",
+                        "outline-variant": "#43474d",
+                        "on-surface": "#d9e3f3",
+                        "midnight-interactive": "#1a4a72",
+                        "surface-variant": "#2c3542",
+                        "on-tertiary-fixed": "#211b04",
+                        "surface-container-high": "#212b37",
+                        "primary": "#aec9ed",
+                        "on-error-container": "#ffdad6",
+                        "surface-tint": "#aec9ed",
+                        "tertiary-container": "#322b10",
+                        "inverse-surface": "#d9e3f3",
+                        "surface-container-low": "#121c28",
+                        "surface": "#0a141f",
+                        "outline": "#8d9198",
+                        "tertiary-fixed": "#efe2ba",
+                        "on-primary": "#15324f",
+                        "on-primary-fixed-variant": "#2e4867",
+                        "on-tertiary": "#373015",
+                        "secondary-fixed-dim": "#e6c364",
+                        "surface-container-lowest": "#050f1a"
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.25rem",
+                        lg: "0.5rem",
+                        xl: "0.75rem",
+                        full: "9999px"
+                    },
+                    spacing: {
+                        "max-width-content": "600px",
+                        "gap-component": "1rem",
+                        "section-h": "1.5rem",
+                        "max-width-container": "900px",
+                        "gap-grid": "2rem",
+                        "section-v": "5rem"
+                    },
+                    fontFamily: {
+                        "label-overline": ["Cinzel"],
+                        "body-verse": ["Playfair Display"],
+                        "headline-section": ["Playfair Display"],
+                        "body-standard": ["Lato"],
+                        "display-hero": ["Playfair Display"],
+                        "headline-section-mobile": ["Playfair Display"],
+                        "display-hero-mobile": ["Playfair Display"],
+                        "body-small": ["Lato"]
+                    },
+                    fontSize: {
+                        "label-overline": ["12px", { lineHeight: "1.0", letterSpacing: "0.3em", fontWeight: "700" }],
+                        "body-verse": ["24px", { lineHeight: "1.8", fontWeight: "400" }],
+                        "headline-section": ["35px", { lineHeight: "1.3", fontWeight: "400" }],
+                        "body-standard": ["16px", { lineHeight: "1.6", fontWeight: "400" }],
+                        "display-hero": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-section-mobile": ["28px", { lineHeight: "1.3", fontWeight: "400" }],
+                        "display-hero-mobile": ["32px", { lineHeight: "1.2", fontWeight: "700" }],
+                        "body-small": ["14px", { lineHeight: "1.6", letterSpacing: "0.01em", fontWeight: "300" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .glass-panel {
+                @apply bg-surface/80 backdrop-blur-md border border-secondary/20 shadow-[0_0_15px_rgba(230,195,100,0.05)];
+            }
+            .nav-item {
+                @apply flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant/80 hover:bg-surface-variant hover:text-on-surface transition-all duration-300;
+            }
+            .nav-item.active {
+                @apply bg-primary-container text-on-primary-container font-bold border-l-4 border-secondary;
+            }
+            .card-gold-border {
+                @apply border border-secondary/30 rounded-xl overflow-hidden bg-surface-container relative;
+            }
+            .card-gold-border::before {
+                content: '';
+                @apply absolute top-0 left-0 w-2 h-2 border-t border-l border-secondary/50;
+            }
+            .card-gold-border::after {
+                content: '';
+                @apply absolute bottom-0 right-0 w-2 h-2 border-b border-r border-secondary/50;
+            }
+            .btn-gold {
+                @apply bg-secondary text-on-secondary px-6 py-2 rounded-md font-label-overline text-label-overline transition-all duration-300 hover:shadow-[0_0_10px_rgba(230,195,100,0.3)] hover:scale-[1.02];
+            }
+            .btn-outline-gold {
+                @apply bg-transparent border border-secondary text-secondary px-6 py-2 rounded-md font-label-overline text-label-overline transition-all duration-300 hover:bg-secondary/10;
+            }
+            .input-field {
+                @apply w-full bg-surface-container-highest border border-outline-variant rounded px-4 py-2 text-on-surface font-body-standard focus:border-secondary focus:ring-1 focus:ring-secondary outline-none transition-colors;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-standard overflow-hidden h-screen flex opacity-0 transition-opacity duration-300" id="admin-body">
+<!-- Sidebar -->
+<aside class="w-64 glass-panel border-r border-secondary/20 flex flex-col z-20 flex-shrink-0 transition-all duration-300 relative" id="sidebar">
+<div class="h-16 flex items-center justify-center border-b border-secondary/20">
+<h1 class="font-label-overline text-label-overline text-secondary tracking-widest">JUJU &amp; OJAN</h1>
+</div>
+<nav class="flex-1 overflow-y-auto py-6 px-3 space-y-2">
+<a class="nav-item active" data-target="dashboard" href="#">
+<i class="w-5 h-5" data-lucide="layout-dashboard"></i>
+<span class="font-body-small">Dashboard</span>
+</a>
+<a class="nav-item" data-target="url-generator" href="#">
+<i class="w-5 h-5" data-lucide="link"></i>
+<span class="font-body-small">URL Generator</span>
+</a>
+<a class="nav-item" data-target="rsvp" href="#">
+<i class="w-5 h-5" data-lucide="mail"></i>
+<span class="font-body-small">RSVP &amp; Ucapan</span>
+</a>
+<a class="nav-item" data-target="gift" href="#">
+<i class="w-5 h-5" data-lucide="gift"></i>
+<span class="font-body-small">Digital Gift</span>
+</a>
+<div class="pt-6 pb-2">
+<p class="px-4 text-xs font-label-overline text-text-light tracking-widest uppercase">System</p>
+</div>
+<a class="nav-item" data-target="settings" href="#">
+<i class="w-5 h-5" data-lucide="settings"></i>
+<span class="font-body-small">Settings</span>
+</a>
+</nav>
+<div class="p-4 border-t border-secondary/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center border border-secondary/30">
+<i class="w-5 h-5 text-secondary" data-lucide="user"></i>
+</div>
+<div class="overflow-hidden">
+<p class="font-body-small text-on-surface truncate">Admin Royal</p>
+<p class="text-xs text-text-light truncate">admin@jujuojan.id</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+<!-- Top Header -->
+<header class="h-16 glass-panel border-b border-secondary/20 flex items-center justify-between px-6 z-10 flex-shrink-0">
+<div class="flex items-center gap-4">
+<button class="md:hidden text-secondary hover:text-gold-light" id="mobile-menu-btn">
+<i class="w-6 h-6" data-lucide="menu"></i>
+</button>
+<h2 class="font-headline-section text-[24px] text-on-surface m-0 leading-none" id="page-title">Dashboard</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-text-light hover:text-secondary transition-colors relative">
+<i class="w-5 h-5" data-lucide="bell"></i>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full border border-background"></span>
+</button>
+<button class="text-text-light hover:text-secondary transition-colors" id="logout-btn">
+<i class="w-5 h-5" data-lucide="log-out"></i>
+</button>
+</div>
+</header>
+<!-- Scrollable Content Area -->
+<div class="flex-1 overflow-y-auto p-section-h md:p-8 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-midnight-interactive/20 via-background to-background relative">
+<!-- View: Dashboard -->
+<div class="space-y-8 block view-section" id="view-dashboard">
+<!-- Stat Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="card-gold-border p-6 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-body-small text-text-light mb-1">Konfirmasi Transfer</p>
+<h3 id="stat-gift-count" class="font-display-hero text-[32px] text-secondary">0</h3>
+</div>
+<div class="w-12 h-12 rounded-lg bg-primary-container flex items-center justify-center">
+<i class="w-6 h-6 text-primary" data-lucide="check-circle"></i>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs">
+<span class="text-primary flex items-center"><i class="w-3 h-3 mr-1" data-lucide="trending-up"></i> +12</span>
+<span class="text-text-light">dari minggu lalu</span>
+</div>
+</div>
+<div class="card-gold-border p-6 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-body-small text-text-light mb-1">Total Transfer (Rp)</p>
+<h3 id="stat-gift-total" class="font-display-hero text-[32px] text-secondary">0</h3>
+</div>
+<div class="w-12 h-12 rounded-lg bg-secondary-container flex items-center justify-center">
+<i class="w-6 h-6 text-on-secondary-container" data-lucide="wallet"></i>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs">
+<span class="text-secondary flex items-center"><i class="w-3 h-3 mr-1" data-lucide="trending-up"></i> +2.1M</span>
+<span class="text-text-light">hari ini</span>
+</div>
+</div>
+<div class="card-gold-border p-6 flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-body-small text-text-light mb-1">RSVP &amp; Ucapan</p>
+<h3 id="stat-rsvp-count" class="font-display-hero text-[32px] text-secondary">0</h3>
+</div>
+<div class="w-12 h-12 rounded-lg bg-tertiary-container flex items-center justify-center">
+<i class="w-6 h-6 text-on-tertiary-container" data-lucide="message-square"></i>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs">
+<span id="stat-rsvp-percentage" class="text-tertiary flex items-center"><i class="w-3 h-3 mr-1" data-lucide="users"></i> 0%</span>
+<span class="text-text-light">kehadiran</span>
+</div>
+</div>
+</div>
+<!-- Recent Activity Bento -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div class="lg:col-span-2 card-gold-border p-6">
+<div class="flex justify-between items-center mb-6">
+<h4 class="font-headline-section text-[20px] text-on-surface">Pesan Terbaru</h4>
+<button class="text-secondary text-sm hover:underline">Lihat Semua</button>
+</div>
+<div class="space-y-4" id="recent-messages-container">
+<!-- Injected by JS -->
+</div>
+</div>
+<div class="card-gold-border p-6">
+<h4 class="font-headline-section text-[20px] text-on-surface mb-6">Status Undangan</h4>
+<div class="relative w-full h-48 flex items-center justify-center bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNDAwIDQwMCI+PGNpcmNsZSBjeD0iMjAwIiBjeT0iMjAwIiByPSIxOTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzBlMjQzYyIgc3Ryb2tlLXdpZHRoPSIyMCIvPjwvc3ZnPg==')] bg-center bg-no-repeat bg-contain" data-alt="A circular chart visualization showing the status of wedding invitations. The chart is minimalist, using a dark navy blue track with a bright gold segment indicating progress. The style is modern corporate, set against a deep midnight background, emphasizing clear data presentation with regal Minangkabau subtle accents.">
+<div class="text-center">
+<span class="block font-display-hero text-[36px] text-secondary">350</span>
+<span class="font-label-overline text-[10px] text-text-light">Terkirim</span>
+</div>
+</div>
+<div class="mt-6 space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant flex items-center"><span class="w-2 h-2 rounded-full bg-secondary mr-2"></span>Dibuka</span>
+<span class="font-bold">280</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant flex items-center"><span class="w-2 h-2 rounded-full bg-primary mr-2"></span>Belum Dibuka</span>
+<span class="font-bold">70</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- View: URL Generator -->
+<div class="space-y-8 hidden view-section" id="view-url-generator">
+<div class="card-gold-border p-6">
+<h3 class="font-headline-section text-[24px] text-secondary mb-4">Buat Tautan Undangan</h3>
+<div class="flex flex-col md:flex-row gap-4">
+<div class="flex-1">
+<label class="block font-body-small text-text-light mb-2">Nama Tamu</label>
+<input id="guest-name-input" class="input-field" placeholder="Contoh: Keluarga Bapak Budi" type="text"/>
+</div>
+<div class="flex items-end gap-2">
+<button id="generate-url-btn" class="btn-gold h-[42px] flex items-center gap-2">
+<i class="w-4 h-4" data-lucide="wand-2"></i> Generate
+                            </button>
+</div>
+</div>
+<div class="mt-6 p-4 bg-midnight-deep border border-secondary/20 rounded-lg flex flex-col md:flex-row justify-between items-center gap-4">
+<div id="generated-url-text" class="truncate w-full font-body-small text-secondary font-mono">
+                            Belum ada tautan yang dibuat.
+                        </div>
+<div class="flex gap-2 w-full md:w-auto">
+<button id="copy-url-btn" class="btn-outline-gold flex-1 md:flex-none flex items-center justify-center gap-2">
+<i class="w-4 h-4" data-lucide="copy"></i> Copy
+                            </button>
+<button id="wa-url-btn" class="bg-[#25D366] text-white px-4 py-2 rounded-md font-label-overline text-[10px] flex items-center justify-center gap-2 hover:bg-[#128C7E] transition-colors">
+<i class="w-4 h-4" data-lucide="message-circle"></i> WhatsApp
+                            </button>
+</div>
+</div>
+</div>
+<div class="card-gold-border overflow-hidden">
+<div class="p-4 border-b border-secondary/20 flex justify-between items-center bg-surface-container-high">
+<h4 class="font-body-standard font-bold text-on-surface">Daftar Tautan Terbuat</h4>
+<div class="relative">
+<i class="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-text-light" data-lucide="search"></i>
+<input class="bg-surface-container border border-outline-variant rounded-full pl-9 pr-4 py-1 text-sm text-on-surface focus:border-secondary outline-none" placeholder="Cari nama..." type="text"/>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-small">
+<thead class="bg-surface-container-highest text-text-light border-b border-secondary/20 uppercase text-[10px] tracking-wider">
+<tr>
+<th class="p-4 font-normal">Nama Tamu</th>
+<th class="p-4 font-normal">URL</th>
+<th class="p-4 font-normal">Dibuat Pada</th>
+<th class="p-4 font-normal text-right">Aksi</th>
+</tr>
+</thead>
+<tbody id="links-tbody" class="divide-y divide-outline-variant/30 text-on-surface-variant">
+<!-- Diinjeksi dengan JS -->
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- View: RSVP -->
+<div class="space-y-8 hidden view-section" id="view-rsvp">
+    <div class="card-gold-border overflow-hidden">
+        <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
+            <h4 class="font-body-standard font-bold text-on-surface">Data RSVP &amp; Ucapan</h4>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-small">
+                <thead class="bg-surface-container-highest text-text-light border-b border-secondary/20 uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="p-4 font-normal">Nama Tamu</th>
+                        <th class="p-4 font-normal">Kehadiran</th>
+                        <th class="p-4 font-normal">Pesan &amp; Doa</th>
+                        <th class="p-4 font-normal">Waktu</th>
+                    </tr>
+                </thead>
+                <tbody id="rsvp-tbody" class="divide-y divide-outline-variant/30 text-on-surface-variant">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- View: Gift -->
+<div class="space-y-8 hidden view-section" id="view-gift">
+    <div class="card-gold-border overflow-hidden">
+        <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
+            <h4 class="font-body-standard font-bold text-on-surface">Konfirmasi Transfer / Digital Gift</h4>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-small">
+                <thead class="bg-surface-container-highest text-text-light border-b border-secondary/20 uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="p-4 font-normal">Dari (Nama)</th>
+                        <th class="p-4 font-normal">Nominal (Rp)</th>
+                        <th class="p-4 font-normal">Bank</th>
+                        <th class="p-4 font-normal">Bukti</th>
+                    </tr>
+                </thead>
+                <tbody id="gift-tbody" class="divide-y divide-outline-variant/30 text-on-surface-variant">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- View: Settings -->
+<div class="space-y-8 hidden view-section" id="view-settings">
+    <div class="card-gold-border overflow-hidden">
+        <div class="p-4 border-b border-secondary/20 bg-surface-container-high">
+            <h4 class="font-body-standard font-bold text-on-surface">Persetujuan Pengguna (Admin)</h4>
+            <p class="text-xs text-text-light mt-1">Pendaftar baru otomatis memiliki Role 'family' dan butuh persetujuan Anda.</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left font-body-small">
+                <thead class="bg-surface-container-highest text-text-light border-b border-secondary/20 uppercase text-[10px] tracking-wider">
+                    <tr>
+                        <th class="p-4 font-normal">User ID</th>
+                        <th class="p-4 font-normal">Role</th>
+                        <th class="p-4 font-normal">Status</th>
+                        <th class="p-4 font-normal">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="users-tbody" class="divide-y divide-outline-variant/30 text-on-surface-variant">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</main>
+<script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Simple SPA navigation logic
+        document.querySelectorAll('.nav-item[data-target]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Remove active class from all nav items
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                
+                // Add active class to clicked item
+                const targetId = item.getAttribute('data-target');
+                item.classList.add('active');
+                
+                // Hide all views
+                document.querySelectorAll('.view-section').forEach(view => {
+                    view.classList.add('hidden');
+                    view.classList.remove('block');
+                });
+                
+                // Show target view (fallback to dashboard if not implemented yet in this snippet)
+                const targetView = document.getElementById(`view-${targetId}`);
+                if(targetView) {
+                    targetView.classList.remove('hidden');
+                    targetView.classList.add('block');
+                } else {
+                     document.getElementById('view-dashboard').classList.remove('hidden');
+                     document.getElementById('view-dashboard').classList.add('block');
+                }
+
+                // Update Header Title
+                document.getElementById('page-title').innerText = item.querySelector('span').innerText;
+            });
+        });
+
+        // Supabase Auth Integration
+        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+        const BASE_URL = 'https://ojanemwe.github.io/inv/';
+
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.replace('login.html');
+                return;
+            }
+
+            // Get user profile for RBAC
+            const { data: profile, error } = await supabase.from('user_profiles').select('*').eq('id', session.user.id).single();
+            
+            if (error || !profile) {
+                alert('Gagal memuat profil pengguna.');
+                await supabase.auth.signOut();
+                window.location.replace('login.html');
+                return;
+            }
+
+            if (!profile.is_approved) {
+                alert('Akun Anda belum disetujui oleh Admin. Hubungi Admin (Juju & Ojan) untuk persetujuan.');
+                await supabase.auth.signOut();
+                window.location.replace('login.html');
+                return;
+            }
+
+            // RBAC UI adjustments
+            if (profile.role === 'family') {
+                document.querySelector('[data-target="dashboard"]').classList.add('hidden');
+                document.querySelector('[data-target="rsvp"]').classList.add('hidden');
+                document.querySelector('[data-target="gift"]').classList.add('hidden');
+                document.querySelector('[data-target="settings"]').classList.add('hidden');
+                document.querySelector('.pt-6.pb-2').classList.add('hidden'); // Hide "System"
+                
+                // Force switch to URL Generator
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                document.querySelector('[data-target="url-generator"]').classList.add('active');
+                
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('view-dashboard').classList.remove('block');
+                document.getElementById('view-url-generator').classList.remove('hidden');
+                document.getElementById('view-url-generator').classList.add('block');
+                document.getElementById('page-title').innerText = 'URL Generator';
+            } else {
+                // Admin specific calls
+                fetchDashboardStats();
+                fetchRsvpTable();
+                fetchGiftTable();
+                fetchUsersTable();
+            }
+
+            document.getElementById('admin-body').classList.remove('opacity-0');
+            fetchLinks();
+        }
+        
+        checkAuth();
+
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.replace('login.html');
+        });
+
+        // ---------------- Dashboard Stats ---------------- //
+        async function fetchDashboardStats() {
+            const { data: rsvpData, error: rsvpErr } = await supabase.from('rsvp').select('*');
+            if(!rsvpErr && rsvpData) {
+                const totalRsvp = rsvpData.length;
+                const totalHadir = rsvpData.filter(r => r.status === 'Hadir').length;
+                const hadirPercentage = totalRsvp === 0 ? 0 : Math.round((totalHadir / totalRsvp) * 100);
+                
+                document.getElementById('stat-rsvp-count').innerText = totalRsvp;
+                document.getElementById('stat-rsvp-percentage').innerHTML = `<i class="w-3 h-3 mr-1" data-lucide="users"></i> ${hadirPercentage}%`;
+                
+                const recentContainer = document.getElementById('recent-messages-container');
+                recentContainer.innerHTML = '';
+                const recentRsvp = [...rsvpData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3);
+                
+                recentRsvp.forEach(r => {
+                    const initials = r.guest_name.substring(0,2).toUpperCase();
+                    recentContainer.innerHTML += `
+                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30 flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+                            <span class="font-label-overline text-secondary">${initials}</span>
+                        </div>
+                        <div>
+                            <p class="font-body-standard text-on-surface font-bold">${r.guest_name}</p>
+                            <p class="font-body-small text-text-light mb-2">${r.status} • ${r.pax} Orang</p>
+                            <p class="font-body-small text-on-surface-variant italic">"${r.message || '-'}"</p>
+                        </div>
+                    </div>`;
+                });
+            }
+
+            const { data: giftData, error: giftErr } = await supabase.from('digital_gifts').select('*');
+            if(!giftErr && giftData) {
+                const totalGiftTx = giftData.length;
+                const totalAmount = giftData.reduce((sum, g) => sum + Number(g.amount), 0);
+                document.getElementById('stat-gift-count').innerText = totalGiftTx;
+                
+                let amountStr = '0';
+                if(totalAmount >= 1000000) amountStr = (totalAmount/1000000).toFixed(1) + 'M';
+                else if(totalAmount >= 1000) amountStr = (totalAmount/1000).toFixed(1) + 'K';
+                else amountStr = totalAmount;
+
+                document.getElementById('stat-gift-total').innerText = amountStr;
+            }
+            lucide.createIcons();
+        }
+
+        // ---------------- Tables Render ---------------- //
+        async function fetchRsvpTable() {
+            const { data, error } = await supabase.from('rsvp').select('*').order('created_at', { ascending: false });
+            if(error) return;
+            const tbody = document.getElementById('rsvp-tbody');
+            tbody.innerHTML = '';
+            data.forEach(r => {
+                const date = new Date(r.created_at).toLocaleString('id-ID', {day: 'numeric', month: 'short', hour:'2-digit', minute:'2-digit'});
+                tbody.innerHTML += `
+                    <tr class="hover:bg-surface-variant/50 transition-colors">
+                        <td class="p-4 font-bold text-on-surface">${r.guest_name}</td>
+                        <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] ${r.status === 'Hadir' ? 'bg-secondary/20 text-secondary' : 'bg-outline-variant/30 text-on-surface'}">${r.status}</span></td>
+                        <td class="p-4 italic text-on-surface-variant text-xs">${r.message || '-'}</td>
+                        <td class="p-4 text-text-light">${date}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.viewImage = function(base64) {
+            const win = window.open();
+            win.document.write('<body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;"><img src="' + base64 + '" style="max-width:100%;max-height:100vh;"/></body>');
+        };
+
+        async function fetchGiftTable() {
+            const { data, error } = await supabase.from('digital_gifts').select('*').order('created_at', { ascending: false });
+            if(error) return;
+            const tbody = document.getElementById('gift-tbody');
+            tbody.innerHTML = '';
+            data.forEach(g => {
+                const amt = new Intl.NumberFormat('id-ID').format(g.amount);
+                tbody.innerHTML += `
+                    <tr class="hover:bg-surface-variant/50 transition-colors">
+                        <td class="p-4 font-bold text-on-surface">${g.sender_name}</td>
+                        <td class="p-4 text-secondary font-mono">${amt}</td>
+                        <td class="p-4 text-text-light">${g.bank_name}</td>
+                        <td class="p-4">
+                            <button onclick="viewImage('${g.proof_image}')" class="text-secondary hover:underline text-xs border border-secondary/30 px-3 py-1 rounded">Lihat Bukti</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function fetchUsersTable() {
+            const { data, error } = await supabase.from('user_profiles').select('*').order('created_at', { ascending: false });
+            if(error) return;
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+            data.forEach(u => {
+                const statusBadge = u.is_approved 
+                    ? '<span class="text-primary text-xs bg-primary/20 px-2 py-1 rounded border border-primary/30">Approved</span>' 
+                    : '<span class="text-error text-xs bg-error/20 px-2 py-1 rounded border border-error/30">Pending</span>';
+                
+                const actionBtn = u.is_approved 
+                    ? `<button onclick="toggleUserApprove('${u.id}', false)" class="text-error text-xs hover:underline">Revoke</button>`
+                    : `<button onclick="toggleUserApprove('${u.id}', true)" class="text-primary text-xs hover:underline">Approve</button>`;
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-surface-variant/50 transition-colors">
+                        <td class="p-4 text-xs font-mono text-text-light truncate max-w-[150px]" title="${u.id}">${u.id.substring(0,8)}...</td>
+                        <td class="p-4 uppercase text-[10px] tracking-widest">${u.role}</td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4">${actionBtn}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.toggleUserApprove = async function(id, isApproved) {
+            const { error } = await supabase.from('user_profiles').update({ is_approved: isApproved }).eq('id', id);
+            if(error) alert('Gagal update user: ' + error.message);
+            else fetchUsersTable(); // refresh
+        }
+
+        // URL Generator Logic
+        const guestInput = document.getElementById('guest-name-input');
+        const generateBtn = document.getElementById('generate-url-btn');
+        const urlText = document.getElementById('generated-url-text');
+        const copyBtn = document.getElementById('copy-url-btn');
+        const waBtn = document.getElementById('wa-url-btn');
+
+        let currentGeneratedUrl = '';
+
+        generateBtn.addEventListener('click', async () => {
+            const guestName = guestInput.value.trim();
+            if(!guestName) return alert('Masukkan nama tamu!');
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="w-4 h-4" data-lucide="loader"></i> Memproses...';
+            lucide.createIcons();
+
+            const encodedName = encodeURIComponent(guestName);
+            currentGeneratedUrl = `${BASE_URL}?to=${encodedName}`;
+            urlText.innerText = currentGeneratedUrl;
+
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            const { error } = await supabase.from('invitation_links').insert([{
+                guest_name: guestName,
+                url: currentGeneratedUrl,
+                created_by: session.user.id
+            }]);
+
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="w-4 h-4" data-lucide="wand-2"></i> Generate';
+            lucide.createIcons();
+
+            if(error) alert('Gagal menyimpan URL: ' + error.message);
+            else {
+                fetchLinks();
+                guestInput.value = '';
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            if(!currentGeneratedUrl) return;
+            navigator.clipboard.writeText(currentGeneratedUrl);
+            alert('Tautan disalin!');
+        });
+
+        waBtn.addEventListener('click', () => {
+            if(!currentGeneratedUrl) return;
+            const text = `Kepada Yth. Tamu Undangan,\n\nKami mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.\n\nSilakan buka tautan berikut untuk info selengkapnya:\n${currentGeneratedUrl}\n\nTerima kasih.`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+        });
+
+        async function fetchLinks() {
+            const { data, error } = await supabase.from('invitation_links').select('*').order('created_at', { ascending: false });
+            if(error) return console.error(error);
+            
+            const tbody = document.getElementById('links-tbody');
+            tbody.innerHTML = '';
+            
+            data.forEach(link => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-surface-variant/50 transition-colors';
+                const date = new Date(link.created_at).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'});
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-on-surface">${link.guest_name}</td>
+                    <td class="p-4 font-mono text-xs text-primary truncate max-w-[200px]"><a href="${link.url}" target="_blank" class="hover:underline">${link.url}</a></td>
+                    <td class="p-4 text-text-light">${date}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="navigator.clipboard.writeText('${link.url}'); alert('Tautan disalin!');" class="text-text-light hover:text-secondary"><i class="w-4 h-4" data-lucide="copy"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            lucide.createIcons();
+        }
+    </script>
+</body></html>
