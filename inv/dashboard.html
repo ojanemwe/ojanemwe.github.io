@@ -486,7 +486,7 @@
         });
 
         // Supabase Auth Integration
-        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabaseClient.co';
+        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
         const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -503,7 +503,7 @@
             const { data: profile, error } = await supabaseClient.from('user_profiles').select('*').eq('id', session.user.id).single();
             
             if (error || !profile) {
-                alert('Gagal memuat profil pengguna.');
+                alert('Gagal memuat profil pengguna: ' + (error ? error.message : 'Profil tidak ditemukan di tabel user_profiles. Pastikan Trigger Auth aktif.'));
                 await supabaseClient.auth.signOut();
                 window.location.replace('login.html');
                 return;
