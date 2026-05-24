@@ -704,15 +704,32 @@
                     ? `<button onclick="toggleUserApprove('${u.id}', false)" class="text-error text-xs hover:underline">Revoke</button>`
                     : `<button onclick="toggleUserApprove('${u.id}', true)" class="text-primary text-xs hover:underline">Approve</button>`;
                 
+                const roleSelect = `
+                    <select onchange="changeUserRole('${u.id}', this.value)" class="bg-surface-container border border-outline-variant/50 rounded px-2 py-1 text-[10px] uppercase tracking-widest text-on-surface focus:border-secondary focus:ring-1 focus:ring-secondary outline-none cursor-pointer">
+                        <option value="family" ${u.role === 'family' ? 'selected' : ''}>FAMILY</option>
+                        <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>ADMIN</option>
+                    </select>
+                `;
+                
                 tbody.innerHTML += `
                     <tr class="hover:bg-surface-variant/50 transition-colors">
                         <td class="p-4 text-xs font-mono text-text-light truncate max-w-[150px]" title="${u.id}">${u.id.substring(0,8)}...</td>
-                        <td class="p-4 uppercase text-[10px] tracking-widest">${u.role}</td>
+                        <td class="p-4">${roleSelect}</td>
                         <td class="p-4">${statusBadge}</td>
                         <td class="p-4">${actionBtn}</td>
                     </tr>
                 `;
             });
+        }
+        
+        window.changeUserRole = async function(id, newRole) {
+            if(!confirm(`Yakin ingin mengubah role user ini menjadi ${newRole.toUpperCase()}?`)) {
+                fetchUsersTable(); // reset select
+                return;
+            }
+            const { error } = await supabaseClient.from('user_profiles').update({ role: newRole }).eq('id', id);
+            if(error) alert('Gagal update role: ' + error.message);
+            else fetchUsersTable(); // refresh
         }
 
         window.toggleUserApprove = async function(id, isApproved) {
