@@ -160,6 +160,10 @@
             
             <form id="register-form" class="space-y-4">
                 <div>
+                    <label class="block font-body-small text-text-light mb-1">Nama Tampilan (Display Name)</label>
+                    <input id="reg-name" class="input-field" type="text" required />
+                </div>
+                <div>
                     <label class="block font-body-small text-text-light mb-1">Email</label>
                     <input id="reg-email" class="input-field" type="email" required />
                 </div>
@@ -221,6 +225,7 @@
         // Register Form Handler
         document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const name = document.getElementById('reg-name').value;
             const email = document.getElementById('reg-email').value;
             const password = document.getElementById('reg-password').value;
             const btn = document.getElementById('reg-submit-btn');
@@ -235,6 +240,11 @@
             const { data, error } = await supabaseClient.auth.signUp({
                 email: email,
                 password: password,
+                options: {
+                    data: {
+                        display_name: name
+                    }
+                }
             });
 
             if (error) {
