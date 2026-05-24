@@ -146,7 +146,7 @@
     </div>
 
     <!-- Register Modal -->
-    <div id="register-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div id="register-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
         <div class="card-gold-border p-8 w-full max-w-md glass-panel">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="font-label-overline text-secondary tracking-widest text-xl">Daftar Akun</h2>
@@ -219,9 +219,11 @@
         const regModal = document.getElementById('register-modal');
         document.getElementById('open-register-btn').addEventListener('click', () => {
             regModal.classList.remove('hidden');
+            regModal.classList.add('flex');
         });
         document.getElementById('close-register-btn').addEventListener('click', () => {
             regModal.classList.add('hidden');
+            regModal.classList.remove('flex');
         });
 
         document.getElementById('register-form').addEventListener('submit', async (e) => {
