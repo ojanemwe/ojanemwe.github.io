@@ -138,15 +138,18 @@
                 <button type="submit" id="submit-btn" class="btn-gold w-full flex justify-center items-center py-3 font-bold">
                     Masuk
                 </button>
-                <button type="button" id="open-register-btn" class="btn-outline-gold w-full flex justify-center items-center py-3 font-bold">
-                    Daftar Akun Baru
-                </button>
             </div>
         </form>
+        
+        <div class="mt-4 pt-4 border-t border-outline-variant/30">
+            <button type="button" id="open-register-btn" class="btn-outline-gold w-full flex justify-center items-center py-3 font-bold">
+                Daftar Akun Baru
+            </button>
+        </div>
     </div>
 
     <!-- Register Modal -->
-    <div id="register-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div id="register-modal" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 items-center justify-center p-4" style="display: none;">
         <div class="card-gold-border p-8 w-full max-w-md glass-panel">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="font-label-overline text-secondary tracking-widest text-xl">Daftar Akun</h2>
@@ -218,12 +221,10 @@
         // Register Modal Logic
         const regModal = document.getElementById('register-modal');
         document.getElementById('open-register-btn').addEventListener('click', () => {
-            regModal.classList.remove('hidden');
-            regModal.classList.add('flex');
+            regModal.style.display = 'flex';
         });
         document.getElementById('close-register-btn').addEventListener('click', () => {
-            regModal.classList.add('hidden');
-            regModal.classList.remove('flex');
+            regModal.style.display = 'none';
         });
 
         document.getElementById('register-form').addEventListener('submit', async (e) => {
