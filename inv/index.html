@@ -135,6 +135,18 @@
         body.locked nav, 
         body.locked section:not(#home), 
         body.locked footer { display: none !important; }
+
+        /* Hidden YouTube Player */
+        #yt-hidden-player {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
     </style>
 </head>
 <body class="locked bg-background text-on-surface font-body-standard text-body-standard min-h-screen antialiased selection:bg-secondary selection:text-on-secondary pb-24 md:pb-0">
@@ -412,9 +424,11 @@
             © 2024 Juju &amp; Ojan. Built with Heritage &amp; Modernity.
         </p>
 </footer>
+
+<div id="yt-hidden-player"></div>
+
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <script>
         // Leaflet Map Init
         document.addEventListener("DOMContentLoaded", () => {
@@ -470,47 +484,61 @@
             });
         });
 
-        // Minimal Tone.js Integration
+        // YouTube Background Music Integration
         let isPlaying = false;
-        let synth;
-        let sequence;
+        let ytPlayer;
 
-        async function initMusic() {
-            await Tone.start();
-            synth = new Tone.PolySynth(Tone.Synth).toDestination();
-            
-            // Very simple pentatonic sequence to match traditional vibe
-            const notes = ["C4", "E4", "G4", "A4", "C5", "A4", "G4", "E4"];
-            let i = 0;
-            
-            sequence = new Tone.Loop(time => {
-                synth.triggerAttackRelease(notes[i], "8n", time);
-                i = (i + 1) % notes.length;
-            }, "4n");
-            
-            Tone.Transport.bpm.value = 90;
+        // Load YouTube Iframe API
+        const tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('yt-hidden-player', {
+                height: '10', // Minimal size
+                width: '10',
+                videoId: '-vIFcIW8gMM', // Reference background music
+                playerVars: {
+                    'autoplay': 0,
+                    'controls': 0,
+                    'disablekb': 1,
+                    'fs': 0,
+                    'rel': 0,
+                    'modestbranding': 1,
+                    'iv_load_policy': 3
+                },
+                events: {
+                    'onReady': (event) => {
+                        event.target.setVolume(50);
+                    },
+                    'onStateChange': onPlayerStateChange
+                }
+            });
         }
 
-        async function toggleMusic() {
+        function onPlayerStateChange(event) {
             const topIcon = document.getElementById('music-icon-top');
             const fabIcon = document.getElementById('music-icon-fab');
             
-            if (!synth) {
-                await initMusic();
-            }
-
-            if (isPlaying) {
-                Tone.Transport.stop();
-                sequence.stop();
-                if(topIcon) topIcon.innerText = "music_off";
-                if(fabIcon) fabIcon.innerText = "music_off";
-                isPlaying = false;
-            } else {
-                Tone.Transport.start();
-                sequence.start(0);
+            if (event.data == YT.PlayerState.PLAYING) {
+                isPlaying = true;
                 if(topIcon) topIcon.innerText = "music_note";
                 if(fabIcon) fabIcon.innerText = "music_note";
-                isPlaying = true;
+            } else {
+                isPlaying = false;
+                if(topIcon) topIcon.innerText = "music_off";
+                if(fabIcon) fabIcon.innerText = "music_off";
+            }
+        }
+
+        function toggleMusic() {
+            if (!ytPlayer || typeof ytPlayer.getPlayerState !== 'function') return;
+
+            if (isPlaying) {
+                ytPlayer.pauseVideo();
+            } else {
+                ytPlayer.playVideo();
             }
         }
 
