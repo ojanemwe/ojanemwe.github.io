@@ -360,7 +360,18 @@
                 <label class="font-body-small text-text-light block mb-1">Foto Bukti Transfer (Otomatis Dikompres)</label>
                 <input id="gift-file" class="w-full text-text-light font-body-small file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-semibold file:bg-secondary/10 file:text-secondary hover:file:bg-secondary/20" required type="file" accept="image/*">
             </div>
-            <p id="gift-status" class="text-xs text-secondary hidden text-center italic"></p>
+            <div>
+                <label class="font-body-small text-text-light block mb-1">Kehadiran</label>
+                <select id="gift-status" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" required>
+                    <option value="Hadir">Hadir</option>
+                    <option value="Tidak Hadir">Tidak Hadir</option>
+                </select>
+            </div>
+            <div>
+                <label class="font-body-small text-text-light block mb-1">Pesan & Doa</label>
+                <textarea id="gift-message" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow h-20" placeholder="Tuliskan doa restu..."></textarea>
+            </div>
+            <p id="gift-status-text" class="text-xs text-secondary hidden text-center italic"></p>
             <button type="submit" id="gift-submit-btn" class="bg-secondary text-on-secondary px-6 py-3 rounded-sm font-label-overline text-label-overline hover:shadow-[0_0_15px_rgba(201,168,76,0.4)] transition-all duration-300 w-full mt-2">
                 Kirim Konfirmasi
             </button>
@@ -668,7 +679,7 @@
             giftForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('gift-submit-btn');
-                const statusText = document.getElementById('gift-status');
+                const statusText = document.getElementById('gift-status-text');
                 
                 btn.disabled = true;
                 btn.innerText = 'Memproses...';
@@ -679,16 +690,31 @@
                     const file = document.getElementById('gift-file').files[0];
                     const base64Image = await compressImage(file);
                     
-                    statusText.innerText = 'Mengirim data...';
-                    const { error } = await supabaseClient.from('digital_gifts').insert([{
-                        sender_name: document.getElementById('gift-name').value,
+                    const guestName = document.getElementById('gift-name').value;
+                    const giftStatus = document.getElementById('gift-status').value;
+                    const giftMessage = document.getElementById('gift-message').value;
+                    
+                    statusText.innerText = 'Mengirim data transfer...';
+                    const { error: giftError } = await supabaseClient.from('digital_gifts').insert([{
+                        sender_name: guestName,
                         amount: parseFloat(document.getElementById('gift-amount').value),
                         bank_name: document.getElementById('gift-bank').value,
                         proof_image: base64Image
                     }]);
 
-                    if (error) throw error;
-                    alert('Konfirmasi transfer berhasil dikirim. Terima kasih!');
+                    if (giftError) throw giftError;
+                    
+                    statusText.innerText = 'Mengirim data RSVP...';
+                    const { error: rsvpError } = await supabaseClient.from('rsvp').insert([{
+                        guest_name: guestName,
+                        status: giftStatus,
+                        pax: giftStatus === 'Hadir' ? 1 : 0,
+                        message: giftMessage
+                    }]);
+
+                    if (rsvpError) throw rsvpError;
+                    
+                    alert('Konfirmasi transfer dan RSVP berhasil dikirim. Terima kasih!');
                     giftModal.classList.add('hidden');
                     giftForm.reset();
                 } catch (error) {
