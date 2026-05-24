@@ -1,1 +1,626 @@
-hello world
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Juju &amp; Ojan - Undangan Pernikahan</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&amp;family=Lato:wght@300;400;700&amp;family=Playfair+Display:ital,wght@0,400;0,700;1,400&amp;display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Tailwind CSS Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed-dim": "#d2c6a0",
+                    "tertiary-container": "#322b10",
+                    "surface": "#0a141f",
+                    "on-tertiary-fixed-variant": "#4e4629",
+                    "primary-fixed": "#d2e4ff",
+                    "on-primary-fixed": "#001d36",
+                    "outline-variant": "#43474d",
+                    "surface-bright": "#303a46",
+                    "on-primary": "#15324f",
+                    "surface-container-high": "#212b37",
+                    "secondary-container": "#785d00",
+                    "surface-tint": "#aec9ed",
+                    "primary": "#aec9ed",
+                    "surface-variant": "#2c3542",
+                    "outline": "#8d9198",
+                    "inverse-primary": "#466080",
+                    "tertiary": "#d2c6a0",
+                    "error": "#ffb4ab",
+                    "surface-dim": "#0a141f",
+                    "on-tertiary-fixed": "#211b04",
+                    "inverse-on-surface": "#27313d",
+                    "surface-container-lowest": "#050f1a",
+                    "background": "#0a141f",
+                    "on-tertiary": "#373015",
+                    "on-secondary-fixed-variant": "#584400",
+                    "surface-container": "#17202c",
+                    "surface-cream-dark": "#dde6f2",
+                    "surface-container-highest": "#2c3542",
+                    "on-tertiary-container": "#9d926f",
+                    "text-light": "#3d5a7a",
+                    "on-primary-fixed-variant": "#2e4867",
+                    "surface-cream": "#f0f4fa",
+                    "midnight-deep": "#071929",
+                    "surface-container-low": "#121c28",
+                    "on-surface": "#d9e3f3",
+                    "primary-fixed-dim": "#aec9ed",
+                    "on-secondary": "#3d2e00",
+                    "on-error-container": "#ffdad6",
+                    "tertiary-fixed": "#efe2ba",
+                    "on-surface-variant": "#c3c6ce",
+                    "secondary-fixed": "#ffe08f",
+                    "on-primary-container": "#7a95b7",
+                    "on-error": "#690005",
+                    "secondary-fixed-dim": "#e6c364",
+                    "on-background": "#d9e3f3",
+                    "on-secondary-container": "#fdd977",
+                    "gold-light": "#e8c97a",
+                    "secondary": "#e6c364",
+                    "inverse-surface": "#d9e3f3",
+                    "error-container": "#93000a",
+                    "midnight-interactive": "#1a4a72",
+                    "on-secondary-fixed": "#241a00",
+                    "primary-container": "#0f2d4a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gap-component": "1rem",
+                    "max-width-container": "900px",
+                    "section-v": "5rem",
+                    "gap-grid": "2rem",
+                    "section-h": "1.5rem",
+                    "max-width-content": "600px"
+            },
+            "fontFamily": {
+                    "body-standard": ["Lato"],
+                    "display-hero": ["Playfair Display"],
+                    "display-hero-mobile": ["Playfair Display"],
+                    "headline-section-mobile": ["Playfair Display"],
+                    "headline-section": ["Playfair Display"],
+                    "label-overline": ["Cinzel"],
+                    "body-small": ["Lato"],
+                    "body-verse": ["Playfair Display"]
+            },
+            "fontSize": {
+                    "body-standard": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-hero": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "display-hero-mobile": ["32px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                    "headline-section-mobile": ["28px", {"lineHeight": "1.3", "fontWeight": "400"}],
+                    "headline-section": ["35px", {"lineHeight": "1.3", "fontWeight": "400"}],
+                    "label-overline": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.3em", "fontWeight": "700"}],
+                    "body-small": ["14px", {"lineHeight": "1.6", "letterSpacing": "0.01em", "fontWeight": "300"}],
+                    "body-verse": ["24px", {"lineHeight": "1.8", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gonjong-divider {
+            width: 100px;
+            height: 20px;
+            margin: 0 auto;
+            display: block;
+        }
+        /* Smooth Scroll Animations */
+        .fade-in-up {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in-up.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* Locked State */
+        body.locked { overflow: hidden; }
+        body.locked nav, 
+        body.locked section:not(#home), 
+        body.locked footer { display: none !important; }
+    </style>
+</head>
+<body class="locked bg-background text-on-surface font-body-standard text-body-standard min-h-screen antialiased selection:bg-secondary selection:text-on-secondary pb-24 md:pb-0 pt-16">
+<!-- TopNavBar (Desktop) -->
+<nav class="bg-surface/80 dark:bg-surface/80 backdrop-blur-md hidden md:flex justify-between items-center w-full px-section-h h-16 fixed top-0 z-50 shadow-[0_0_15px_rgba(230,195,100,0.2)] border-b border-secondary/20">
+<div class="font-label-overline text-label-overline text-secondary dark:text-secondary tracking-widest">
+            JUJU &amp; OJAN
+        </div>
+<ul class="flex items-center gap-6">
+<li class=""><a class="text-secondary font-bold border-b-2 border-secondary pb-1 flex items-center gap-2 font-label-overline text-label-overline" href="#home"><span class="material-symbols-outlined" style="font-size: 16px;">home</span> Home</a></li>
+<li class=""><a class="text-on-surface/70 hover:text-secondary hover:text-gold-light transition-colors transition-all duration-300 font-label-overline text-label-overline flex items-center gap-2" href="#story"><span class="material-symbols-outlined" style="font-size: 16px;">history_edu</span> Story</a></li>
+<li class=""><a class="text-on-surface/70 hover:text-secondary hover:text-gold-light transition-colors transition-all duration-300 font-label-overline text-label-overline flex items-center gap-2" href="#events"><span class="material-symbols-outlined" style="font-size: 16px;">event_note</span> Events</a></li>
+<li class=""><a class="text-on-surface/70 hover:text-secondary hover:text-gold-light transition-colors transition-all duration-300 font-label-overline text-label-overline flex items-center gap-2" href="#gallery"><span class="material-symbols-outlined" style="font-size: 16px;">photo_library</span> Gallery</a></li>
+<li class=""><a class="text-on-surface/70 hover:text-secondary hover:text-gold-light transition-colors transition-all duration-300 font-label-overline text-label-overline flex items-center gap-2" href="#rsvp"><span class="material-symbols-outlined" style="font-size: 16px;">mail</span> RSVP</a></li>
+</ul>
+<div class="flex items-center">
+<button class="text-secondary hover:text-gold-light transition-all duration-300 rounded-full p-2 bg-secondary-container/20" onclick="toggleMusic()">
+<span class="material-symbols-outlined" id="music-icon-top">music_note</span>
+</button>
+</div>
+</nav>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-surface/80 dark:bg-surface/80 backdrop-blur-md rounded-t-xl shadow-[0_-4px_20px_rgba(230,195,100,0.15)] border-t border-secondary/30">
+<a class="flex flex-col items-center justify-center bg-secondary-container/30 text-secondary rounded-xl px-3 py-1 scale-90 transition-all duration-200" href="#home">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-overline text-[10px] mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-secondary transition-colors" href="#story">
+<span class="material-symbols-outlined">history_edu</span>
+<span class="font-label-overline text-[10px] mt-1">Story</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-secondary transition-colors" href="#events">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-label-overline text-[10px] mt-1">Events</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-secondary transition-colors" href="#gallery">
+<span class="material-symbols-outlined">photo_library</span>
+<span class="font-label-overline text-[10px] mt-1">Gallery</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-secondary transition-colors" href="#rsvp">
+<span class="material-symbols-outlined">mail</span>
+<span class="font-label-overline text-[10px] mt-1">RSVP</span>
+</a>
+</nav>
+<!-- Floating Music Button (Mobile/Contextual) -->
+<button class="md:hidden fixed bottom-24 right-4 z-40 bg-secondary text-on-secondary p-3 rounded-full shadow-[0_0_15px_rgba(230,195,100,0.4)] flex items-center justify-center" onclick="toggleMusic()">
+<span class="material-symbols-outlined" id="music-icon-fab">music_note</span>
+</button>
+<!-- Content Wrap -->
+<main class="w-full flex flex-col items-center">
+<!-- Hero Section -->
+<section class="relative w-full min-h-[921px] flex flex-col items-center justify-center text-center px-section-h py-section-v bg-cover bg-center" data-alt="A grand, dimly lit traditional Minangkabau palace interior during nighttime. The space is heavily adorned with deep navy and rich gold floral and architectural patterns reflecting regal Sumatran heritage. Soft, warm ambient lighting casts a celestial glow over intricately carved wooden panels. The aesthetic is formal, minimalist in its central framing, but ornate at the borders, echoing a modern royal wedding invitation." id="home" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAHNuf5CTzoXvXZbsG9niYM3qxwsruDrj11JcbZJ3HKggmIQYzqY5bWR09CLF9Y69349heb8MwlhTStcBtnRqNgowqG3W6wAIwxCptz50oH_-0Cx81hAL1D_iCNBu4K0jSSsXaIMdrq6v7SxC9wAEggf_7sE7qTSd_fvlSF4Ov2aT2aB6IVlncBujHVWE63hxXedz9KLK8YfO0Akfv9t2sZjUUmFtOTovtvgC4yI6OOJmAMZ0L5xcEpmYxiuAhTnWr_TuYbV9yVOQ');">
+<!-- Overlay -->
+<div class="absolute inset-0 bg-midnight-deep/85 backdrop-blur-[2px]"></div>
+<div class="relative z-10 w-full max-w-max-width-content border-2 border-secondary/40 p-8 md:p-12 rounded-sm bg-midnight-deep/40 backdrop-blur-md flex flex-col items-center">
+<!-- Top Ornament -->
+<svg class="gonjong-divider mb-6 text-secondary" fill="currentColor" viewBox="0 0 100 30">
+<path d="M50 0 L60 20 L90 20 L95 25 L5 25 L10 20 L40 20 Z"></path>
+</svg>
+<p class="font-label-overline text-label-overline text-secondary mb-6 tracking-widest uppercase">Bismillahirrahmanirrahim</p>
+<p class="font-body-small text-body-small text-on-surface-variant mb-2">Kami Mengundang Yth. Bapak/Ibu/Saudara/i</p>
+<h2 class="font-display-hero-mobile text-display-hero-mobile text-secondary mb-4 italic" id="guest-display">Tamu Undangan</h2>
+<p class="font-label-overline text-label-overline text-on-surface-variant mb-6 tracking-widest uppercase">Pada Pernikahan</p>
+<h1 class="font-display-hero-mobile text-display-hero-mobile md:font-display-hero md:text-display-hero text-on-surface mb-8">Juju <span class="text-secondary">&amp;</span> Ojan</h1>
+<p class="font-body-small text-body-small text-on-surface-variant mb-8 max-w-md mx-auto">
+                    "Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu isteri-isteri dari jenismu sendiri, supaya kamu cenderung dan merasa tenteram kepadanya." <br>
+<span class="text-secondary text-xs mt-2 block">(QS. Ar-Rum: 21)</span>
+</p>
+<!-- Countdown -->
+<div class="flex gap-4 justify-center mb-8 w-full max-w-xs">
+<div class="flex flex-col items-center bg-surface-container\/80 p-3 rounded border border-secondary\/20 flex-1">
+<span class="font-display-hero-mobile text-display-hero-mobile text-secondary" id="cd-days">00</span>
+<span class="font-label-overline text-[10px] text-on-surface-variant">Hari</span>
+</div>
+<div class="flex flex-col items-center bg-surface-container\/80 p-3 rounded border border-secondary\/20 flex-1">
+<span class="font-display-hero-mobile text-display-hero-mobile text-secondary" id="cd-hours">00</span>
+<span class="font-label-overline text-[10px] text-on-surface-variant">Jam</span>
+</div>
+<div class="flex flex-col items-center bg-surface-container\/80 p-3 rounded border border-secondary\/20 flex-1">
+<span class="font-display-hero-mobile text-display-hero-mobile text-secondary" id="cd-mins">00</span>
+<span class="font-label-overline text-[10px] text-on-surface-variant">Mnt</span>
+</div>
+</div>
+<button id="btn-buka" class="bg-secondary text-on-secondary px-8 py-3 rounded-sm font-label-overline text-label-overline hover:shadow-[0_0_15px_rgba(201,168,76,0.4)] transition-all duration-300 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">mail</span> Buka Undangan
+                </button>
+<!-- Bottom Ornament -->
+<svg class="gonjong-divider mt-6 text-secondary rotate-180" fill="currentColor" viewBox="0 0 100 30">
+<path d="M50 0 L60 20 L90 20 L95 25 L5 25 L10 20 L40 20 Z"></path>
+</svg>
+</div>
+</section>
+<!-- Mempelai Section -->
+<section class="w-full max-w-max-width-container px-section-h py-section-v flex flex-col items-center text-center" id="mempelai">
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-12">Sang Mempelai</h2>
+<div class="flex flex-col md:flex-row gap-gap-grid w-full justify-center">
+<!-- Juju -->
+<div class="flex-1 bg-surface-container p-6 rounded-lg border border-secondary/30 relative overflow-hidden group">
+<div class="w-32 h-32 mx-auto rounded-full border-2 border-secondary p-1 mb-4">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="A portrait of an elegant woman wearing traditional royal Minangkabau bridal attire with intricate gold headpieces (Suntiang) set against a moody, deep navy studio background. Warm spotlighting illuminates her face softly, accentuating the regal, celestial atmosphere and modern minimalist framing of the scene." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAf5t_yG_wtWcR-u7tC6ATKkweGgY_oV0YBObFX8y-DHbZ2irNnNm_BttdlE-Mh6frCUoimB-b-CnybAh6jlxk_cQ9rRATd5JJeNzBck3I3P3pCbMO6qFqsRO_gyuDx2pfAm_IVc18ynv1ruQ_Lrx5z7Y0lrQw8ONpHkftFRZzVhCZeJFILmpIedkGE1SjHDFQknerfmd9IlwixKulD1KPe5YzGYlwaT_xuTdRSJOaKBs2x300lFYv957jdSgCetQGFfM_ksL-J-A');"></div>
+</div>
+<h3 class="font-display-hero-mobile text-[24px] text-on-surface mb-1">Yulia Herlina</h3>
+<p class="font-label-overline text-label-overline text-secondary mb-3">Juju</p>
+<p class="font-body-small text-body-small text-on-surface-variant">Putri dari Bapak Fulan &amp; Ibu Fulanah</p>
+<a class="inline-flex mt-4 text-on-surface-variant hover:text-secondary transition-colors" href="#"><span class="material-symbols-outlined">person</span></a>
+</div>
+<!-- Ojan -->
+<div class="flex-1 bg-surface-container p-6 rounded-lg border border-secondary/30 relative overflow-hidden group">
+<div class="w-32 h-32 mx-auto rounded-full border-2 border-secondary p-1 mb-4">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="A portrait of a handsome man wearing a traditional royal Minangkabau groom's attire (Salengkang and Deta) featuring deep navy fabrics and heavy gold embroidery. The setting is a sophisticated dark studio with a celestial ambiance. The lighting is cinematic, highlighting the regal modern corporate aesthetic and sharp symmetry." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCe_09233KySKodSsFXRtB0ZDw3XwD9BC5nn_VNxPf5zHAvx0db4S07mM-qkw1CuKl_8pYTedawix1vntVSZcjWrViUMxP2A4pmtFWVZDRHsTFxktDJ-yBkNGmZfA9evbpEukM0gS_FmBPFMCPrWaEEQ3N5jq4q_W4TwhE4oYM-K16msusvBPhjARClxyV6Gi_Qv3meHuX9DjWqG3K4SN9DgIEVFjWSJs-HuJDEvbQ6E-ZA7pwOJD__DCyk08gDxFs6iIxX5PXiGg');"></div>
+</div>
+<h3 class="font-display-hero-mobile text-[24px] text-on-surface mb-1">Fauzan Putra</h3>
+<p class="font-label-overline text-label-overline text-secondary mb-3">Ojan</p>
+<p class="font-body-small text-body-small text-on-surface-variant">Putra dari Bapak Fulan &amp; Ibu Fulanah</p>
+<a class="inline-flex mt-4 text-on-surface-variant hover:text-secondary transition-colors" href="#"><span class="material-symbols-outlined">person</span></a>
+</div>
+</div>
+</section>
+<!-- Events Section -->
+<section class="w-full px-section-h py-section-v bg-surface-container-low flex flex-col items-center" id="events">
+<svg class="gonjong-divider mb-6 text-secondary" fill="currentColor" viewBox="0 0 100 30">
+<path d="M50 0 L60 20 L90 20 L95 25 L5 25 L10 20 L40 20 Z"></path>
+</svg>
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-12">Detail Acara</h2>
+<div class="w-full max-w-max-width-container grid grid-cols-1 md:grid-cols-2 gap-gap-grid">
+<!-- Akad -->
+<div class="bg-surface p-8 border border-secondary/30 rounded text-center relative shadow-[0_0_20px_rgba(201,168,76,0.05)]">
+<span class="material-symbols-outlined text-4xl text-secondary mb-4 block" data-weight="fill">volunteer_activism</span>
+<h3 class="font-label-overline text-[18px] text-on-surface mb-4 tracking-widest">Akad Nikah</h3>
+<p class="font-body-standard text-secondary mb-2">Sabtu, 24 Agustus 2024</p>
+<p class="font-body-small text-on-surface-variant mb-6">08:00 WIB - Selesai</p>
+<p class="font-body-small text-on-surface mb-6 border-t border-b border-secondary/20 py-4">
+                        Masjid Raya Sumatera Barat<br>
+                        Jl. Khatib Sulaiman, Padang Utara
+                    </p>
+<button class="border border-secondary text-secondary px-6 py-2 text-sm font-label-overline hover:bg-secondary hover:text-on-secondary transition-all rounded-sm flex items-center justify-center gap-2 w-full">
+<span class="material-symbols-outlined text-sm">location_on</span> Lihat Lokasi
+                    </button>
+</div>
+<!-- Resepsi -->
+<div class="bg-surface p-8 border border-secondary/30 rounded text-center relative shadow-[0_0_20px_rgba(201,168,76,0.05)]">
+<span class="material-symbols-outlined text-4xl text-secondary mb-4 block" data-weight="fill">celebration</span>
+<h3 class="font-label-overline text-[18px] text-on-surface mb-4 tracking-widest">Resepsi</h3>
+<p class="font-body-standard text-secondary mb-2">Minggu, 25 Agustus 2024</p>
+<p class="font-body-small text-on-surface-variant mb-6">10:00 WIB - Selesai</p>
+<p class="font-body-small text-on-surface mb-6 border-t border-b border-secondary/20 py-4">
+                        Pangeran Beach Hotel<br>
+                        Jl. Ir. H. Juanda No.79, Padang
+                    </p>
+<button class="border border-secondary text-secondary px-6 py-2 text-sm font-label-overline hover:bg-secondary hover:text-on-secondary transition-all rounded-sm flex items-center justify-center gap-2 w-full">
+<span class="material-symbols-outlined text-sm">location_on</span> Lihat Lokasi
+                    </button>
+</div>
+</div>
+<!-- Map Container -->
+<div class="w-full max-w-max-width-container mt-12 h-64 bg-surface-container border border-secondary/30 rounded" data-location="Padang, Indonesia" id="map"></div>
+</section>
+<!-- Digital Gift Section -->
+<section class="w-full max-w-max-width-content px-section-h py-section-v flex flex-col items-center text-center" id="gift">
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-4">Digital Gift</h2>
+<p class="font-body-small text-body-small text-on-surface-variant mb-10">Doa restu Anda merupakan karunia yang sangat berarti bagi kami. Namun, jika Anda hendak memberikan tanda kasih, dapat melalui fitur di bawah ini.</p>
+<div class="w-full flex flex-col gap-4">
+<div class="bg-surface-container border border-secondary/20 p-6 rounded text-left flex justify-between items-center">
+<div>
+<p class="font-label-overline text-secondary text-sm mb-1">BCA</p>
+<p class="font-body-standard text-on-surface text-xl mb-1 tracking-wider">1234 5678 90</p>
+<p class="font-body-small text-on-surface-variant">a.n Yulia Herlina</p>
+</div>
+<button class="bg-secondary/10 text-secondary p-2 rounded hover:bg-secondary hover:text-on-secondary transition-colors" title="Salin Rekening">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+<div class="bg-surface-container border border-secondary/20 p-6 rounded text-left flex justify-between items-center">
+<div>
+<p class="font-label-overline text-secondary text-sm mb-1">MANDIRI</p>
+<p class="font-body-standard text-on-surface text-xl mb-1 tracking-wider">0987 6543 21</p>
+<p class="font-body-small text-on-surface-variant">a.n Fauzan Putra</p>
+</div>
+<button class="bg-secondary/10 text-secondary p-2 rounded hover:bg-secondary hover:text-on-secondary transition-colors" title="Salin Rekening">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+</div>
+<button id="btn-open-gift-modal" class="mt-8 bg-secondary text-on-secondary px-6 py-3 rounded-sm font-label-overline text-label-overline hover:shadow-[0_0_15px_rgba(201,168,76,0.4)] transition-all duration-300 w-full flex justify-center items-center gap-2">
+<span class="material-symbols-outlined">receipt_long</span> Konfirmasi Transfer
+            </button>
+</section>
+
+<!-- Gift Modal -->
+<div id="gift-modal" class="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm hidden flex items-center justify-center px-4">
+    <div class="bg-surface-container border border-secondary/30 rounded-lg p-6 w-full max-w-md shadow-2xl relative">
+        <button id="btn-close-gift-modal" class="absolute top-4 right-4 text-text-light hover:text-secondary"><span class="material-symbols-outlined">close</span></button>
+        <h3 class="font-headline-section text-secondary mb-4 text-[24px]">Konfirmasi Transfer</h3>
+        <form id="gift-form" class="flex flex-col gap-4">
+            <div>
+                <label class="font-body-small text-text-light block mb-1">Dari (Nama)</label>
+                <input id="gift-name" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" required type="text" placeholder="Nama Pengirim">
+            </div>
+            <div>
+                <label class="font-body-small text-text-light block mb-1">Nominal (Rp)</label>
+                <input id="gift-amount" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" required type="number" min="1" placeholder="Contoh: 100000">
+            </div>
+            <div>
+                <label class="font-body-small text-text-light block mb-1">Bank Tujuan</label>
+                <select id="gift-bank" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" required>
+                    <option value="BCA">BCA - Yulia Herlina</option>
+                    <option value="MANDIRI">MANDIRI - Fauzan Putra</option>
+                </select>
+            </div>
+            <div>
+                <label class="font-body-small text-text-light block mb-1">Foto Bukti Transfer (Otomatis Dikompres)</label>
+                <input id="gift-file" class="w-full text-text-light font-body-small file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-semibold file:bg-secondary/10 file:text-secondary hover:file:bg-secondary/20" required type="file" accept="image/*">
+            </div>
+            <p id="gift-status" class="text-xs text-secondary hidden text-center italic"></p>
+            <button type="submit" id="gift-submit-btn" class="bg-secondary text-on-secondary px-6 py-3 rounded-sm font-label-overline text-label-overline hover:shadow-[0_0_15px_rgba(201,168,76,0.4)] transition-all duration-300 w-full mt-2">
+                Kirim Konfirmasi
+            </button>
+        </form>
+    </div>
+</div>
+<!-- RSVP & Wishes Section -->
+<section class="w-full px-section-h py-section-v bg-surface-container-low flex flex-col items-center" id="rsvp">
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-8">RSVP &amp; Ucapan</h2>
+<div class="w-full max-w-max-width-content bg-surface p-6 md:p-8 rounded border border-secondary/30 shadow-[0_0_20px_rgba(201,168,76,0.05)]">
+<form id="rsvp-form" class="flex flex-col gap-4">
+<div>
+<label class="font-body-small text-text-light block mb-1">Nama</label>
+<input id="rsvp-name" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" placeholder="Nama Anda" required="" type="text">
+</div>
+<div>
+<label class="font-body-small text-text-light block mb-1">Kehadiran</label>
+<select id="rsvp-status" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow">
+<option value="Hadir">Hadir</option>
+<option value="Tidak Hadir">Tidak Hadir</option>
+</select>
+</div>
+<div>
+<label class="font-body-small text-text-light block mb-1">Pesan &amp; Doa</label>
+<textarea id="rsvp-message" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow h-24" placeholder="Tuliskan doa restu..."></textarea>
+</div>
+<button class="bg-secondary text-on-secondary px-6 py-3 rounded-sm font-label-overline text-label-overline hover:shadow-[0_0_15px_rgba(201,168,76,0.4)] transition-all duration-300 w-full mt-2" type="submit">
+                        Kirim Ucapan
+                    </button>
+</form>
+<div class="mt-10 border-t border-secondary/20 pt-8">
+<h3 class="font-label-overline text-secondary mb-6 text-center">Ucapan Termanis</h3>
+<div class="flex flex-col gap-4 h-64 overflow-y-auto pr-2 custom-scrollbar">
+<!-- Stub Wishes -->
+<div class="bg-surface-container p-4 rounded border border-outline-variant/30">
+<p class="font-label-overline text-on-surface mb-1 text-sm">Ahmad Family <span class="bg-secondary text-on-secondary text-[9px] px-2 py-0.5 rounded-full ml-2 align-middle inline-block">Hadir</span></p>
+<p class="font-body-small text-on-surface-variant">Selamat menempuh hidup baru Juju dan Ojan! Semoga menjadi keluarga sakinah, mawaddah, warahmah.</p>
+</div>
+<div class="bg-surface-container p-4 rounded border border-outline-variant/30">
+<p class="font-label-overline text-on-surface mb-1 text-sm">Budi &amp; Rekan <span class="bg-outline text-background text-[9px] px-2 py-0.5 rounded-full ml-2 align-middle inline-block">Tidak Hadir</span></p>
+<p class="font-body-small text-on-surface-variant">Maaf belum bisa hadir, tapi doa terbaik selalu menyertai pernikahan kalian berdua.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-section-v px-section-h flex flex-col items-center text-center gap-gap-component bg-midnight-deep dark:bg-midnight-deep border-t border-secondary/10 relative">
+<div class="font-display-hero text-headline-section text-secondary mb-4">
+            JUJU &amp; OJAN
+        </div>
+<p class="font-body-small text-body-small text-on-surface/50 max-w-sm mb-4">
+            Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir memberikan doa restu.
+        </p>
+<div class="flex gap-4 font-label-overline text-label-overline">
+<a class="text-on-surface/50 hover:text-secondary transition-colors" href="#">Privacy Policy</a>
+<a class="text-on-surface/50 hover:text-secondary transition-colors" href="#">Contact Support</a>
+</div>
+<p class="font-body-small text-body-small text-on-surface/50 mt-4">
+            © 2024 Juju &amp; Ojan. Built with Heritage &amp; Modernity.
+        </p>
+</footer>
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<script>
+        // Leaflet Map Init
+        document.addEventListener("DOMContentLoaded", () => {
+            const mapContainer = document.getElementById('map');
+            if (mapContainer) {
+                const map = L.map('map').setView([-0.9471, 100.3658], 13); // Padang coordinates
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                }).addTo(map);
+                L.marker([-0.9471, 100.3658]).addTo(map)
+                    .bindPopup('<b>Lokasi Acara</b><br>Padang, Sumatera Barat.')
+                    .openPopup();
+            }
+
+            // Simple Countdown
+            const countDownDate = new Date().getTime() + (30 * 24 * 60 * 60 * 1000); // 30 days from now
+            setInterval(() => {
+                const now = new Date().getTime();
+                const distance = countDownDate - now;
+                
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById("cd-days").innerText = days.toString().padStart(2, '0');
+                document.getElementById("cd-hours").innerText = hours.toString().padStart(2, '0');
+                document.getElementById("cd-mins").innerText = minutes.toString().padStart(2, '0');
+            }, 1000);
+
+            // Buka Undangan Logic
+            const btnBuka = document.getElementById('btn-buka');
+            if(btnBuka) {
+                btnBuka.addEventListener('click', () => {
+                    document.body.classList.remove('locked');
+                    if(!isPlaying) toggleMusic();
+                    const mempelaiSection = document.getElementById('mempelai');
+                    if(mempelaiSection) mempelaiSection.scrollIntoView({ behavior: 'smooth' });
+                });
+            }
+
+            // Scroll Animation Observer
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('section:not(#home) h2, section:not(#home) p, section:not(#home) .grid, section:not(#home) > div, footer').forEach(el => {
+                el.classList.add('fade-in-up');
+                observer.observe(el);
+            });
+        });
+
+        // Minimal Tone.js Integration
+        let isPlaying = false;
+        let synth;
+        let sequence;
+
+        async function initMusic() {
+            await Tone.start();
+            synth = new Tone.PolySynth(Tone.Synth).toDestination();
+            
+            // Very simple pentatonic sequence to match traditional vibe
+            const notes = ["C4", "E4", "G4", "A4", "C5", "A4", "G4", "E4"];
+            let i = 0;
+            
+            sequence = new Tone.Loop(time => {
+                synth.triggerAttackRelease(notes[i], "8n", time);
+                i = (i + 1) % notes.length;
+            }, "4n");
+            
+            Tone.Transport.bpm.value = 90;
+        }
+
+        async function toggleMusic() {
+            const topIcon = document.getElementById('music-icon-top');
+            const fabIcon = document.getElementById('music-icon-fab');
+            
+            if (!synth) {
+                await initMusic();
+            }
+
+            if (isPlaying) {
+                Tone.Transport.stop();
+                sequence.stop();
+                if(topIcon) topIcon.innerText = "music_off";
+                if(fabIcon) fabIcon.innerText = "music_off";
+                isPlaying = false;
+            } else {
+                Tone.Transport.start();
+                sequence.start(0);
+                if(topIcon) topIcon.innerText = "music_note";
+                if(fabIcon) fabIcon.innerText = "music_note";
+                isPlaying = true;
+            }
+        }
+
+        // Supabase Integrations
+        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+        // RSVP Submit
+        const rsvpForm = document.getElementById('rsvp-form');
+        if(rsvpForm) {
+            rsvpForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = rsvpForm.querySelector('button[type="submit"]');
+                const originalText = btn.innerText;
+                btn.innerText = 'Mengirim...';
+                btn.disabled = true;
+
+                const name = document.getElementById('rsvp-name').value;
+                const status = document.getElementById('rsvp-status').value;
+                const message = document.getElementById('rsvp-message').value;
+
+                const { error } = await supabaseClient.from('rsvp').insert([{
+                    guest_name: name,
+                    status: status,
+                    pax: status === 'Hadir' ? 1 : 0,
+                    message: message
+                }]);
+
+                btn.innerText = originalText;
+                btn.disabled = false;
+
+                if (error) {
+                    alert('Gagal mengirim RSVP: ' + error.message);
+                } else {
+                    alert('Terima kasih, RSVP Anda telah terkirim!');
+                    rsvpForm.reset();
+                }
+            });
+        }
+
+        // Gift Submit & Image Compression
+        const giftModal = document.getElementById('gift-modal');
+        document.getElementById('btn-open-gift-modal')?.addEventListener('click', () => giftModal.classList.remove('hidden'));
+        document.getElementById('btn-close-gift-modal')?.addEventListener('click', () => giftModal.classList.add('hidden'));
+
+        function compressImage(file, maxWidth = 800, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = event => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        const giftForm = document.getElementById('gift-form');
+        if(giftForm) {
+            giftForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('gift-submit-btn');
+                const statusText = document.getElementById('gift-status');
+                
+                btn.disabled = true;
+                btn.innerText = 'Memproses...';
+                statusText.classList.remove('hidden');
+                statusText.innerText = 'Mengompresi gambar...';
+
+                try {
+                    const file = document.getElementById('gift-file').files[0];
+                    const base64Image = await compressImage(file);
+                    
+                    statusText.innerText = 'Mengirim data...';
+                    const { error } = await supabaseClient.from('digital_gifts').insert([{
+                        sender_name: document.getElementById('gift-name').value,
+                        amount: parseFloat(document.getElementById('gift-amount').value),
+                        bank_name: document.getElementById('gift-bank').value,
+                        proof_image: base64Image
+                    }]);
+
+                    if (error) throw error;
+                    alert('Konfirmasi transfer berhasil dikirim. Terima kasih!');
+                    giftModal.classList.add('hidden');
+                    giftForm.reset();
+                } catch (error) {
+                    alert('Gagal: ' + error.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = 'Kirim Konfirmasi';
+                    statusText.classList.add('hidden');
+                }
+            });
+        }
+    </script>
+</body></html>
