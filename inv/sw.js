@@ -1,5 +1,12 @@
-const CACHE_NAME = 'ZanJu-cache-v1';
-const urlsToCache = ['./'];
+const CACHE_NAME = 'zanju-cache-v1';
+const urlsToCache = [
+  './',
+  './login.html',
+  './dashboard.html',
+  './manifest.json',
+  './icon192.png',
+  './icon512.png'
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(
