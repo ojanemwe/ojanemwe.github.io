@@ -839,6 +839,7 @@
         const waBtn = document.getElementById('wa-url-btn');
 
         let currentGeneratedUrl = '';
+        let currentGuestName = ''; // 1. Tambahkan variabel global untuk menyimpan nama
 
         generateBtn.addEventListener('click', async () => {
             const guestName = guestInput.value.trim();
@@ -850,6 +851,7 @@
 
             const encodedName = encodeURIComponent(guestName);
             currentGeneratedUrl = `${BASE_URL}?to=${encodedName}`;
+            currentGuestName = guestName; // 2. Simpan nama input ke variabel global
             urlText.innerText = currentGeneratedUrl;
 
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -879,7 +881,8 @@
 
         waBtn.addEventListener('click', () => {
             if(!currentGeneratedUrl) return;
-            const text = `Kepada Yth. Tamu Undangan,\n\nKami mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.\n\nSilakan buka tautan berikut untuk info selengkapnya:\n${currentGeneratedUrl}\n\nTerima kasih.`;
+            // 3. Ubah "Tamu Undangan" menjadi ${currentGuestName}
+            const text = `Kepada Yth. ${currentGuestName || 'Tamu Undangan'},\n\nKami mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.\n\nSilakan buka tautan berikut untuk info selengkapnya:\n${currentGeneratedUrl}\n\nTerima kasih.`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         });
 
