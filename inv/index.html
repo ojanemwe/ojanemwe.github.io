@@ -514,27 +514,18 @@ Lihat Semua Ucapan
         document.addEventListener("DOMContentLoaded", () => {
             const mapContainer = document.getElementById('map');
             if (mapContainer) {
-                // Inisialisasi peta tanpa setView statis
                 const map = L.map('map');
                 
-                // Menggunakan tile layer versi terang (light_all)
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
                 }).addTo(map);
                 
-                // Definisi koordinat titik
                 const lokasiAndaleh = [-0.232244, 100.690673];
                 const lokasiLubuakJantan = [-0.439353, 100.748457];
 
-                // Marker 1: Andaleh
-                L.marker(lokasiAndaleh).addTo(map)
-                    .bindPopup('<b>Andaleh</b>');
+                L.marker(lokasiAndaleh).addTo(map).bindPopup('<b>Andaleh</b>');
+                L.marker(lokasiLubuakJantan).addTo(map).bindPopup('<b>Lubuak Jantan</b>');
 
-                // Marker 2: Lubuak Jantan
-                L.marker(lokasiLubuakJantan).addTo(map)
-                    .bindPopup('<b>Lubuak Jantan</b>');
-
-                // Menyesuaikan cakupan peta secara otomatis berdasarkan posisi kedua titik
                 const bounds = L.latLngBounds([lokasiAndaleh, lokasiLubuakJantan]);
                 map.fitBounds(bounds, { padding: [40, 40] });
             }
