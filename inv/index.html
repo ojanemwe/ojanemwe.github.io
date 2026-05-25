@@ -391,6 +391,53 @@
         </div>
     </div>
 </div>
+<!-- Gallery Section -->
+<section class="w-full px-section-h py-section-v bg-background flex flex-col items-center" id="gallery">
+    <svg class="gonjong-divider mb-6 text-secondary" fill="currentColor" viewBox="0 0 100 30">
+        <path d="M50 0 L60 20 L90 20 L95 25 L5 25 L10 20 L40 20 Z"></path>
+    </svg>
+    <h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-12">Galeri Momen</h2>
+    <div class="w-full max-w-max-width-container grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[200px] md:auto-rows-[300px]">
+        <!-- Portrait 1 -->
+        <div class="row-span-2 col-span-1 rounded-lg overflow-hidden group cursor-pointer border border-secondary/20 shadow-lg relative" onclick="openGalleryModal('https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=800&auto=format&fit=crop" alt="Wedding Moment 1" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+                <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-150">zoom_in</span>
+            </div>
+        </div>
+        <!-- Landscape 1 -->
+        <div class="col-span-2 md:col-span-1 rounded-lg overflow-hidden group cursor-pointer border border-secondary/20 shadow-lg relative" onclick="openGalleryModal('https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop" alt="Wedding Moment 2" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+                <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-150">zoom_in</span>
+            </div>
+        </div>
+        <!-- Portrait 2 -->
+        <div class="row-span-2 col-span-1 rounded-lg overflow-hidden group cursor-pointer border border-secondary/20 shadow-lg relative" onclick="openGalleryModal('https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=800&auto=format&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?q=80&w=800&auto=format&fit=crop" alt="Wedding Moment 3" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+                <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-150">zoom_in</span>
+            </div>
+        </div>
+        <!-- Landscape 2 -->
+        <div class="col-span-2 md:col-span-2 rounded-lg overflow-hidden group cursor-pointer border border-secondary/20 shadow-lg relative" onclick="openGalleryModal('https://images.unsplash.com/photo-1532712938736-59c79bfb54a3?q=80&w=1200&auto=format&fit=crop')">
+            <img src="https://images.unsplash.com/photo-1532712938736-59c79bfb54a3?q=80&w=1200&auto=format&fit=crop" alt="Wedding Moment 4" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300 flex items-center justify-center">
+                <span class="material-symbols-outlined text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 scale-150">zoom_in</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Gallery Lightbox Modal -->
+<div id="gallery-modal" class="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md hidden flex items-center justify-center px-4 opacity-0 transition-opacity duration-300" onclick="closeGalleryModal()">
+    <button class="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10 bg-black/50 p-2 rounded-full">
+        <span class="material-symbols-outlined scale-150">close</span>
+    </button>
+    <!-- stopPropagation allows clicking the image without closing the modal -->
+    <img id="gallery-modal-img" src="" alt="Gallery Preview" class="max-w-full max-h-[90vh] object-contain rounded shadow-2xl scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+</div>
+
 <!-- RSVP & Wishes Section -->
 <section class="w-full px-section-h py-section-v bg-surface-container-low flex flex-col items-center" id="rsvp">
 <h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-8">RSVP &amp; Ucapan</h2>
@@ -791,6 +838,30 @@ Lihat Semua Ucapan
                 allWishesModal.classList.add('hidden');
             });
         });
+
+        function openGalleryModal(imgSrc) {
+            const modal = document.getElementById('gallery-modal');
+            const img = document.getElementById('gallery-modal-img');
+            img.src = imgSrc;
+            modal.classList.remove('hidden');
+            // Small delay to allow display block to apply before animating opacity
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                img.classList.remove('scale-95');
+                img.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeGalleryModal() {
+            const modal = document.getElementById('gallery-modal');
+            const img = document.getElementById('gallery-modal-img');
+            modal.classList.add('opacity-0');
+            img.classList.remove('scale-100');
+            img.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300); // Matches transition duration
+        }
 
         function show404() {
             document.body.innerHTML = `
