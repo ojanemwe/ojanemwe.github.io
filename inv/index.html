@@ -513,27 +513,24 @@ Lihat Semua Ucapan
         // Leaflet Map Init
         document.addEventListener("DOMContentLoaded", () => {
             const mapContainer = document.getElementById('map');
-        if (mapContainer) {
-            const map = L.map('map');
+            let map; // Deklarasikan variabel map di luar agar bisa diakses secara global di scope fungsi ini
             
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-            }).addTo(map);
-            
-            const lokasiAndaleh = [-0.232244, 100.690673];
-            const lokasiLubuakJantan = [-0.439353, 100.748457];
+            if (mapContainer) {
+                map = L.map('map');
+                
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '© OpenStreetMap contributors © CARTO'
+                }).addTo(map);
+                
+                const lokasiAndaleh = [-0.232244, 100.690673];
+                const lokasiLubuakJantan = [-0.439353, 100.748457];
 
-            L.marker(lokasiAndaleh).addTo(map).bindPopup('<b>Andaleh</b>');
-            L.marker(lokasiLubuakJantan).addTo(map).bindPopup('<b>Lubuak Jantan</b>');
+                L.marker(lokasiAndaleh).addTo(map).bindPopup('<b>Andaleh</b>');
+                L.marker(lokasiLubuakJantan).addTo(map).bindPopup('<b>Lubuak Jantan</b>');
 
-            const bounds = L.latLngBounds([lokasiAndaleh, lokasiLubuakJantan]);
-            map.fitBounds(bounds, { padding: [40, 40] });
-            
-            // Opsional: Memaksa peta menghitung ulang ukuran kontainer agar tidak bug saat pertama dimuat
-            setTimeout(() => {
-                map.invalidateSize();
-            }, 100);
-        }
+                const bounds = L.latLngBounds([lokasiAndaleh, lokasiLubuakJantan]);
+                map.fitBounds(bounds, { padding: [40, 40] });
+            }
 
             // Simple Countdown
             const countDownDate = new Date("2026-06-01T09:00:00+07:00").getTime(); // Target: 1 Juni 2026 09:00 WIB
@@ -556,6 +553,18 @@ Lihat Semua Ucapan
                 btnBuka.addEventListener('click', () => {
                     document.body.classList.remove('locked');
                     if(!isPlaying) toggleMusic();
+                    
+                    // MEMPERBAIKI BUG: Paksa Leaflet merender ulang ukuran dimensi kontainer setelah status 'locked' dihapus
+                    if (map) {
+                        setTimeout(() => {
+                            map.invalidateSize();
+                            const lokasiAndaleh = [-0.232244, 100.690673];
+                            const lokasiLubuakJantan = [-0.439353, 100.748457];
+                            const bounds = L.latLngBounds([lokasiAndaleh, lokasiLubuakJantan]);
+                            map.fitBounds(bounds, { padding: [40, 40] });
+                        }, 300); // Delay menyesuaikan transisi pembukaan halaman
+                    }
+
                     const mempelaiSection = document.getElementById('mempelai');
                     if(mempelaiSection) mempelaiSection.scrollIntoView({ behavior: 'smooth' });
                 });
