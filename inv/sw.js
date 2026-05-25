@@ -1,5 +1,5 @@
-const CACHE_NAME = 'pwa-cache-v1';
-const urlsToCache = ['/'];
+const CACHE_NAME = 'ZanJu-cache-v1';
+const urlsToCache = ['./'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
