@@ -274,7 +274,7 @@
 <div class="w-full max-w-max-width-container grid grid-cols-1 md:grid-cols-2 gap-gap-grid">
 <!-- Akad -->
 <div class="bg-surface p-8 border border-secondary/30 rounded text-center relative shadow-[0_0_20px_rgba(201,168,76,0.05)]">
-<span class="material-symbols-outlined text-4xl text-secondary mb-4 block" data-weight="fill">volunteer_activism celebration</span>
+<span class="material-symbols-outlined text-4xl text-secondary mb-4 block" data-weight="fill">volunteer_activism - celebration</span>
 <h3 class="font-label-overline text-[18px] text-on-surface mb-4 tracking-widest">Akad Nikah &amp; Resepsi Mempelai Wanita</h3>
 <p class="font-body-standard text-secondary mb-2">Senin, 1 Juni 2026</p>
 <p class="font-body-small text-on-surface-variant mb-6">09:00 WIB - Selesai</p>
@@ -511,32 +511,33 @@ Lihat Semua Ucapan
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
         // Leaflet Map Init
-        document.addEventListener("DOMContentLoaded", function () {
-          // Inisialisasi peta tanpa menentukan center manual (akan diatur oleh fitBounds)
-          const map = L.map('map');
-      
-          // Load Tile Layer dari OpenStreetMap
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-              attribution: '&copy; OpenStreetMap contributors'
-          }).addTo(map);
-      
-          // Data koordinat dan label
-          const titikLokasi = [
-              { coords: [-0.232244, 100.690673], nama: "Andaleh" },
-              { coords: [-0.439353, 100.748457], nama: "Lubuak Jantan" }
-          ];
-      
-          const bounds = [];
-      
-          // Tambahkan marker ke peta dan kumpulkan koordinat untuk batas otomatis
-          titikLokasi.forEach(lokasi => {
-              L.marker(lokasi.coords).addTo(map).bindPopup(`<b>${lokasi.nama}</b>`);
-              bounds.push(lokasi.coords);
-          });
-      
-          // Otomatis mengatur posisi kamera dan zoom agar kedua titik terlihat bersamaan
-          map.fitBounds(bounds, { padding: [50, 50] });
-      });
+        document.addEventListener("DOMContentLoaded", () => {
+            const mapContainer = document.getElementById('map');
+            if (mapContainer) {
+                // Inisialisasi peta tanpa setView statis
+                const map = L.map('map');
+                
+                // Menggunakan tile layer versi terang (light_all)
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+                }).addTo(map);
+                
+                // Definisi koordinat titik
+                const lokasiAndaleh = [-0.232244, 100.690673];
+                const lokasiLubuakJantan = [-0.439353, 100.748457];
+
+                // Marker 1: Andaleh
+                L.marker(lokasiAndaleh).addTo(map)
+                    .bindPopup('<b>Andaleh</b>');
+
+                // Marker 2: Lubuak Jantan
+                L.marker(lokasiLubuakJantan).addTo(map)
+                    .bindPopup('<b>Lubuak Jantan</b>');
+
+                // Menyesuaikan cakupan peta secara otomatis berdasarkan posisi kedua titik
+                const bounds = L.latLngBounds([lokasiAndaleh, lokasiLubuakJantan]);
+                map.fitBounds(bounds, { padding: [40, 40] });
+            }
 
             // Simple Countdown
             const countDownDate = new Date("2026-06-01T09:00:00+07:00").getTime(); // Target: 1 Juni 2026 09:00 WIB
