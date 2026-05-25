@@ -378,6 +378,19 @@
         </form>
     </div>
 </div>
+
+<!-- All Wishes Modal -->
+<div id="all-wishes-modal" class="fixed inset-0 z-[100] bg-background/80 backdrop-blur-sm hidden flex items-center justify-center px-4">
+    <div class="bg-surface-container border border-secondary/30 rounded-lg p-6 w-full max-w-2xl max-h-[80vh] shadow-2xl relative flex flex-col">
+        <button id="btn-close-all-wishes" class="absolute top-4 right-4 text-text-light hover:text-secondary z-10">
+            <span class="material-symbols-outlined">close</span>
+        </button>
+        <h3 class="font-headline-section text-secondary mb-4 text-[24px]">Semua Ucapan & Doa</h3>
+        <div id="all-wishes-container" class="flex-1 overflow-y-auto pr-2 flex flex-col gap-4">
+            <!-- All wishes will be loaded here -->
+        </div>
+    </div>
+</div>
 <!-- RSVP & Wishes Section -->
 <section class="w-full px-section-h py-section-v bg-surface-container-low flex flex-col items-center" id="rsvp">
 <h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-8">RSVP &amp; Ucapan</h2>
@@ -404,17 +417,12 @@
 </form>
 <div class="mt-10 border-t border-secondary/20 pt-8">
 <h3 class="font-label-overline text-secondary mb-6 text-center">Ucapan Termanis</h3>
-<div class="flex flex-col gap-4 h-64 overflow-y-auto pr-2 custom-scrollbar">
-<!-- Stub Wishes -->
-<div class="bg-surface-container p-4 rounded border border-outline-variant/30">
-<p class="font-label-overline text-on-surface mb-1 text-sm">Ahmad Family <span class="bg-secondary text-on-secondary text-[9px] px-2 py-0.5 rounded-full ml-2 align-middle inline-block">Hadir</span></p>
-<p class="font-body-small text-on-surface-variant">Selamat menempuh hidup baru Juju dan Ojan! Semoga menjadi keluarga sakinah, mawaddah, warahmah.</p>
+<div id="wishes-container" class="flex flex-col gap-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+<!-- Wishes will be dynamically loaded here -->
 </div>
-<div class="bg-surface-container p-4 rounded border border-outline-variant/30">
-<p class="font-label-overline text-on-surface mb-1 text-sm">Budi &amp; Rekan <span class="bg-outline text-background text-[9px] px-2 py-0.5 rounded-full ml-2 align-middle inline-block">Tidak Hadir</span></p>
-<p class="font-body-small text-on-surface-variant">Maaf belum bisa hadir, tapi doa terbaik selalu menyertai pernikahan kalian berdua.</p>
-</div>
-</div>
+<button id="btn-view-all-wishes" class="mt-4 w-full border border-secondary text-secondary px-4 py-2 rounded-sm font-label-overline text-label-overline hover:bg-secondary hover:text-on-secondary transition-all duration-300">
+Lihat Semua Ucapan
+</button>
 </div>
 </div>
 </section>
@@ -638,6 +646,7 @@
                 } else {
                     alert('Terima kasih, RSVP Anda telah terkirim!');
                     rsvpForm.reset();
+                    fetchWishes(); // Refresh wishes list
                 }
             });
         }
@@ -748,6 +757,19 @@
             } else {
                 show404();
             }
+            
+            // Initialize wishes display
+            fetchWishes();
+            
+            // Modal controls for all wishes
+            const allWishesModal = document.getElementById('all-wishes-modal');
+            document.getElementById('btn-view-all-wishes')?.addEventListener('click', () => {
+                allWishesModal.classList.remove('hidden');
+                fetchAllWishes();
+            });
+            document.getElementById('btn-close-all-wishes')?.addEventListener('click', () => {
+                allWishesModal.classList.add('hidden');
+            });
         });
 
         function show404() {
@@ -757,6 +779,95 @@
                     <p style="color:#8d9198;font-size:1rem;">Tautan undangan tidak valid atau telah kedaluwarsa.</p>
                 </div>
             `;
+        }
+
+        // Fetch Recent Wishes (Max 10) for main page
+        async function fetchWishes() {
+            const container = document.getElementById('wishes-container');
+            if (!container) return;
+            container.innerHTML = '<p class="text-center text-text-light text-sm italic">Memuat ucapan...</p>';
+            
+            const { data, error } = await supabaseClient
+                .from('rsvp')
+                .select('*')
+                .not('message', 'is', null)
+                .neq('message', '')
+                .order('created_at', { ascending: false })
+                .limit(10);
+                
+            if (error) {
+                console.error("Error fetching wishes:", error);
+                container.innerHTML = '<p class="text-center text-error text-sm italic">Gagal memuat ucapan. (Pastikan RLS Policy di Supabase mengizinkan SELECT publik)</p>';
+                return;
+            }
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-center text-text-light text-sm italic">Belum ada ucapan.</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            data.forEach(wish => {
+                const initials = wish.guest_name ? wish.guest_name.substring(0,2).toUpperCase() : '??';
+                const date = new Date(wish.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                
+                container.innerHTML += `
+                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30 flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+                            <span class="font-label-overline text-secondary">${initials}</span>
+                        </div>
+                        <div>
+                            <p class="font-body-standard text-on-surface font-bold">${wish.guest_name}</p>
+                            <p class="font-body-small text-text-light mb-2">${date} • ${wish.status}</p>
+                            <p class="font-body-small text-on-surface-variant italic">"${wish.message}"</p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Fetch All Wishes for Modal
+        async function fetchAllWishes() {
+            const container = document.getElementById('all-wishes-container');
+            if (!container) return;
+            container.innerHTML = '<p class="text-center text-text-light text-sm italic">Memuat semua ucapan...</p>';
+            
+            const { data, error } = await supabaseClient
+                .from('rsvp')
+                .select('*')
+                .not('message', 'is', null)
+                .neq('message', '')
+                .order('created_at', { ascending: false });
+                
+            if (error) {
+                console.error("Error fetching all wishes:", error);
+                container.innerHTML = '<p class="text-center text-error text-sm italic">Gagal memuat ucapan. (Pastikan RLS Policy di Supabase mengizinkan SELECT publik)</p>';
+                return;
+            }
+            
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-center text-text-light text-sm italic">Belum ada ucapan.</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            data.forEach(wish => {
+                const initials = wish.guest_name ? wish.guest_name.substring(0,2).toUpperCase() : '??';
+                const date = new Date(wish.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                
+                container.innerHTML += `
+                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30 flex gap-4">
+                        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+                            <span class="font-label-overline text-secondary">${initials}</span>
+                        </div>
+                        <div>
+                            <p class="font-body-standard text-on-surface font-bold">${wish.guest_name}</p>
+                            <p class="font-body-small text-text-light mb-2">${date} • ${wish.status}</p>
+                            <p class="font-body-small text-on-surface-variant italic">"${wish.message}"</p>
+                        </div>
+                    </div>
+                `;
+            });
         }
     </script>
 </body></html>
