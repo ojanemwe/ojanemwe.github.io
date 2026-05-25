@@ -488,7 +488,7 @@
 
 <!-- RSVP & Wishes Section -->
 <section class="w-full px-section-h py-section-v bg-surface-container-low flex flex-col items-center" id="rsvp">
-<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-8">RSVP &amp; Ucapan</h2>
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-secondary mb-8">Kehadiran &amp; Ucapan</h2>
 <div class="w-full max-w-max-width-content bg-surface p-6 md:p-8 rounded border border-secondary/30 shadow-[0_0_20px_rgba(201,168,76,0.05)]">
 <form id="rsvp-form" class="flex flex-col gap-4">
 <div>
@@ -778,9 +778,9 @@ Lihat Semua Ucapan
                 btn.disabled = false;
 
                 if (error) {
-                    alert('Gagal mengirim RSVP: ' + error.message);
+                    alert('Gagal mengirim Ucapan: ' + error.message);
                 } else {
-                    alert('Terima kasih, RSVP Anda telah terkirim!');
+                    alert('Terima kasih, Ucapan Anda telah terkirim!');
                     rsvpForm.reset();
                     fetchWishes(); // Refresh wishes list
                 }
@@ -884,7 +884,7 @@ Lihat Semua Ucapan
 
                     if (rsvpError) throw rsvpError;
                     
-                    alert('Konfirmasi transfer dan RSVP berhasil dikirim. Terima kasih!');
+                    alert('Konfirmasi transfer dan Ucapan berhasil dikirim. Barakallah!');
                     giftModal.classList.add('hidden');
                     giftForm.reset();
                 } catch (error) {
