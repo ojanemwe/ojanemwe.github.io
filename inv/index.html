@@ -347,7 +347,7 @@
             </div>
             <div>
                 <label class="font-body-small text-text-light block mb-1">Nominal (Rp)</label>
-                <input id="gift-amount" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" required type="number" min="1" placeholder="Contoh: 100000">
+                <input id="gift-amount" class="w-full bg-surface-cream text-on-primary border-none rounded-sm px-4 py-2 font-body-standard focus:ring-2 focus:ring-secondary transition-shadow" required type="text" inputmode="numeric" placeholder="Contoh: 100000">
             </div>
             <div>
                 <label class="font-body-small text-text-light block mb-1">Bank Tujuan</label>
@@ -765,7 +765,31 @@ Lihat Semua Ucapan
         }
 
         const giftForm = document.getElementById('gift-form');
+        const giftAmount = document.getElementById('gift-amount');
+        const giftSubmitBtn = document.getElementById('gift-submit-btn');
+
         if(giftForm) {
+            // Logika disable tombol & auto-format ribuan jika field nominal kosong/diisi
+            if (giftAmount && giftSubmitBtn) {
+                giftSubmitBtn.disabled = true;
+                giftSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                giftAmount.addEventListener('input', function(e) {
+                    // Hapus karakter non-digit
+                    let rawValue = this.value.replace(/[^0-9]/g, '');
+                    
+                    if (rawValue) {
+                        this.value = parseInt(rawValue, 10).toLocaleString('id-ID').replace(/,/g, '.'); // Pastikan pemisahnya titik untuk lokal id-ID
+                        giftSubmitBtn.disabled = false;
+                        giftSubmitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        this.value = '';
+                        giftSubmitBtn.disabled = true;
+                        giftSubmitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+            }
+
             giftForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = document.getElementById('gift-submit-btn');
@@ -785,9 +809,10 @@ Lihat Semua Ucapan
                     const giftMessage = document.getElementById('gift-message').value;
                     
                     statusText.innerText = 'Mengirim data transfer...';
+                    const rawAmount = document.getElementById('gift-amount').value.replace(/\./g, '');
                     const { error: giftError } = await supabaseClient.from('digital_gifts').insert([{
                         sender_name: guestName,
-                        amount: parseFloat(document.getElementById('gift-amount').value),
+                        amount: parseFloat(rawAmount),
                         bank_name: document.getElementById('gift-bank').value,
                         proof_image: base64Image
                     }]);
