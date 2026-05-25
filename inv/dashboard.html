@@ -879,7 +879,7 @@
 
         waBtn.addEventListener('click', () => {
             if(!currentGeneratedUrl) return;
-            const text = `Kepada Yth. ${r.guest_name},\n\nKami mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.\n\nSilakan buka tautan berikut untuk info selengkapnya:\n${currentGeneratedUrl}\n\nTerima kasih.`;
+            const text = `Kepada Yth. ${r.guestInput},\n\nKami mengundang Bapak/Ibu/Saudara/i untuk hadir pada acara pernikahan kami.\n\nSilakan buka tautan berikut untuk info selengkapnya:\n${currentGeneratedUrl}\n\nTerima kasih.`;
             window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         });
 
