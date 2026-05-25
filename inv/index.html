@@ -619,7 +619,27 @@ Lihat Semua Ucapan
 
         // RSVP Submit
         const rsvpForm = document.getElementById('rsvp-form');
-        if(rsvpForm) {
+        const rsvpMessage = document.getElementById('rsvp-message');
+        
+        if (rsvpForm) {
+            const rsvpBtn = rsvpForm.querySelector('button[type="submit"]');
+            
+            // Logika disable tombol jika pesan kosong
+            if (rsvpMessage && rsvpBtn) {
+                rsvpBtn.disabled = true;
+                rsvpBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+                rsvpMessage.addEventListener('input', (e) => {
+                    if (e.target.value.trim() === '') {
+                        rsvpBtn.disabled = true;
+                        rsvpBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    } else {
+                        rsvpBtn.disabled = false;
+                        rsvpBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+            }
+
             rsvpForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const btn = rsvpForm.querySelector('button[type="submit"]');
@@ -812,15 +832,10 @@ Lihat Semua Ucapan
                 const date = new Date(wish.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 
                 container.innerHTML += `
-                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30 flex gap-4">
-                        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
-                            <span class="font-label-overline text-secondary">${initials}</span>
-                        </div>
-                        <div>
-                            <p class="font-body-standard text-on-surface font-bold">${wish.guest_name}</p>
-                            <p class="font-body-small text-text-light mb-2">${date} • ${wish.status}</p>
-                            <p class="font-body-small text-on-surface-variant italic">"${wish.message}"</p>
-                        </div>
+                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30">
+                        <p class="font-body-standard text-on-surface font-bold">${wish.guest_name}</p>
+                        <p class="text-[10px] text-text-light mb-2">${date} • ${wish.status}</p>
+                        <p class="font-body-small text-on-surface-variant italic">"${wish.message}"</p>
                     </div>
                 `;
             });
@@ -856,15 +871,10 @@ Lihat Semua Ucapan
                 const date = new Date(wish.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 
                 container.innerHTML += `
-                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30 flex gap-4">
-                        <div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
-                            <span class="font-label-overline text-secondary">${initials}</span>
-                        </div>
-                        <div>
-                            <p class="font-body-standard text-on-surface font-bold">${wish.guest_name}</p>
-                            <p class="font-body-small text-text-light mb-2">${date} • ${wish.status}</p>
-                            <p class="font-body-small text-on-surface-variant italic">"${wish.message}"</p>
-                        </div>
+                    <div class="p-4 bg-surface-container-highest rounded-lg border border-outline-variant/30">
+                        <p class="font-body-standard text-on-surface font-bold">${wish.guest_name}</p>
+                        <p class="text-[10px] text-text-light mb-2">${date} • ${wish.status}</p>
+                        <p class="font-body-small text-on-surface-variant italic">"${wish.message}"</p>
                     </div>
                 `;
             });
