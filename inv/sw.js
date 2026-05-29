@@ -1,6 +1,5 @@
-const CACHE_NAME = 'zanju-cache-v2';
+const CACHE_NAME = 'zanju-cache-v3';
 const urlsToCache = [
-  './',
   './login.html',
   './dashboard.html',
   './manifest.json',
