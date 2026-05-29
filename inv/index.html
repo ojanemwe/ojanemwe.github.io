@@ -928,6 +928,14 @@ Lihat Semua Ucapan
 
             // Validate against database
             const { data, error } = await supabaseClient.from('invitation_links').select('id').eq('guest_name', to).limit(1);
+            // Error Handling + Logging - start
+            if (error) {
+                console.error('Supabase error:', error);
+                show404(); // atau tampilkan pesan "Gagal memuat, coba lagi"
+                return;
+            }
+            // Error Handling + Logging - end
+              
             if (data && data.length > 0) {
                 guestDisplay.innerText = to;
                 // Auto-fill form fields
