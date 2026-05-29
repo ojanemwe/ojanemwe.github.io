@@ -747,7 +747,9 @@ Lihat Semua Ucapan
         }
 
         // Supabase Integrations
-        
+        const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
         // RSVP Submit
         const rsvpForm = document.getElementById('rsvp-form');
@@ -916,10 +918,6 @@ Lihat Semua Ucapan
         // URL Parameter Validation & Dynamic Guest Name
         document.addEventListener("DOMContentLoaded", async () => {
             // Supabase Integrations
-            const SUPABASE_URL = 'https://ubzdmnjbacsomhgugwcb.supabase.co';
-            const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InViemRtbmpiYWNzb21oZ3Vnd2NiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2MDgzNzcsImV4cCI6MjA5NTE4NDM3N30._qCp0UjSylgE0ffkkRW5TMusKGerh2Nmwbg1hSN4Y_c';
-            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-              
             const urlParams = new URLSearchParams(window.location.search);
             const to = urlParams.get('to');
             const guestDisplay = document.getElementById('guest-display');
@@ -929,24 +927,25 @@ Lihat Semua Ucapan
                 return;
             }
 
-            // Validate against database
-            const { data, error } = await supabaseClient.from('invitation_links').select('id').eq('guest_name', to).limit(1);
-           
-              // Error Handling + Logging - start
-            /* if (error) {
-                console.error('Supabase error:', error);
-                show404(); // atau tampilkan pesan "Gagal memuat, coba lagi"
-                return;
-            } */
-            // Error Handling + Logging - end
-              
-            if (data && data.length > 0) {
-                guestDisplay.innerText = to;
-                // Auto-fill form fields
-                document.getElementById('gift-name').value = to;
-                document.getElementById('rsvp-name').value = to;
-            } else {
-                show404();
+            // Tampilkan nama dari URL sejak awal (fallback otomatis jika jaringan/script gagal)
+            guestDisplay.innerText = to;
+            if (document.getElementById('gift-name')) document.getElementById('gift-name').value = to;
+            if (document.getElementById('rsvp-name')) document.getElementById('rsvp-name').value = to;
+            
+                try {
+                    // Validasi ke database Supabase
+                    const { data, error } = await supabaseClient.from('invitation_links').select('id').eq('guest_name', to).limit(1);
+                    
+                    if (error) {
+                        console.error('Koneksi Supabase terganggu:', error);
+                    } else if (data && data.length === 0) {
+                        // Database berhasil diakses, dan memastikan nama TIDAK ADA di daftar
+                        show404();
+                        return;
+                    }
+            } catch (e) {
+                    // Berjalan jika objek supabaseClient crash akibat CDN diblokir total
+                    console.error('Pustaka Supabase gagal dimuat atau diblokir peramban:', e);
             }
             
             // Initialize wishes display
